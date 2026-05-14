@@ -1,0 +1,112 @@
+import { Chat } from './chat-layout';
+
+export const mockChats: Chat[] = [
+  {
+    id: 'sara',
+    type: 'dm',
+    name: 'Sara R.',
+    avatarInitials: 'SR',
+    avatarColor: 'blue',
+    status: 'online',
+    lastMessage: 'Sounds good, see you then!',
+    lastTime: '11:42',
+    messages: [
+      {
+        id: '1',
+        senderId: 'sara',
+        text: 'Hey! Did you finish the new component?',
+        time: '11:30',
+      },
+      {
+        id: '2',
+        senderId: 'me',
+        text: 'Almost — just cleaning up the props API',
+        time: '11:31',
+      },
+      {
+        id: '3',
+        senderId: 'me',
+        text: 'Should be ready in like 20 mins',
+        time: '11:31',
+      },
+      {
+        id: '4',
+        senderId: 'sara',
+        text: "Nice! I'll wait for the PR then",
+        time: '11:35',
+      },
+      {
+        id: '5',
+        senderId: 'sara',
+        text: 'Sounds good, see you then!',
+        time: '11:42',
+      },
+    ],
+  },
+  {
+    id: 'john',
+    type: 'dm',
+    name: 'John D.',
+    avatarInitials: 'JD',
+    avatarColor: 'coral',
+    status: 'offline',
+    lastMessage: 'Can you review the PR?',
+    lastTime: '10:15',
+    unread: 3,
+    messages: [
+      {
+        id: '1',
+        senderId: 'john',
+        text: 'Hey, do you have a moment?',
+        time: '10:10',
+      },
+      { id: '2', senderId: 'me', text: "Sure, what's up?", time: '10:11' },
+      {
+        id: '3',
+        senderId: 'john',
+        text: 'Can you review the PR?',
+        time: '10:15',
+      },
+    ],
+  },
+  {
+    id: 'design',
+    type: 'group',
+    name: 'Design Team',
+    avatarInitials: '#D',
+    avatarColor: 'teal',
+    lastMessage: 'Mike: new figma link is up',
+    lastTime: '09:30',
+    unread: 12,
+    messages: [
+      { id: '1', senderId: 'mike', text: 'Morning everyone!', time: '09:00' },
+      {
+        id: '2',
+        senderId: 'me',
+        text: 'Morning! Ready for the standup?',
+        time: '09:05',
+      },
+      { id: '3', senderId: 'anna', text: "I'll be 5 mins late", time: '09:08' },
+      {
+        id: '4',
+        senderId: 'mike',
+        text: 'new figma link is up',
+        time: '09:30',
+      },
+    ],
+  },
+  {
+    id: 'engineering',
+    type: 'group',
+    name: 'Engineering',
+    avatarInitials: '#E',
+    avatarColor: 'green',
+    lastMessage: 'Deploy is live ✓',
+    lastTime: 'Mon',
+    messages: [
+      { id: '1', senderId: 'ci', text: 'Build passed', time: '14:00' },
+      { id: '2', senderId: 'me', text: 'Deploying to prod now', time: '14:10' },
+      { id: '3', senderId: 'ci', text: 'Deploy is live ✓', time: '14:15' },
+    ],
+  },
+];
