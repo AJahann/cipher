@@ -5,7 +5,13 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-config({ path: path.resolve(__dirname, '../../.env') });
+const isProductionBuild = __dirname.includes(path.join('dist', 'src'));
+
+const envDir = isProductionBuild
+  ? path.resolve(__dirname, '../../../') // up out of config, src, and dist
+  : path.resolve(__dirname, '../../'); // up out of config and src
+
+config({ path: path.join(envDir, '.env') });
 
 const envSchema = z.object({
   CLIENT_ORIGIN: z.string().default('http://localhost:3000'),

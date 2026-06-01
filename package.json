@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm --parallel dev",
     "build": "pnpm --recursive build",
+    "start": "pnpm --parallel start",
     "lint": "pnpm --recursive lint",
     "clean": "pnpm --recursive clean"
   },
