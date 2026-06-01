@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Sidebar from './sidebar';
+import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { ChatPage } from './chat-page';
 import { useMe, useUsersList } from '@/lib/data-layer/user';
 import {
@@ -12,19 +12,13 @@ import {
   useCreateConversation,
 } from '@/lib/data-layer/chats';
 
-const EmptyState = () => (
-  <main className='flex-1 flex items-center justify-center text-gray-400 dark:text-gray-600 text-sm'>
-    Select a conversation
-  </main>
-);
-
 export default function ChatLayout() {
   const { data: me } = useMe();
-
   const { data: usersData } = useUsersList();
+
   const users = useMemo(() => {
     if (!usersData) return [];
-    // supports both paginated + non‑paginated
+    // supports both paginated + non-paginated responses
     // @ts-ignore
     return Array.isArray(usersData?.pages)
       ? // @ts-ignore
@@ -34,7 +28,6 @@ export default function ChatLayout() {
   }, [usersData]);
 
   const createConversation = useCreateConversation();
-
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
@@ -42,26 +35,27 @@ export default function ChatLayout() {
 
   const socket = useChatSocket();
   const { joinConversation } = useChatSocketActions();
-
   useChatSocketEvents({});
 
-  async function createConversationHandler(receiverId: string) {
+  async function handleSelectUser(receiverId: string) {
     const created = await createConversation.mutateAsync({
       memberId: receiverId,
     });
-
     setActiveConversationId(created.id);
     setActiveReceiverId(receiverId);
     joinConversation?.(created.id);
   }
 
   return (
-    <div className='flex h-screen bg-white dark:bg-neutral-900 font-sans'>
-      <Sidebar
-        setActiveChatId={(id) => createConversationHandler(id)}
-        chatList={users} // users list
-      />
-
+    <AppShell
+      sidebar={
+        <Sidebar
+          users={users}
+          activeUserId={activeReceiverId}
+          onSelect={handleSelectUser}
+        />
+      }
+    >
       {activeConversationId && activeReceiverId && me?.id ? (
         <ChatPage
           conversationId={activeConversationId}
@@ -72,6 +66,6 @@ export default function ChatLayout() {
       ) : (
         <EmptyState />
       )}
-    </div>
+    </AppShell>
   );
 }

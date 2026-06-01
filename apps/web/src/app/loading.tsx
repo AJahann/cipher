@@ -1,9 +1,5 @@
-const Loading = () => {
-  return (
-    <div className='w-full min-h-screen bg-black flex items-center justify-center'>
-      <p className='text-2xl text-white'>Loading...</p>
-    </div>
-  );
-};
+import { LoadingScreen } from '@chat-app/ui-web';
 
-export default Loading;
+export default function Loading() {
+  return <LoadingScreen />;
+}

@@ -1,1 +1,39 @@
+@import '../../../../packages/ui-tokens/src/tokens.css';
 @import 'tailwindcss';
+
+@source '../../../../packages/ui-web/src/**/*.{ts,tsx}';
+
+@theme {
+  --font-sans: var(--cipher-font-sans);
+  --font-mono: var(--cipher-font-mono);
+  --color-bg: var(--cipher-bg);
+  --color-surface: var(--cipher-surface);
+  --color-surface-2: var(--cipher-surface-2);
+  --color-border: var(--cipher-border);
+  --color-border-hi: var(--cipher-border-hi);
+  --color-text: var(--cipher-text);
+  --color-muted: var(--cipher-muted);
+  --color-accent: var(--cipher-accent);
+  --color-accent-dim: var(--cipher-accent-dim);
+  --color-accent-hover: var(--cipher-accent-hover);
+  --color-success: var(--cipher-success);
+  --color-danger: var(--cipher-danger);
+
+  /* radius values used by components via var() */
+  --cipher-radius-sm: 4px;
+  --cipher-radius-md: 6px;
+  --cipher-radius-lg: 8px;
+  --cipher-radius-xl: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--cipher-bg);
+  color: var(--cipher-text);
+}

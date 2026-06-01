@@ -1,7 +1,5 @@
-import { ChatProvider } from '@/components/chat-provider';
+import ChatLayout from '@/components/chat-layout';
 
-const page = () => {
-  return <ChatProvider />;
-};
-
-export default page;
+export default function ChatPage() {
+  return <ChatLayout />;
+}

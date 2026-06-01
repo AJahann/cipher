@@ -8,8 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./crypto": "./src/crypto/index.ts",
-    "./types": "./src/types/index.ts",
-    "./validators": "./src/validators/index.ts"
+    "./types": "./src/types/index.ts"
   },
   "scripts": {
     "build": "tsc",

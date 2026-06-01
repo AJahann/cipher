@@ -8,7 +8,7 @@ function ChatItem({ chat, onClick }: { chat: User; onClick: () => void }) {
     >
       <div className='flex-1 min-w-0'>
         <p className='text-md font-medium text-gray-900 dark:text-gray-100 truncate'>
-          USER ID: {chat.id.slice(-4)}
+          {chat.username}
         </p>
       </div>
     </button>
