@@ -14,6 +14,7 @@
     "@fastify/cors": "9",
     "@fastify/jwt": "8",
     "@fastify/session": "10",
+    "@t3-oss/env-core": "^0.13.11",
     "bcrypt": "^6.0.0",
     "connect-pg-simple": "^10.0.0",
     "dotenv": "^17.4.2",
@@ -23,7 +24,8 @@
     "libsodium-wrappers": "0.8.4",
     "pg": "^8.20.0",
     "socket.io": "^4.8.3",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

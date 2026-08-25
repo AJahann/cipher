@@ -1,26 +1,23 @@
-import { config } from 'dotenv';
+import { createEnv } from '@t3-oss/env-core';
 import { z } from 'zod';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const isProductionBuild = __dirname.includes(path.join('dist', 'src'));
+// Load .env files in local dev. The monorepo root .env is the canonical file;
+// an app-local apps/api/.env can override nothing (first-loaded + real env win).
+// No-op when the files are absent (CI / production platforms inject real env).
+for (const envPath of ['../../../.env', '.env']) {
+  try {
+    process.loadEnvFile(envPath);
+  } catch {
+    // file not found — fall back to process.env
+  }
+}
 
-const envDir = isProductionBuild
-  ? path.resolve(__dirname, '../../../') // up out of config, src, and dist
-  : path.resolve(__dirname, '../../'); // up out of config and src
-
-config({ path: path.join(envDir, '.env') });
-
-const envSchema = z.object({
-  CLIENT_ORIGIN: z.string().default('http://localhost:3000'),
-  DATABASE_URL: z.string(),
-  PORT: z.string().default('3000'),
-  SESSION_SECRET: z.string().min(32),
-  NODE_ENV: z
-    .enum(['development', 'production', 'test'])
-    .default('development'),
+export const env = createEnv({
+  server: {
+    CLIENT_ORIGIN: z.url(),
+    DATABASE_URL: z.string(),
+    PORT: z.string(),
+    SESSION_SECRET: z.string().min(32),
+  },
+  runtimeEnv: process.env,
 });
-
-export const env = envSchema.parse(process.env);
