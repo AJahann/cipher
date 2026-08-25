@@ -14,6 +14,9 @@ for (const envPath of ['../../../.env', '.env']) {
 
 export const env = createEnv({
   server: {
+    NODE_ENV: z
+      .enum(['development', 'production', 'test'])
+      .default('development'),
     CLIENT_ORIGIN: z.url(),
     DATABASE_URL: z.string(),
     PORT: z.string(),

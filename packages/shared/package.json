@@ -15,10 +15,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "libsodium-wrappers-sumo": "^0.8.4",
-    "zod": "^3.22.0"
+    "libsodium-wrappers-sumo": "^0.8.4"
   },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "typescript": "^5"
   }
 }

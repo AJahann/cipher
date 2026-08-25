@@ -39,10 +39,11 @@ export const authController = async (app: FastifyInstance) => {
         .code(400)
         .send({ error: 'Validation failed', issues: error.issues });
     }
-    if (error.message === 'USERNAME_TAKEN') {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message === 'USERNAME_TAKEN') {
       return reply.code(409).send({ error: 'Username already taken' });
     }
-    if (error.message === 'INVALID_CREDENTIALS') {
+    if (message === 'INVALID_CREDENTIALS') {
       return reply.code(401).send({ error: 'Invalid credentials' });
     }
     app.log.error(error);

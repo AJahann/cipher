@@ -45,7 +45,8 @@ export const chatController = async (app: FastifyInstance) => {
         .code(400)
         .send({ error: 'Validation failed', issues: error.issues });
     }
-    if (error.message === 'FORBIDDEN') {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message === 'FORBIDDEN') {
       return reply
         .code(403)
         .send({ error: 'Not a member of this conversation' });

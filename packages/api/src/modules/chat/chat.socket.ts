@@ -1,6 +1,6 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
-import { parse as parseCookie } from 'cookie';
+import { parseCookie } from 'cookie';
 import type { Store } from 'express-session';
 import { ZodError } from 'zod';
 import { chatService } from './chat.service';
