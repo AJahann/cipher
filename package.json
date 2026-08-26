@@ -7,10 +7,26 @@
     "build": "pnpm --recursive build",
     "start": "pnpm --parallel start",
     "lint": "pnpm --recursive lint",
-    "clean": "pnpm --recursive clean"
+    "clean": "pnpm --recursive clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui-web": "vitest run --project ui-web",
+    "test:shared": "vitest run --project shared",
+    "test:api": "vitest run --project api",
+    "test:coverage": "vitest run --coverage"
   },
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.6",
+    "@types/jest": "^30.0.0",
+    "@vitejs/plugin-react": "^6.1.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "jsdom": "^30.0.1",
+    "vitest": "^4.1.11"
   }
 }
