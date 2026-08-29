@@ -1,24 +1,12 @@
-// apps/web/src/hooks/use-chat.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Conversation, Message } from '@chat-app/shared/types'; // <- adjust path in your monorepo
+import type { Conversation, Message } from '@chat-app/shared/types';
 import { apiFetch } from '../client';
-
-// -----------------------------
-// Query Keys
-// -----------------------------
-// apps/web/src/hooks/use-chat.ts
-// ...
 export const chatKeys = {
   all: ['chat'] as const,
   conversations: () => [...chatKeys.all, 'conversations'] as const,
   messages: (conversationId?: string, limit?: number, before?: string) =>
     [...chatKeys.all, 'messages', { conversationId, limit, before }] as const,
 };
-// ...
-
-// -----------------------------
-// API Calls
-// -----------------------------
 type CreateConversationPayload = { memberId: string };
 
 const createConversation = (payload: CreateConversationPayload) =>
@@ -44,9 +32,6 @@ const getMessages = (
   return apiFetch<MessagesResponse>(`/chat/messages?${qs}`);
 };
 
-// -----------------------------
-// Hooks
-// -----------------------------
 export function useConversations() {
   return useQuery({
     queryKey: chatKeys.conversations(),
