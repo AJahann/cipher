@@ -5,15 +5,10 @@ import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@chat-app/shared/types'; // <- adjust path
 import { chatKeys } from './use-chat';
+import { env } from '@/config/env';
 
-const SOCKET_URL =
-  process.env.NEXT_PUBLIC_WS_URL ??
-  process.env.NEXT_PUBLIC_API_URL ??
-  'http://localhost:3002';
+const SOCKET_URL = env.NEXT_PUBLIC_API_URL;
 
-// -----------------------------
-// Socket Types
-// -----------------------------
 interface ServerToClientEvents {
   'message:new': (message: MessagePayload) => void;
   'message:ack': (data: { tempId: string; message: MessagePayload }) => void;

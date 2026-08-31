@@ -4,11 +4,11 @@ import { env } from './config/env';
 const start = async () => {
   const { app } = await buildApp();
 
-  await app.listen({ port: Number(env.PORT), host: '0.0.0.0' });
+  await app.listen({ port: Number(env.BACKEND_PORT), host: '0.0.0.0' });
 
-  console.log(`Server running on port ${env.PORT}`);
-  console.log(`  REST:      http://localhost:${env.PORT}`);
-  console.log(`  Socket.IO: ws://localhost:${env.PORT}`);
+  console.log(`Server running on port ${env.BACKEND_PORT}`);
+  console.log(`  REST:      http://localhost:${env.BACKEND_PORT}`);
+  console.log(`  Socket.IO: ws://localhost:${env.BACKEND_PORT}`);
 };
 
 start().catch((err) => {

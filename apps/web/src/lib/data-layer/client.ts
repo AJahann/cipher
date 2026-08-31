@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3002';
+import { env } from '@/config/env';
 
 export class ApiError extends Error {
   constructor(
@@ -16,7 +16,9 @@ export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  console.log(env.NEXT_PUBLIC_API_URL);
+
+  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
     ...init,
     credentials: 'include',
     headers: {

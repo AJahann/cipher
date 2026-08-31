@@ -19,7 +19,7 @@ export const env = createEnv({
       .default('development'),
     CLIENT_ORIGIN: z.url(),
     DATABASE_URL: z.string(),
-    PORT: z.string(),
+    BACKEND_PORT: z.string(),
     SESSION_SECRET: z.string().min(32),
   },
   runtimeEnv: process.env,
