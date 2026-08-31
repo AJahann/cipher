@@ -6,9 +6,6 @@ import type {
 } from '@chat-app/shared/types';
 import { apiFetch } from '../client';
 
-// -----------------------------
-// Query Keys
-// -----------------------------
 const userKeys = {
   all: ['user'] as const,
   me: () => [...userKeys.all, 'me'] as const,
@@ -17,9 +14,6 @@ const userKeys = {
   publicKey: (id: string) => [...userKeys.all, 'publicKey', id] as const,
 };
 
-// -----------------------------
-// API Calls
-// -----------------------------
 const fetchMe = () => apiFetch<User>('/auth/me');
 
 const register = (payload: RegisterUserPayload) =>
@@ -52,15 +46,12 @@ const listUsers = (limit?: number, after?: string) => {
 const getPublicKey = (userId: string) =>
   apiFetch<{ publicKey: string }>(`/users/${userId}/public-key`);
 
-// -----------------------------
-// Hooks
-// -----------------------------
 export function useMe(enabled = true) {
   return useQuery({
     queryKey: userKeys.me(),
     queryFn: fetchMe,
     enabled,
-    retry: false, // useful for session-based auth
+    retry: false,
   });
 }
 
@@ -69,9 +60,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: register,
     onSuccess: (user) => {
-      // prime /me cache
       qc.setQueryData(userKeys.me(), user);
-      // invalidate user lists if needed
       qc.invalidateQueries({ queryKey: userKeys.list() });
     },
   });
