@@ -1,31 +1,19 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { ChatPage } from './chat-page';
 import { useMe, useUsersList } from '@/lib/data-layer/user';
 import {
   useChatSocket,
   useChatSocketActions,
-  useChatSocketEvents,
+  useChatRealtimeSync,
   useCreateConversation,
 } from '@/lib/data-layer/chats';
 
 export default function ChatLayout() {
   const { data: me } = useMe();
-  const { data: usersData } = useUsersList();
-
-  const users = useMemo(() => {
-    if (!usersData) return [];
-    // supports both paginated + non-paginated responses
-    // @ts-ignore
-    return Array.isArray(usersData?.pages)
-      ? // @ts-ignore
-        usersData.pages.flat()
-      : // @ts-ignore
-        usersData;
-  }, [usersData]);
+  const { data: users = [] } = useUsersList();
 
   const createConversation = useCreateConversation();
   const [activeConversationId, setActiveConversationId] = useState<
@@ -35,7 +23,11 @@ export default function ChatLayout() {
 
   const socket = useChatSocket();
   const { joinConversation } = useChatSocketActions();
-  useChatSocketEvents({});
+
+  // Mounted here rather than inside ChatPage: ChatPage only renders once a
+  // conversation is selected, so a user on the empty state would otherwise have
+  // no listeners and would miss new contacts and incoming messages entirely.
+  useChatRealtimeSync();
 
   async function handleSelectUser(receiverId: string) {
     const created = await createConversation.mutateAsync({

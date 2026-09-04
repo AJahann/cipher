@@ -13,6 +13,13 @@ import { sessionStore } from './db/session';
 export const buildApp = async () => {
   const app = Fastify({ logger: true });
 
+  // Socket.IO can only attach once the HTTP server is ready, but the REST
+  // handlers registered below need to emit on it at request time (e.g. telling
+  // connected clients that a new account was created). A getter decorator hands
+  // them a late-bound reference instead of capturing `null` forever.
+  let io: SocketIOServer | null = null;
+  app.decorate('io', { getter: () => io });
+
   await app.register(cors, {
     origin: env.CLIENT_ORIGIN,
     credentials: true,
@@ -43,14 +50,16 @@ export const buildApp = async () => {
 
   await app.ready();
 
-  const io = new SocketIOServer(app.server, {
+  const socketServer = new SocketIOServer(app.server, {
     cors: {
       origin: env.CLIENT_ORIGIN,
       credentials: true,
     },
   });
 
-  registerChatSocket(io, app.log, sessionStore, app);
+  io = socketServer;
 
-  return { app, io };
+  registerChatSocket(socketServer, app.log, sessionStore, app);
+
+  return { app, io: socketServer };
 };

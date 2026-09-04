@@ -1,12 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Conversation, Message } from '@chat-app/shared/types';
 import { apiFetch } from '../client';
+
+export type MessagesQueryParams = {
+  conversationId?: string;
+  limit?: number;
+  before?: string;
+};
+
 export const chatKeys = {
   all: ['chat'] as const,
   conversations: () => [...chatKeys.all, 'conversations'] as const,
+  /**
+   * Prefix for cache lookups and invalidation.
+   *
+   * Never filter with `messages(id)`: React Query compares the params object
+   * with `partialDeepEqual`, and `{ limit: undefined }` does not match a cached
+   * `{ limit: 50 }`. Filtering by a partially-filled key silently matches
+   * nothing. Filter on this prefix and narrow on `conversationId` yourself.
+   */
+  messagesRoot: () => [...chatKeys.all, 'messages'] as const,
   messages: (conversationId?: string, limit?: number, before?: string) =>
-    [...chatKeys.all, 'messages', { conversationId, limit, before }] as const,
+    [...chatKeys.messagesRoot(), { conversationId, limit, before }] as const,
 };
+
 type CreateConversationPayload = { memberId: string };
 
 const createConversation = (payload: CreateConversationPayload) =>
