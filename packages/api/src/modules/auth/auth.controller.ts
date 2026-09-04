@@ -10,6 +10,12 @@ export const authController = async (app: FastifyInstance) => {
     const user = await userService.register(body);
     req.session.userId = user.id;
     await req.session.save();
+
+    // The contact list is the user directory, so every connected client needs
+    // to know it changed. Without this their list stays at whatever it was when
+    // they logged in until they refresh the page.
+    app.io?.emit('user:new', { id: user.id, username: user.username });
+
     return reply.code(201).send(user);
   });
 

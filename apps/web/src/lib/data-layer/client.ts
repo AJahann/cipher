@@ -16,8 +16,6 @@ export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  console.log(env.NEXT_PUBLIC_API_URL);
-
   const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
     ...init,
     credentials: 'include',
