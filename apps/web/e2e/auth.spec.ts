@@ -1,11 +1,26 @@
 import { test, expect } from '@playwright/test';
+import { PASSPHRASE, register, uniqueUsername } from './helpers';
 
-test('authenticates and shows the empty inbox', async ({ page }) => {
-  await page.goto('http://localhost:3000/');
+test('registers and shows the empty inbox', async ({ page }) => {
+  await register(page, uniqueUsername('auth'));
 
-  await page.getByRole('textbox', { name: /username/i }).fill('ashkan');
-  await page.getByRole('textbox', { name: /passphrase/i }).fill('password');
+  await expect(page.getByText(/select a conversation to begin/i)).toBeVisible();
+});
+
+test('authenticates an existing account', async ({ page, context }) => {
+  const username = uniqueUsername('auth');
+
+  await register(page, username);
+
+  // Drop the session and the unwrapped key, then sign back in.
+  await context.clearCookies();
+  await page.evaluate(() => localStorage.clear());
+
+  await page.goto('/');
+  await page.getByLabel('username').fill(username);
+  await page.getByLabel(/^passphrase$/).fill(PASSPHRASE);
   await page.getByRole('button', { name: /authenticate/i }).click();
 
+  await expect(page).toHaveURL(/\/chat/);
   await expect(page.getByText(/select a conversation to begin/i)).toBeVisible();
 });

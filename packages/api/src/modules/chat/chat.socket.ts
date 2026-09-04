@@ -5,13 +5,28 @@ import type { Store } from 'express-session';
 import { ZodError } from 'zod';
 import { chatService } from './chat.service';
 import { sendMessageSchema } from './chat.schema';
-import { sessionStore } from '../../db/session';
+import { userService } from '../user/user.service';
 
-// ── Event shape interfaces ────────────────────────────────────────────────────
+// ── Event shape interfaces ──────────────────────────────────────────────────
 
 interface ServerToClientEvents {
   'message:new': (message: MessagePayload) => void;
   'message:ack': (data: { tempId: string; message: MessagePayload }) => void;
+  /**
+   * Delivered to every member's personal room when a conversation receives a
+   * message.
+   *
+   * `message:new` only reaches sockets that joined the conversation room, and a
+   * client joins that room when the user opens the thread. A recipient who has
+   * never opened it — or who does not even have the sender in their contact
+   * list yet — would otherwise receive nothing until a page refresh.
+   */
+  'conversation:updated': (data: {
+    conversationId: string;
+    message: MessagePayload;
+  }) => void;
+  /** Broadcast to all connected clients when a new account is registered. */
+  'user:new': (user: { id: string; username: string }) => void;
   'typing:indicator': (data: {
     conversationId: string;
     userId: string;
@@ -59,6 +74,7 @@ interface MessagePayload {
 
 interface SocketData {
   userId: string;
+  username: string;
 }
 
 type AppSocket = Socket<
@@ -137,11 +153,28 @@ export function registerChatSocket(
 
   // ── Connection handler ────────────────────────────────────────────────────
 
-  io.on('connection', async (socket) => {
+  io.on('connection', async (socket: AppSocket) => {
     const userId = socket.data.userId;
 
     socket.join(userRoom(userId));
-    log.info({ userId }, 'Socket connected');
+
+    // Join every conversation this user already belongs to. Previously a client
+    // only entered a conversation room after the user clicked that contact, so
+    // incoming messages and presence updates never reached anyone who had not
+    // opened the thread in this session.
+    const conversationIds = await chatService
+      .getConversationIds(userId)
+      .catch(() => [] as string[]);
+    for (const id of conversationIds) socket.join(conversationRoom(id));
+
+    // Cached once so outgoing message payloads carry a real sender name.
+    const profile = await userService.findById(userId).catch(() => null);
+    socket.data.username = profile?.username ?? '';
+
+    log.info(
+      { userId, conversations: conversationIds.length },
+      'Socket connected',
+    );
 
     // Broadcast online presence to all shared conversations
     await broadcastPresence(io, userId, true);
@@ -163,14 +196,36 @@ export function registerChatSocket(
         const payload: MessagePayload = {
           ...message,
           createdAt: message.createdAt.toISOString(),
-          sender: { id: userId, username: '' }, // username hydrated below if needed
+          sender: { id: userId, username: socket.data.username },
         };
 
-        // Broadcast to everyone in the conversation room
+        // 1. Everyone currently viewing the thread.
         io.to(conversationRoom(parsed.conversationId)).emit(
           'message:new',
           payload,
         );
+
+        // 2. Everyone else in the conversation, through their personal room.
+        //    This is what reaches a recipient who has never opened the thread.
+        const memberIds = await chatService.getConversationMembers(
+          parsed.conversationId,
+        );
+
+        for (const memberId of memberIds) {
+          if (memberId === userId) continue;
+
+          // Pull their live sockets into the conversation room so subsequent
+          // messages, typing indicators and presence updates arrive directly.
+          // Done after the emit above so they do not receive this message twice.
+          io.in(userRoom(memberId)).socketsJoin(
+            conversationRoom(parsed.conversationId),
+          );
+
+          io.to(userRoom(memberId)).emit('conversation:updated', {
+            conversationId: parsed.conversationId,
+            message: payload,
+          });
+        }
 
         // ACK back to sender with tempId so optimistic UI can reconcile
         socket.emit('message:ack', { tempId: data.tempId, message: payload });

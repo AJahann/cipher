@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// apps/web/src/hooks/use-chat-socket.ts
-import { useCallback, useEffect, useState } from 'react';
+// apps/web/src/lib/data-layer/chats/use-chat-socket.ts
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
-import type { Message } from '@chat-app/shared/types'; // <- adjust path
-import { chatKeys } from './use-chat';
+import type { Message } from '@chat-app/shared/types';
+import { chatKeys, type MessagesQueryParams } from './use-chat';
+import { userKeys } from '../user/use-user';
 import { env } from '@/config/env';
 
 const SOCKET_URL = env.NEXT_PUBLIC_API_URL;
@@ -12,6 +13,13 @@ const SOCKET_URL = env.NEXT_PUBLIC_API_URL;
 interface ServerToClientEvents {
   'message:new': (message: MessagePayload) => void;
   'message:ack': (data: { tempId: string; message: MessagePayload }) => void;
+  /** Sent to the recipient's personal room even if the thread is not open. */
+  'conversation:updated': (data: {
+    conversationId: string;
+    message: MessagePayload;
+  }) => void;
+  /** Broadcast when a new account is registered anywhere in the app. */
+  'user:new': (user: { id: string; username: string }) => void;
   'typing:indicator': (data: {
     conversationId: string;
     userId: string;
@@ -84,6 +92,7 @@ export function useChatSocket(autoConnect = true) {
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
 
+    if (socket.connected) setConnected(true);
     if (autoConnect && !socket.connected) socket.connect();
 
     return () => {
@@ -104,19 +113,35 @@ export function useChatSocket(autoConnect = true) {
 export function useChatSocketEvents(handlers: Partial<ServerToClientEvents>) {
   const { socket } = useChatSocket(true);
 
+  const handlersRef = useRef(handlers);
+
   useEffect(() => {
-    Object.entries(handlers).forEach(([event, handler]) => {
-      if (handler)
-        socket.on(event as keyof ServerToClientEvents, handler as any);
+    handlersRef.current = handlers;
+  }, [handlers]);
+
+  // Only the set of event names should retrigger the subscription. Depending on
+  // `handlers` itself tore down and re-registered every listener on every
+  // render, because callers pass a fresh object literal each time.
+  const eventNames = Object.keys(handlers).sort().join('|');
+
+  useEffect(() => {
+    if (!eventNames) return;
+
+    const names = eventNames.split('|') as (keyof ServerToClientEvents)[];
+
+    const bound = names.map((event) => {
+      const listener = (...args: any[]) =>
+        (handlersRef.current[event] as any)?.(...args);
+      socket.on(event as any, listener as any);
+      return { event, listener };
     });
 
     return () => {
-      Object.entries(handlers).forEach(([event, handler]) => {
-        if (handler)
-          socket.off(event as keyof ServerToClientEvents, handler as any);
+      bound.forEach(({ event, listener }) => {
+        socket.off(event as any, listener as any);
       });
     };
-  }, [socket, handlers]);
+  }, [socket, eventNames]);
 }
 
 export function useChatSocketActions() {
@@ -169,29 +194,26 @@ export function useChatSocketActions() {
 }
 
 /**
- * Updates React Query message caches on message:new and message:ack
+ * Cache writers shared by the message-level and list-level realtime hooks.
  */
-export function useChatRealtimeMessages() {
+function useMessageCacheWriters() {
   const qc = useQueryClient();
 
   const upsertMessage = useCallback(
     (message: MessagePayload) => {
       const queries = qc.getQueriesData<Message[]>({
-        queryKey: chatKeys.messages(message.conversationId),
-        exact: false,
+        queryKey: chatKeys.messagesRoot(),
       });
 
       queries.forEach(([key, data]) => {
-        console.log(key, data);
-
         if (!data) return;
 
-        const exists = data.some((m) => m.id === message.id);
-        if (exists) return;
+        const params = key[2] as MessagesQueryParams | undefined;
+        if (params?.conversationId !== message.conversationId) return;
 
-        const updated = [...data, message];
+        if (data.some((m) => m.id === message.id)) return;
 
-        qc.setQueryData(key, updated);
+        qc.setQueryData(key, [...data, message]);
       });
     },
     [qc],
@@ -200,12 +222,16 @@ export function useChatRealtimeMessages() {
   const replaceTemp = useCallback(
     (tempId: string, message: MessagePayload) => {
       const queries = qc.getQueriesData<Message[]>({
-        queryKey: chatKeys.messages(message.conversationId),
-        exact: false,
+        queryKey: chatKeys.messagesRoot(),
       });
 
       queries.forEach(([key, data]) => {
         if (!data) return;
+
+        const params = key[2] as MessagesQueryParams | undefined;
+        if (params?.conversationId !== message.conversationId) return;
+
+        if (!data.some((m) => m.id === tempId)) return;
 
         qc.setQueryData(
           key,
@@ -216,8 +242,50 @@ export function useChatRealtimeMessages() {
     [qc],
   );
 
+  return { upsertMessage, replaceTemp };
+}
+
+/**
+ * Updates React Query message caches on message:new and message:ack.
+ *
+ * Mounted by the open conversation view.
+ */
+export function useChatRealtimeMessages() {
+  const { upsertMessage, replaceTemp } = useMessageCacheWriters();
+
   useChatSocketEvents({
     'message:new': upsertMessage,
     'message:ack': ({ tempId, message }) => replaceTemp(tempId, message),
+  });
+}
+
+/**
+ * Keeps the contact and conversation lists in sync.
+ *
+ * Mount this once, high enough in the tree that it stays mounted while no
+ * conversation is open — otherwise a user sitting on the empty state has no
+ * socket listeners at all and never learns about incoming messages or new
+ * accounts until they refresh.
+ */
+export function useChatRealtimeSync() {
+  const qc = useQueryClient();
+  const { upsertMessage } = useMessageCacheWriters();
+
+  const refreshLists = useCallback(() => {
+    qc.invalidateQueries({ queryKey: chatKeys.conversations() });
+    qc.invalidateQueries({ queryKey: userKeys.listRoot() });
+  }, [qc]);
+
+  const onConversationUpdated = useCallback(
+    ({ message }: { conversationId: string; message: MessagePayload }) => {
+      upsertMessage(message);
+      refreshLists();
+    },
+    [upsertMessage, refreshLists],
+  );
+
+  useChatSocketEvents({
+    'conversation:updated': onConversationUpdated,
+    'user:new': refreshLists,
   });
 }

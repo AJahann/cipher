@@ -6,11 +6,19 @@ import type {
 } from '@chat-app/shared/types';
 import { apiFetch } from '../client';
 
-const userKeys = {
+export const userKeys = {
   all: ['user'] as const,
   me: () => [...userKeys.all, 'me'] as const,
+  /**
+   * Prefix for cache lookups and invalidation.
+   *
+   * `list()` embeds a params object, and React Query's `partialDeepEqual` will
+   * not match `{ limit: undefined }` against a cached `{ limit: 50 }`. Always
+   * invalidate on this prefix so paginated variants are covered too.
+   */
+  listRoot: () => [...userKeys.all, 'list'] as const,
   list: (limit?: number, after?: string) =>
-    [...userKeys.all, 'list', { limit, after }] as const,
+    [...userKeys.listRoot(), { limit, after }] as const,
   publicKey: (id: string) => [...userKeys.all, 'publicKey', id] as const,
 };
 
@@ -30,10 +38,8 @@ const login = (payload: LoginUserPayload) =>
 
 const logout = () => apiFetch<{ ok: true }>('/auth/logout', { method: 'POST' });
 
-type UsersListResponse = {
-  items: User[];
-  nextAfter?: string;
-};
+/** GET /users returns a bare array — there is no envelope or cursor yet. */
+type UsersListResponse = User[];
 
 const listUsers = (limit?: number, after?: string) => {
   const params = new URLSearchParams();
@@ -61,7 +67,7 @@ export function useRegister() {
     mutationFn: register,
     onSuccess: (user) => {
       qc.setQueryData(userKeys.me(), user);
-      qc.invalidateQueries({ queryKey: userKeys.list() });
+      qc.invalidateQueries({ queryKey: userKeys.listRoot() });
     },
   });
 }
@@ -72,7 +78,7 @@ export function useLogin() {
     mutationFn: login,
     onSuccess: (user) => {
       qc.setQueryData(userKeys.me(), user);
-      qc.invalidateQueries({ queryKey: userKeys.list() });
+      qc.invalidateQueries({ queryKey: userKeys.listRoot() });
     },
   });
 }
