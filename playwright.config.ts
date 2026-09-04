@@ -29,17 +29,24 @@ export default defineConfig({
   },
 
   projects: [
+    // Runs once before the browser projects. Its own testMatch overrides the
+    // top-level `*.spec.ts` glob so only the setup file runs here (and the
+    // browser projects, which inherit the glob, never re-run it).
+    { name: 'setup', testMatch: /.*\.setup\.ts/ },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      dependencies: ['setup'],
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      dependencies: ['setup'],
     },
   ],
 

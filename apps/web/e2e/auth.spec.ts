@@ -1,55 +1,26 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-const PASSPHRASE = 's3cr3t-pass';
-async function register(page: Page, username: string): Promise<void> {
-  await page.goto('/');
-
-  await page.getByRole('button', { name: 'register' }).click();
-
-  await page.getByLabel('username', { exact: true }).fill(username);
-  await page.getByLabel('passphrase', { exact: true }).fill(PASSPHRASE);
-  await page.getByLabel('confirm passphrase', { exact: true }).fill(PASSPHRASE);
-
-  await page.getByRole('button', { name: 'generate keys + register' }).click();
-
-  await page.waitForURL('**/chat');
-}
-
-test('register → open conversation → send → receive', async ({
-  browser,
-  baseURL,
+// Day 5 journey, now on the fixtures. No register() in this file: both pages
+// arrive already registered + unlocked, keys in RAM, sitting on /chat.
+test('open conversation -> send -> receive', async ({
+  alicePage,
+  bobPage,
+  aliceUsername,
+  bobUsername,
 }) => {
-  const ts = Date.now();
-  const aliceUsername = `alice-${ts}`;
-  const bobUsername = `bob-${ts}`;
+  // Alice opens Bob and sends. The contact button auto-waits until it exists.
+  await alicePage.getByRole('button', { name: bobUsername }).click();
+  await alicePage.getByRole('textbox').fill('hello from alice');
+  await alicePage.getByRole('button', { name: 'Send message' }).click();
 
-  const contextOptions = { baseURL: baseURL ?? 'http://localhost:3000' };
-  const aliceCtx = await browser.newContext(contextOptions);
-  const bobCtx = await browser.newContext(contextOptions);
+  await expect(
+    alicePage.getByRole('paragraph').filter({ hasText: 'hello from alice' }),
+  ).toBeVisible();
 
-  const alicePage = await aliceCtx.newPage();
-  const bobPage = await bobCtx.newPage();
+  // Bob opens Alice and sees the same paragraph (realtime + on-open fetch).
+  await bobPage.getByRole('button', { name: aliceUsername }).click();
 
-  try {
-    await register(bobPage, bobUsername);
-    await register(alicePage, aliceUsername);
-
-    await alicePage.getByRole('button', { name: bobUsername }).click();
-
-    await alicePage.getByRole('textbox').fill('hello from alice');
-    await alicePage.getByRole('button', { name: 'Send message' }).click();
-
-    await expect(
-      alicePage.getByRole('paragraph').filter({ hasText: 'hello from alice' }),
-    ).toBeVisible();
-
-    await bobPage.getByRole('button', { name: aliceUsername }).click();
-
-    await expect(
-      bobPage.getByRole('paragraph').filter({ hasText: 'hello from alice' }),
-    ).toBeVisible();
-  } finally {
-    await aliceCtx.close();
-    await bobCtx.close();
-  }
+  await expect(
+    bobPage.getByRole('paragraph').filter({ hasText: 'hello from alice' }),
+  ).toBeVisible();
 });
