@@ -16,6 +16,7 @@
     "test:api": "vitest run --project api",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed --project=chromium",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report"
   },
