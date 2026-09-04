@@ -1,10 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
 
-test.skip(
-  ({ browserName }) => browserName !== 'chromium',
-  'Chromium-only spec — Day 6 will add cross-browser coverage',
-);
-
 const PASSPHRASE = 's3cr3t-pass';
 async function register(page: Page, username: string): Promise<void> {
   await page.goto('/');
@@ -44,11 +39,15 @@ test('register → open conversation → send → receive', async ({
     await alicePage.getByRole('textbox').fill('hello from alice');
     await alicePage.getByRole('button', { name: 'Send message' }).click();
 
-    await expect(alicePage.getByText('hello from alice')).toBeVisible();
+    await expect(
+      alicePage.getByRole('paragraph').filter({ hasText: 'hello from alice' }),
+    ).toBeVisible();
 
     await bobPage.getByRole('button', { name: aliceUsername }).click();
 
-    await expect(bobPage.getByText('hello from alice')).toBeVisible();
+    await expect(
+      bobPage.getByRole('paragraph').filter({ hasText: 'hello from alice' }),
+    ).toBeVisible();
   } finally {
     await aliceCtx.close();
     await bobCtx.close();
