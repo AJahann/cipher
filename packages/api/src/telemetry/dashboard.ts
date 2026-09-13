@@ -216,7 +216,7 @@ function getDashboardHtml(): string {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       const panel = document.getElementById(id);
       if (panel) panel.classList.add('active');
-      const target = btn || (typeof event !== 'undefined' && event?.target) || document.querySelector('[onclick*=\"' + id + '\"]');
+      const target = btn || (typeof event !== 'undefined' && event?.target) || document.querySelector('[onclick*="' + id + '"]');
       if (target?.classList) target.classList.add('active');
     }
 

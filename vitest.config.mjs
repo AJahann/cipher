@@ -8,6 +8,9 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_API_URL:
         process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
+      DATABASE_URL:
+        process.env.DATABASE_URL ??
+        'postgresql://cipher:cipher@localhost:5432/cipher_test',
     },
     reporters: process.env.GITHUB_ACTIONS
       ? ['verbose', 'github-actions']

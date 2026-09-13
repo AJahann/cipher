@@ -1,6 +1,5 @@
 import * as Sentry from '@sentry/node';
 import { sanitizeTelemetryData } from '@chat-app/shared/telemetry';
-import { env } from '../config/env';
 
 export interface SentryEventRecord {
   eventId: string;
@@ -17,15 +16,28 @@ const capturedEvents: SentryEventRecord[] = [];
 
 let sentryInitialized = false;
 
+function getSentryConfig() {
+  const environment =
+    // oxlint-disable-next-line node/no-process-env
+    process.env.SENTRY_ENVIRONMENT ??
+    // oxlint-disable-next-line node/no-process-env
+    process.env.NODE_ENV ??
+    'development';
+  // oxlint-disable-next-line node/no-process-env
+  const release = process.env.SENTRY_RELEASE ?? 'cipher-api@0.1.0';
+  // oxlint-disable-next-line node/no-process-env
+  const dsn = process.env.SENTRY_DSN;
+  return { environment, release, dsn };
+}
+
 export function initApiSentry(): void {
   if (sentryInitialized) return;
 
-  const environment = env.SENTRY_ENVIRONMENT ?? env.NODE_ENV;
-  const release = env.SENTRY_RELEASE ?? 'cipher-api@0.1.0';
+  const { environment, release, dsn } = getSentryConfig();
 
-  if (env.SENTRY_DSN) {
+  if (dsn) {
     Sentry.init({
-      dsn: env.SENTRY_DSN,
+      dsn,
       environment,
       release,
       beforeSend(event) {
@@ -46,8 +58,7 @@ export function captureApiError(
     extra?: Record<string, unknown>;
   } = {},
 ): string {
-  const environment = env.SENTRY_ENVIRONMENT ?? env.NODE_ENV;
-  const release = env.SENTRY_RELEASE ?? 'cipher-api@0.1.0';
+  const { environment, release, dsn } = getSentryConfig();
   const eventId = `sentry-api-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
   const sanitizedContext = sanitizeTelemetryData(context);
@@ -71,7 +82,7 @@ export function captureApiError(
 
   capturedEvents.push(record);
 
-  if (env.SENTRY_DSN) {
+  if (dsn) {
     Sentry.withScope((scope) => {
       if (sanitizedContext.requestId)
         scope.setTag('requestId', sanitizedContext.requestId);
