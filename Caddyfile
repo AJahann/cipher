@@ -16,6 +16,10 @@
         reverse_proxy api:3001
     }
 
+    handle /telemetry* {
+        reverse_proxy api:3001
+    }
+
     # Realtime WebSockets / Socket.io
     handle /socket.io/* {
         reverse_proxy api:3001

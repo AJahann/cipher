@@ -12,7 +12,8 @@
     ".": "./src/index.ts",
     "./crypto": "./src/crypto/index.ts",
     "./types": "./src/types/index.ts",
-    "./contracts": "./src/contracts/index.ts"
+    "./contracts": "./src/contracts/index.ts",
+    "./telemetry": "./src/telemetry/index.ts"
   },
   "scripts": {
     "build": "tsc",

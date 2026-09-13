@@ -175,15 +175,15 @@ export const chatService = {
       throw new AppError('CONVERSATION_NOT_FOUND');
     }
 
-    let anchorId: string | undefined;
+    let anchor: { id: string; createdAt: Date } | undefined;
     if (cursor) {
-      anchorId = decodeCursor('messages', cursor);
-      const anchor = await db.query.messages.findFirst({
+      const anchorId = decodeCursor('messages', cursor);
+      anchor = await db.query.messages.findFirst({
         where: and(
           eq(messages.id, anchorId),
           eq(messages.conversationId, conversationId),
         ),
-        columns: { id: true },
+        columns: { id: true, createdAt: true },
       });
       if (!anchor) throw new AppError('INVALID_CURSOR');
     }
@@ -192,8 +192,8 @@ export const chatService = {
       where: (m, { and: allOf, eq: equals }) =>
         allOf(
           equals(m.conversationId, conversationId),
-          anchorId
-            ? sql`(${m.createdAt}, ${m.id}) < (select anchor.created_at, anchor.id from messages anchor where anchor.id = ${anchorId})`
+          anchor
+            ? sql`(${m.createdAt}, ${m.id}) < (${anchor.createdAt}, ${anchor.id})`
             : undefined,
         ),
       orderBy: (m, { desc }) => [desc(m.createdAt), desc(m.id)],

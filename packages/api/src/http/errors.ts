@@ -1,6 +1,7 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import type { ApiErrorBody, ErrorCode } from '@chat-app/shared/contracts';
+import { captureApiError } from '../telemetry/sentry';
 
 /** HTTP status for each error code. The one place this mapping lives. */
 export const STATUS_BY_CODE: Record<ErrorCode, number> = {
@@ -114,7 +115,16 @@ export function toApiError(error: unknown): {
 export function registerErrorHandling(app: FastifyInstance) {
   app.setErrorHandler((error, req, reply) => {
     const { status, body } = toApiError(error);
-    if (status >= 500) req.log.error({ code: 'INTERNAL' }, 'Request failed');
+    if (status >= 500) {
+      req.log.error({ code: 'INTERNAL' }, 'Request failed');
+      const trace = (req as unknown as { traceContext?: { traceId?: string } })
+        .traceContext;
+      captureApiError(error, {
+        requestId: req.id,
+        traceId: trace?.traceId,
+        route: req.routeOptions.url ?? req.url.split('?')[0],
+      });
+    }
     return reply.code(status).send(body);
   });
 
