@@ -16,7 +16,7 @@ export default defineConfig({
         test: {
           name: 'apps/web',
           root: './apps/web',
-          globals: true, // ← here
+          globals: true,
           environment: 'jsdom',
           setupFiles: ['./src/test/setup.ts'],
           include: ['src/**/*.test.{ts,tsx}'],
@@ -27,7 +27,7 @@ export default defineConfig({
         test: {
           name: 'ui-web',
           root: './packages/ui-web',
-          globals: true, // ← here
+          globals: true,
           environment: 'jsdom',
           setupFiles: ['./src/test/setup.ts'],
           include: ['src/**/*.test.{ts,tsx}'],
@@ -45,8 +45,8 @@ export default defineConfig({
       {
         test: {
           name: 'api',
-          root: './apps/api',
-          globals: true, // ← and here
+          root: './packages/api',
+          globals: true,
           environment: 'node',
           include: ['src/**/*.test.ts'],
         },
