@@ -1,9 +1,6 @@
 import { createEnv } from '@t3-oss/env-core';
 import { z } from 'zod';
 
-// Load .env files in local dev. The monorepo root .env is the canonical file;
-// an app-local apps/api/.env can override nothing (first-loaded + real env win).
-// No-op when the files are absent (CI / production platforms inject real env).
 for (const envPath of ['../../.env', './.env']) {
   try {
     process.loadEnvFile(envPath);
