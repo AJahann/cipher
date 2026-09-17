@@ -155,7 +155,7 @@ jobs:
         run: pnpm --filter web build
 
       - name: Run Chromium E2E tests
-        run: pnpm test:e2e -- --project=chromium
+        run: pnpm test:e2e --project=chromium
 
       - name: Upload Playwright report and traces
         if: always()
