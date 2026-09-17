@@ -43,6 +43,19 @@ jobs:
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      - name: Create root .env
+        shell: bash
+        env:
+          CI_ENV_FILE: ${{ secrets.CI_ENV_FILE }}
+        run: |
+          if [ -z "$CI_ENV_FILE" ]; then
+            echo "::error::CI_ENV_FILE repository secret is unavailable"
+            exit 1
+          fi
+
+          umask 077
+          printf '%s' "$CI_ENV_FILE" > "$GITHUB_WORKSPACE/.env"
+
       # Expects a root-level `test:unit` script that calls Vitest with
       # coverage enabled, e.g.:
       #   "test:unit": "vitest run --coverage --reporter=verbose --reporter=github-actions"
@@ -125,11 +138,18 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: pnpm exec playwright install --with-deps chromium
 
-      # Seed the minimum env so Next.js starts without missing-variable
-      # errors. Add real secrets via Settings → Secrets → Actions and
-      # reference them as ${{ secrets.MY_SECRET }} below.
-      - name: Prepare test environment
-        run: cp .env.example apps/web/.env.local
+      - name: Create root .env
+        shell: bash
+        env:
+          CI_ENV_FILE: ${{ secrets.CI_ENV_FILE }}
+        run: |
+          if [ -z "$CI_ENV_FILE" ]; then
+            echo "::error::CI_ENV_FILE repository secret is unavailable"
+            exit 1
+          fi
+
+          umask 077
+          printf '%s' "$CI_ENV_FILE" > "$GITHUB_WORKSPACE/.env"
 
       # Build the production bundle before the test run.
       # playwright.config.ts is expected to start the server automatically:
