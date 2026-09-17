@@ -1,5 +1,7 @@
 # cipher
 
+[![CI](https://github.com/AJahann/cipher/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/AJahann/cipher/actions/workflows/ci.yml)
+
 End-to-end encrypted chat. Keys are generated and never leave the client.
 
 ## Stack
