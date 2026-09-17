@@ -5,30 +5,25 @@ on:
     branches: [main]
   pull_request:
 
-# Cancel in-flight runs for the same branch when a new commit arrives.
-# Never cancel main — let every push there reach a final status.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  # ─── Unit Tests ────────────────────────────────────────────────────────
-  # Runs the complete Vitest suite and publishes a coverage summary.
-  # This job is fully independent — a failing e2e job NEVER hides
-  # a passing unit result.
   unit:
     name: Unit Tests
     runs-on: ubuntu-latest
+
+    env:
+      CI: true
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Exact versions from the local dev environment.
-      # To keep the pin in one place going forward, add to package.json:
-      #   "packageManager": "pnpm@10.33.0"
-      # and add .nvmrc containing "24.11.1" — then both tools read the
-      # files automatically and this YAML never needs to change again.
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -38,9 +33,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: 'pnpm'
+          cache: pnpm
 
-      - name: Install (frozen lockfile)
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Create root .env
@@ -56,63 +51,53 @@ jobs:
           umask 077
           printf '%s' "$CI_ENV_FILE" > "$GITHUB_WORKSPACE/.env"
 
-      # Expects a root-level `test:unit` script that calls Vitest with
-      # coverage enabled, e.g.:
-      #   "test:unit": "vitest run --coverage --reporter=verbose --reporter=github-actions"
-      #
-      # vitest.config.ts should include:
-      #   coverage: { reporter: ['text', 'json-summary', 'lcov'] }
-      #
-      # The `github-actions` reporter surfaces per-test failure annotations
-      # directly on the PR diff.
       - name: Run Vitest with coverage
-        run: pnpm test:unit
-        env:
-          CI: true
+        run: |
+          pnpm exec vitest run \
+            --coverage \
+            --coverage.reporter=text \
+            --coverage.reporter=json-summary \
+            --coverage.reporter=lcov \
+            --coverage.reporter=html
 
-      # Writes a Markdown table to the Actions step summary so reviewers
-      # can read coverage numbers inline without downloading the artifact.
       - name: Publish coverage summary
         if: always()
+        shell: bash
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            printf '## 📊 Coverage\n\n| Metric | %% |\n|---|---|\n' >> "$GITHUB_STEP_SUMMARY"
+            printf '## 📊 Coverage\n\n| Metric | %% |\n|---|---|\n' \
+              >> "$GITHUB_STEP_SUMMARY"
+
             jq -r '
               .total
               | to_entries[]
-              | select(.key | IN("statements","branches","functions","lines"))
+              | select(
+                  .key
+                  | IN("statements", "branches", "functions", "lines")
+                )
               | "| \(.key) | \(.value.pct)% |"
             ' coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "⚠️ \`coverage/coverage-summary.json\` not found." \
-              "Add \`json-summary\` to \`coverage.reporter\` in vitest.config.ts." \
+            echo "⚠️ Coverage summary was not generated." \
               >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      # Preserves the full coverage report (HTML, LCOV, JSON) so any
-      # committer can open the HTML report locally to trace uncovered lines.
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/
           retention-days: 14
+          if-no-files-found: warn
 
-  # ─── E2E Tests ─────────────────────────────────────────────────────────
-  # Runs the Playwright suite against the real Next.js application.
-  # • No MSW — all network traffic hits the real app.
-  # • No waitForTimeout — all readiness checks use expect().toBeVisible()
-  #   or Playwright's built-in auto-wait.
-  # • Only Chromium is installed (--with-deps handles all OS libraries).
-  #
-  # ⚠️  storageState restores cookies and localStorage but does NOT restore
-  # the in-memory ECDH private key.  Every test that drives an encrypted
-  # operation (send/receive messages) must execute the full unlock step
-  # (enter passphrase) even when a saved session cookie is reused.
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
+
+    env:
+      CI: true
+      DATABASE_URL: postgresql://cipher:cipher@127.0.0.1:5432/cipher_test
 
     services:
       postgres:
@@ -129,9 +114,6 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
-    env:
-      DATABASE_URL: postgresql://cipher:cipher@127.0.0.1:5432/cipher_test
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -145,14 +127,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: 'pnpm'
+          cache: pnpm
 
-      - name: Install (frozen lockfile)
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # --with-deps installs the OS-level libraries Chromium needs on the
-      # ubuntu-latest runner (libnss3, libgbm, libatk, libatk-bridge,
-      # libxcomposite, fonts, etc.) without needing a manual apt-get list.
       - name: Install Chromium and OS dependencies
         run: pnpm exec playwright install --with-deps chromium
 
@@ -169,36 +148,18 @@ jobs:
           umask 077
           printf '%s' "$CI_ENV_FILE" > "$GITHUB_WORKSPACE/.env"
 
-      # Build the production bundle before the test run.
-      # playwright.config.ts is expected to start the server automatically:
-      #
-      #   webServer: {
-      #     command: 'pnpm --filter web start',
-      #     url: 'http://localhost:3000',
-      #     reuseExistingServer: !process.env.CI,
-      #   }
-      #
-      # This keeps server startup deterministic and avoids race conditions
-      # without resorting to waitForTimeout or fixed sleep commands.
       - name: Apply database migrations
         run: pnpm --filter @chat-app/api exec drizzle-kit migrate
 
       - name: Build application
         run: pnpm --filter web build
 
-      - name: Run E2E tests
+      - name: Run Chromium E2E tests
         run: pnpm test:e2e -- --project=chromium
-        env:
-          CI: true
 
-      # Upload the HTML report and failure traces on every run — including
-      # passing runs — so you can compare the pre-failure trace when a
-      # test that was green starts flaking.
-      # Playwright only writes test-results/ when a test fails, so that
-      # directory may be absent on a clean run; that is expected.
       - name: Upload Playwright report and traces
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
           path: |
