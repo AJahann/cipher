@@ -1,5 +1,3 @@
-'use client';
-
 import { AuthGuard } from '../_components/auth-guard';
 import { SessionGate } from '../_components/session-gate';
 
