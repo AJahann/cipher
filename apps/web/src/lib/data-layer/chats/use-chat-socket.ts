@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@chat-app/shared/types';
 import { chatKeys, type MessagesQueryParams } from './use-chat';
 import { userKeys } from '../user/use-user';
-import { env } from '@/config/env';
+import { env } from '../../../config/env';
 
 const SOCKET_URL = env.NEXT_PUBLIC_API_URL;
 
@@ -142,6 +142,8 @@ export function useChatSocketEvents(handlers: Partial<ServerToClientEvents>) {
       });
     };
   }, [socket, eventNames]);
+
+  return socket;
 }
 
 export function useChatSocketActions() {
@@ -284,8 +286,21 @@ export function useChatRealtimeSync() {
     [upsertMessage, refreshLists],
   );
 
-  useChatSocketEvents({
+  const socket = useChatSocketEvents({
     'conversation:updated': onConversationUpdated,
     'user:new': refreshLists,
   });
+
+  useEffect(() => {
+    const onConnect = () => {
+      // A reconnect can happen after a user:new event was missed. Reconcile
+      // only the contact list; unrelated caches do not need to be refreshed.
+      qc.invalidateQueries({ queryKey: userKeys.listRoot() });
+    };
+
+    socket.on('connect', onConnect);
+    return () => {
+      socket.off('connect', onConnect);
+    };
+  }, [qc, socket]);
 }
