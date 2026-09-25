@@ -58,6 +58,10 @@ export function useMe(enabled = true) {
     queryFn: fetchMe,
     enabled,
     retry: false,
+    // AuthGuard establishes this identity before the protected chat tree
+    // mounts. Keep that result fresh long enough for consumers in the tree to
+    // reuse it instead of issuing a second /auth/me request.
+    staleTime: 30_000,
   });
 }
 
