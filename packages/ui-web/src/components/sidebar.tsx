@@ -29,7 +29,7 @@ export function Sidebar({ users, activeUserId, onSelect }: SidebarProps) {
         </p>
       </div>
 
-      <div className='flex-1 overflow-y-auto'>
+      <div className='flex-1 overflow-y-auto scrollbar-track-transparent scrollbar-thumb-accent-dim'>
         {users.length === 0 ? (
           <p className='px-4 py-2 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)]'>
             no users found
