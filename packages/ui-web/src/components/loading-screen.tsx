@@ -6,8 +6,8 @@ export interface LoadingScreenProps {
 
 export function LoadingScreen({ message = 'loading...' }: LoadingScreenProps) {
   return (
-    <div className='flex min-h-screen items-center justify-center bg-[var(--cipher-bg)]'>
-      <p className='font-[var(--cipher-font-mono)] text-[13px] text-[var(--cipher-muted)]'>
+    <div className='flex flex-1 items-center justify-center'>
+      <p className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
         {message}
       </p>
     </div>

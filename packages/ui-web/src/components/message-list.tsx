@@ -6,9 +6,15 @@ import type { DecryptedMessage } from './message-bubble';
 
 export interface MessageListProps {
   messages: DecryptedMessage[];
+  loadingMessage: string;
+  isLoading: boolean;
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({
+  messages,
+  loadingMessage,
+  isLoading,
+}: MessageListProps) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -18,8 +24,10 @@ export function MessageList({ messages }: MessageListProps) {
   if (messages.length === 0) {
     return (
       <div className='flex flex-1 items-center justify-center'>
-        <p className='font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)]'>
-          // no messages yet · send the first one
+        <p className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
+          {isLoading
+            ? loadingMessage
+            : '// no messages yet · send the first one'}
         </p>
       </div>
     );
