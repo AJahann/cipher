@@ -2,6 +2,6 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
-  bcrypt: set this to true or false
-  esbuild: set this to true or false
-  msw: set this to true or false
+  bcrypt: false
+  esbuild: false
+  msw: false
