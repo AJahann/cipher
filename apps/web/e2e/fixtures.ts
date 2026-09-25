@@ -47,10 +47,10 @@ async function withUnlockedPage(
 }
 
 export const test = base.extend<Fixtures>({
-  aliceUsername: async (_fixtures, pageUse) => {
+  aliceUsername: async ({}, pageUse) => {
     await pageUse(readUsers().alice);
   },
-  bobUsername: async (_fixtures, pageUse) => {
+  bobUsername: async ({}, pageUse) => {
     await pageUse(readUsers().bob);
   },
   alicePage: async ({ browser }, use) => {
