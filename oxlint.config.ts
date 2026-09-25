@@ -14,5 +14,11 @@ export default defineConfig({
         'import/no-cycle': 'off',
       },
     },
+    {
+      files: ['apps/web/e2e/fixtures.ts'],
+      rules: {
+        'no-empty-pattern': 'off',
+      },
+    },
   ],
 });
