@@ -20,13 +20,15 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed --project=chromium",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "lint:oxlint": "oxlint --config ./oxlint.config.ts apps packages"
   },
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
   },
   "devDependencies": {
+    "@fullstacksjs/oxlint-minimal": "1.1.1",
     "@playwright/test": "^1.62.1",
     "@t3-oss/env-core": "^0.13.11",
     "@testing-library/jest-dom": "^7.0.1",
@@ -39,6 +41,7 @@
     "dotenv": "^17.4.2",
     "jsdom": "^30.0.1",
     "msw": "^2.15.0",
+    "oxlint": "1.85.0",
     "vitest": "^4.1.11",
     "zod": "^4.4.3"
   }
