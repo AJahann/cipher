@@ -1,3 +1,4 @@
+// oxlint-disable typescript/no-extraneous-class import/no-named-as-default-member
 'use client';
 
 import _sodium from 'libsodium-wrappers-sumo';

@@ -1,6 +1,8 @@
+// oxlint-disable typescript/no-extraneous-class
 import _sodium from 'libsodium-wrappers-sumo';
 
 async function getSodium() {
+  // oxlint-disable-next-line import/no-named-as-default-member
   await _sodium.ready;
   return _sodium;
 }

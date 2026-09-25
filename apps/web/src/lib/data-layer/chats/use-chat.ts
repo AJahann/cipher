@@ -24,7 +24,9 @@ export const chatKeys = {
     [...chatKeys.messagesRoot(), { conversationId, limit, before }] as const,
 };
 
-interface CreateConversationPayload { memberId: string }
+interface CreateConversationPayload {
+  memberId: string;
+}
 
 const createConversation = (payload: CreateConversationPayload) =>
   apiFetch<Conversation>('/chat/conversations', {

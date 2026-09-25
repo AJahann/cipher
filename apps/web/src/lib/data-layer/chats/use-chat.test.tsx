@@ -1,3 +1,4 @@
+// oxlint-disable vitest/no-conditional-in-test max-nested-callbacks
 import { CONV_PATH, stubConversation } from '../../../test/msw/handlers';
 import { server } from '../../../test/msw/server';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -5,6 +6,7 @@ import { delay, http, HttpResponse } from 'msw';
 import { useConversations, useCreateConversation } from './use-chat';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
+// oxlint-disable-next-line max-lines-per-function
 describe(useConversations, () => {
   it('is pending before the first response arrives', async () => {
     server.use(

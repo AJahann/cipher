@@ -1,3 +1,4 @@
+// oxlint-disable max-lines-per-function
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import { parseCookie } from 'cookie';
@@ -80,13 +81,13 @@ interface SocketData {
 type AppSocket = Socket<
   ClientToServerEvents,
   ServerToClientEvents,
-  {},
+  object,
   SocketData
 >;
 type AppIO = SocketIOServer<
   ClientToServerEvents,
   ServerToClientEvents,
-  {},
+  object,
   SocketData
 >;
 
@@ -154,7 +155,7 @@ export function registerChatSocket(
   // ── Connection handler ────────────────────────────────────────────────────
 
   io.on('connection', async (socket: AppSocket) => {
-    const {userId} = socket.data;
+    const { userId } = socket.data;
 
     socket.join(userRoom(userId));
 
