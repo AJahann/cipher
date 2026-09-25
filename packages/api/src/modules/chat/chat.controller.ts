@@ -4,7 +4,7 @@ import { chatService } from './chat.service';
 import { createConversationSchema, getMessagesSchema } from './chat.schema';
 import { requireAuth } from '../auth/auth.middleware';
 
-export const chatController = async (app: FastifyInstance) => {
+export const chatController = (app: FastifyInstance) => {
   app.addHook('preHandler', requireAuth);
 
   /** POST /chat/conversations — create or return existing DM conversation */

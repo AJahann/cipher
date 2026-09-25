@@ -19,7 +19,7 @@ describe(useMe, () => {
     let hits = 0;
     server.use(
       http.get(ME_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
       }),
     );
@@ -42,7 +42,7 @@ describe(useMe, () => {
     let hits = 0;
     server.use(
       http.get(ME_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
       }),
     );

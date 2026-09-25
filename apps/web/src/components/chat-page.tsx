@@ -10,8 +10,12 @@ import {
 import { E2EEncryption, getSessionPrivateKey } from '@chat-app/shared/crypto';
 import { KeyStorage } from '@/lib/keyStorage';
 import { KeyManager } from '@chat-app/shared';
-import { ChatHeader, ChatInput, MessageList } from '@chat-app/ui-web';
-import type { DecryptedMessage } from '@chat-app/ui-web';
+import {
+  ChatHeader,
+  ChatInput,
+  MessageList,
+  type DecryptedMessage,
+} from '@chat-app/ui-web';
 
 function formatTime(ts?: string | number | Date) {
   if (!ts) return '';
@@ -66,14 +70,15 @@ export function ChatPage({
                 receiverKeyRaw,
                 sessionPrivateKey,
               );
-              return {
+              const message: DecryptedMessage = {
                 id: m.id,
                 senderId: m.senderId,
                 text: plain,
                 time: formatTime(m.createdAt),
                 isMine: m.senderId === myId,
-              } as DecryptedMessage;
-            } catch {
+              };
+              return message;
+            } catch (error) {
               return null;
             }
           }),
@@ -82,7 +87,7 @@ export function ChatPage({
         if (!cancelled) {
           setDecrypted(out.filter((x): x is DecryptedMessage => x !== null));
         }
-      } catch {
+      } catch (error) {
         if (!cancelled) setDecrypted([]);
       }
     }

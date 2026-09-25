@@ -37,7 +37,9 @@ describe('private-key wrapping', () => {
     const { privateKey } = await E2EEncryption.generateKeyPair();
     const wrapped = await wrapPrivateKey(privateKey, 'correct password');
 
-    await expect(unwrapPrivateKey(wrapped, 'wrong password')).rejects.toThrow();
+    await expect(unwrapPrivateKey(wrapped, 'wrong password')).rejects.toThrow(
+      /secret key/i,
+    );
   });
 
   it('uses fresh salt and nonce values for every wrap', async () => {
@@ -59,7 +61,7 @@ describe('private-key wrapping', () => {
         { ...wrapped, ciphertext: await tamperBase64(wrapped.ciphertext) },
         'correct password',
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/secret key/i);
   });
 });
 
@@ -150,7 +152,7 @@ describe(E2EEncryption, () => {
         alice.publicKey,
         eve.privateKey,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/key pair/i);
   });
 
   it('rejects tampered message ciphertext', async () => {
@@ -169,6 +171,6 @@ describe(E2EEncryption, () => {
         alice.publicKey,
         bob.privateKey,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/key pair/i);
   });
 });

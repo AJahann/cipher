@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { vi } from 'vitest';
 import { ChatInput } from './chat-input';
 
-function Setup({ onSend = () => {} }: { onSend?: () => void }) {
+const noop = () => {};
+
+function Setup({ onSend = noop }: { onSend?: () => void }) {
   const [value, setValue] = useState('');
   return <ChatInput value={value} onChange={setValue} onSend={onSend} />;
 }

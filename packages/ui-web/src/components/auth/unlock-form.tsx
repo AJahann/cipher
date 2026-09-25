@@ -20,7 +20,7 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
     setIsPending(true);
     try {
       await onUnlock(password);
-    } catch {
+    } catch (caughtError) {
       setError('wrong passphrase or damaged key');
     } finally {
       setIsPending(false);
@@ -45,7 +45,7 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
             Unlock session
           </h1>
           <p className='mt-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)]'>
-            // enter passphrase to restore your private key
+            &#x2F;&#x2F; enter passphrase to restore your private key
           </p>
         </div>
 

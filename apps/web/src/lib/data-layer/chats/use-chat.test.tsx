@@ -66,7 +66,7 @@ describe(useConversations, () => {
 
     server.use(
       http.get(CONV_PATH, () => {
-        hits++;
+        hits += 1;
         return hits <= 2
           ? new HttpResponse(null, { status: 503 })
           : HttpResponse.json([stubConversation]);
@@ -90,7 +90,7 @@ describe(useConversations, () => {
       let hits = 0;
       server.use(
         http.get(CONV_PATH, () => {
-          hits++;
+          hits += 1;
           return HttpResponse.json([stubConversation]);
         }),
       );
@@ -110,7 +110,7 @@ describe(useConversations, () => {
       expect(result.current.isSuccess).toBe(true);
       expect(result.current.data).toEqual([stubConversation]);
 
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       expect(hits).toBe(1);
     });
 
@@ -118,7 +118,7 @@ describe(useConversations, () => {
       let hits = 0;
       server.use(
         http.get(CONV_PATH, () => {
-          hits++;
+          hits += 1;
           return HttpResponse.json([stubConversation]);
         }),
       );
@@ -141,7 +141,7 @@ describe(useConversations, () => {
     let getHits = 0;
     server.use(
       http.get(CONV_PATH, () => {
-        getHits++;
+        getHits += 1;
         return HttpResponse.json([stubConversation]);
       }),
       http.post(CONV_PATH, () =>

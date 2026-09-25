@@ -4,6 +4,7 @@ function ChatItem({ chat, onClick }: { chat: User; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
+      aria-label={`Open conversation with ${chat.username}`}
       className='w-full cursor-pointer flex items-center gap-2.5 px-5 py-6 bg-neutral-800 transition-colors text-left'
     >
       <div className='flex-1 min-w-0'>

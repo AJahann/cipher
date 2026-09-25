@@ -10,7 +10,7 @@ describe(useMessages, () => {
     let hits = 0;
     server.use(
       http.get(MESSAGES_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json([stubMessage]);
       }),
     );
@@ -49,7 +49,7 @@ describe(useMessages, () => {
     let hits = 0;
     server.use(
       http.get(MESSAGES_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json([stubMessage]);
       }),
     );

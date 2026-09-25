@@ -35,9 +35,10 @@ const { fakeSocket, ioMock } = vi.hoisted(() => {
 });
 
 vi.mock(import('socket.io-client'), () => ({
-  io: ioMock,
+  io: ioMock as unknown as typeof import('socket.io-client').io,
 }));
 
+// oxlint-disable-next-line import/first -- Vitest hoists this mock before the module import.
 import { useChatRealtimeSync } from './use-chat-socket';
 
 describe(useChatRealtimeSync, () => {

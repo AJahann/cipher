@@ -45,5 +45,5 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
     return <UnlockForm onUnlock={handleUnlock} />;
   }
 
-  return <>{children}</>;
+  return children;
 }
