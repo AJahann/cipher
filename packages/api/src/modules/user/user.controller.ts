@@ -1,9 +1,9 @@
-import { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { ZodError, z } from 'zod';
 import { userService } from './user.service';
 import { requireAuth } from '../auth/auth.middleware';
 
-export const userController = async (app: FastifyInstance) => {
+export const userController = (app: FastifyInstance) => {
   app.addHook('preHandler', requireAuth);
 
   app.get('/', async (req, reply) => {

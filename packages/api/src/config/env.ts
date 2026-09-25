@@ -4,7 +4,7 @@ import { z } from 'zod';
 for (const envPath of ['../../.env', './.env']) {
   try {
     process.loadEnvFile(envPath);
-  } catch {
+  } catch (error) {
     // file not found — fall back to process.env
   }
 }
@@ -19,5 +19,6 @@ export const env = createEnv({
     BACKEND_PORT: z.string(),
     SESSION_SECRET: z.string().min(32),
   },
+  // oxlint-disable-next-line node/no-process-env -- env-core requires the process environment.
   runtimeEnv: process.env,
 });

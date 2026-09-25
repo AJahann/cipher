@@ -1,3 +1,4 @@
+// oxlint-disable no-await-in-loop
 import fs from 'node:fs';
 
 import { test as setup, type Page } from '@playwright/test';

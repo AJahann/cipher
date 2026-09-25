@@ -5,12 +5,12 @@ import { server } from '../../../test/msw/server';
 import { useMessages } from './use-chat';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
-describe('useMessages', () => {
+describe(useMessages, () => {
   it('does not fetch when conversationId is omitted — enabled: false', () => {
     let hits = 0;
     server.use(
       http.get(MESSAGES_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json([stubMessage]);
       }),
     );
@@ -49,7 +49,7 @@ describe('useMessages', () => {
     let hits = 0;
     server.use(
       http.get(MESSAGES_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json([stubMessage]);
       }),
     );

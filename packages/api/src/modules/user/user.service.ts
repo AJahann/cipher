@@ -75,14 +75,14 @@ export const userService = {
     };
   },
 
-  async findById(id: string) {
+  findById(id: string) {
     return db.query.users.findFirst({
       where: eq(users.id, id),
       columns: PUBLIC_COLUMNS,
     });
   },
 
-  async listUsers(excludeUserId: string, limit: number, after?: string) {
+  listUsers(excludeUserId: string, limit: number, after?: string) {
     const conditions = [ne(users.id, excludeUserId)];
     if (after) {
       conditions.push(gt(users.id, after));

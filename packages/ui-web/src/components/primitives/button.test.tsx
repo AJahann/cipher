@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { Button } from './button';
 
-describe('Button', () => {
+describe(Button, () => {
   it('derives its accessible name from children', () => {
     render(<Button>Save</Button>);
     expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();

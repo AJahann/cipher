@@ -108,6 +108,6 @@ export function useUserPublicKey(userId?: string) {
   return useQuery({
     queryKey: userKeys.publicKey(userId ?? ''),
     queryFn: () => getPublicKey(userId!),
-    enabled: !!userId,
+    enabled: Boolean(userId),
   });
 }

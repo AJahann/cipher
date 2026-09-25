@@ -1,10 +1,10 @@
-import { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { userService } from '../user/user.service';
 import { registerUserSchema, loginUserSchema } from '../user/user.schema';
 import { requireAuth } from './auth.middleware';
 
-export const authController = async (app: FastifyInstance) => {
+export const authController = (app: FastifyInstance) => {
   app.post('/register', async (req, reply) => {
     const body = registerUserSchema.parse(req.body);
     const user = await userService.register(body);

@@ -4,12 +4,14 @@ import { useState } from 'react';
 import { vi } from 'vitest';
 import { ChatInput } from './chat-input';
 
-function Setup({ onSend = () => {} }: { onSend?: () => void }) {
+const noop = () => {};
+
+function Setup({ onSend = noop }: { onSend?: () => void }) {
   const [value, setValue] = useState('');
   return <ChatInput value={value} onChange={setValue} onSend={onSend} />;
 }
 
-describe('ChatInput', () => {
+describe(ChatInput, () => {
   it('send button has an accessible name', () => {
     render(<Setup />);
     expect(
@@ -27,7 +29,7 @@ describe('ChatInput', () => {
     render(<Setup onSend={onSend} />);
     await userEvent.type(screen.getByRole('textbox'), 'Hello');
     await userEvent.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(onSend).toHaveBeenCalledTimes(1);
+    expect(onSend).toHaveBeenCalledOnce();
   });
 
   describe('keyboard', () => {
@@ -36,7 +38,7 @@ describe('ChatInput', () => {
       render(<Setup onSend={onSend} />);
       await userEvent.type(screen.getByRole('textbox'), 'Hello');
       await userEvent.keyboard('{Enter}');
-      expect(onSend).toHaveBeenCalledTimes(1);
+      expect(onSend).toHaveBeenCalledOnce();
     });
 
     it('Shift+Enter does not call onSend', async () => {

@@ -20,7 +20,7 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
     setIsPending(true);
     try {
       await onUnlock(password);
-    } catch {
+    } catch (caughtError) {
       setError('wrong passphrase or damaged key');
     } finally {
       setIsPending(false);
@@ -28,12 +28,12 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-[var(--cipher-bg)] px-4'>
+    <div className='w-full flex min-h-screen items-center justify-center bg-(--cipher-bg) px-4'>
       <div className='w-full max-w-sm'>
         <div className='mb-10 flex flex-col gap-3'>
           <div className='flex items-center gap-2.5'>
-            <span className='h-2 w-2 animate-pulse rounded-full bg-[var(--cipher-accent)]' />
-            <span className='font-[var(--cipher-font-mono)] text-[13px] tracking-[0.08em] text-[var(--cipher-accent)]'>
+            <span className='h-2 w-2 animate-pulse rounded-full bg-(--cipher-accent)' />
+            <span className='font-[var(--cipher-font-mono)] text-[13px] tracking-[0.08em] text-(--cipher-accent)'>
               cipher
             </span>
           </div>
@@ -45,7 +45,7 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
             Unlock session
           </h1>
           <p className='mt-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)]'>
-            // enter passphrase to restore your private key
+            &#x2F;&#x2F; enter passphrase to restore your private key
           </p>
         </div>
 
