@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "dev": "pnpm --parallel dev",
     "build": "pnpm --recursive build",
@@ -26,7 +27,7 @@
   },
   "engines": {
     "node": ">=20",
-    "pnpm": ">=9"
+    "pnpm": ">=12.6.0"
   },
   "devDependencies": {
     "@fullstacksjs/oxlint-config": "1.1.0",
