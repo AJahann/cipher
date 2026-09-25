@@ -5,7 +5,7 @@ export const registerUserSchema = z.object({
     .string()
     .min(3)
     .max(32)
-    .regex(/^[a-zA-Z0-9_-]+$/),
+    .regex(/^[\w-]+$/i),
   password: z.string().min(8).max(128),
   publicKey: z.string().min(1),
   wrappedPrivateKey: z.object({

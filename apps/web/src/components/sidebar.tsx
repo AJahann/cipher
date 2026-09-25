@@ -1,4 +1,4 @@
-import { User } from '@chat-app/shared';
+import type { User } from '@chat-app/shared';
 
 function ChatItem({ chat, onClick }: { chat: User; onClick: () => void }) {
   return (

@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
 import { userService } from '../user/user.service';
 import { registerUserSchema, loginUserSchema } from '../user/user.schema';

@@ -34,13 +34,13 @@ const { fakeSocket, ioMock } = vi.hoisted(() => {
   };
 });
 
-vi.mock('socket.io-client', () => ({
+vi.mock(import('socket.io-client'), () => ({
   io: ioMock,
 }));
 
 import { useChatRealtimeSync } from './use-chat-socket';
 
-describe('useChatRealtimeSync', () => {
+describe(useChatRealtimeSync, () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -57,7 +57,7 @@ describe('useChatRealtimeSync', () => {
       fakeSocket.trigger('connect');
     });
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).toHaveBeenCalledOnce();
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: userKeys.listRoot(),
     });
@@ -67,6 +67,6 @@ describe('useChatRealtimeSync', () => {
       fakeSocket.trigger('connect');
     });
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).toHaveBeenCalledOnce();
   });
 });

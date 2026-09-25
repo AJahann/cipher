@@ -154,7 +154,7 @@ export function registerChatSocket(
   // ── Connection handler ────────────────────────────────────────────────────
 
   io.on('connection', async (socket: AppSocket) => {
-    const userId = socket.data.userId;
+    const {userId} = socket.data;
 
     socket.join(userRoom(userId));
 

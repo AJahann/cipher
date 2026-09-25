@@ -5,7 +5,7 @@ import { server } from '../../../test/msw/server';
 import { useMe } from './use-user';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
-describe('useMe', () => {
+describe(useMe, () => {
   it('returns the user on 200', async () => {
     const { result } = renderHook(() => useMe(), {
       wrapper: makeWrapper(makeClient()),

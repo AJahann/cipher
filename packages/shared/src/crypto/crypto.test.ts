@@ -8,7 +8,7 @@ async function tamperBase64(value: string): Promise<string> {
   return KeyManager.toBase64(tampered);
 }
 
-describe('KeyManager', () => {
+describe(KeyManager, () => {
   it('round-trips arbitrary bytes through base64', async () => {
     const input = Uint8Array.from([0, 1, 2, 127, 128, 254, 255]);
     const encoded = await KeyManager.toBase64(input);
@@ -63,7 +63,7 @@ describe('private-key wrapping', () => {
   });
 });
 
-describe('E2EEncryption', () => {
+describe(E2EEncryption, () => {
   it('returns base64 representations of the generated key pair', async () => {
     const pair = await E2EEncryption.generateKeyPair();
 

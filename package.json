@@ -7,6 +7,7 @@
     "build": "pnpm --recursive build",
     "start": "pnpm --parallel start",
     "lint": "oxlint --config ./oxlint.config.ts apps packages",
+    "lint:fix": "oxlint --config ./oxlint.config.ts --fix apps packages",
     "clean": "rimraf --glob **/node_modules **/.next **/dist **/build **/coverage playwright-report **/.cache **/.turbo",
     "clean:cache": "rimraf --glob **/.next **/.cache **/.turbo",
     "fresh": "pnpm clean && pnpm install",

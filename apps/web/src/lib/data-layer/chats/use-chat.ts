@@ -2,11 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Conversation, Message } from '@chat-app/shared/types';
 import { apiFetch } from '../client';
 
-export type MessagesQueryParams = {
+export interface MessagesQueryParams {
   conversationId?: string;
   limit?: number;
   before?: string;
-};
+}
 
 export const chatKeys = {
   all: ['chat'] as const,
@@ -24,7 +24,7 @@ export const chatKeys = {
     [...chatKeys.messagesRoot(), { conversationId, limit, before }] as const,
 };
 
-type CreateConversationPayload = { memberId: string };
+interface CreateConversationPayload { memberId: string }
 
 const createConversation = (payload: CreateConversationPayload) =>
   apiFetch<Conversation>('/chat/conversations', {
@@ -74,6 +74,6 @@ export function useMessages(
   return useQuery({
     queryKey: chatKeys.messages(conversationId, limit, before),
     queryFn: () => getMessages(conversationId!, limit, before),
-    enabled: !!conversationId,
+    enabled: Boolean(conversationId),
   });
 }

@@ -5,7 +5,7 @@ import { delay, http, HttpResponse } from 'msw';
 import { useConversations, useCreateConversation } from './use-chat';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
-describe('useConversations', () => {
+describe(useConversations, () => {
   it('is pending before the first response arrives', async () => {
     server.use(
       http.get(CONV_PATH, async () => {
