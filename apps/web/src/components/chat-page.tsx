@@ -10,12 +10,7 @@ import {
 import { E2EEncryption, getSessionPrivateKey } from '@chat-app/shared/crypto';
 import { KeyStorage } from '@/lib/keyStorage';
 import { KeyManager } from '@chat-app/shared';
-import {
-  ChatHeader,
-  ChatInput,
-  MessageList,
-  LoadingScreen,
-} from '@chat-app/ui-web';
+import { ChatHeader, ChatInput, MessageList } from '@chat-app/ui-web';
 import type { DecryptedMessage } from '@chat-app/ui-web';
 
 function formatTime(ts?: string | number | Date) {
@@ -36,7 +31,8 @@ export function ChatPage({
   isConnected: boolean;
 }) {
   const { sendMessage, typingStart, typingStop } = useChatSocketActions();
-  const { data: messages } = useMessages(conversationId);
+  const { data: messages, isLoading: messagesIsLoading } =
+    useMessages(conversationId);
   useChatRealtimeMessages();
 
   const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
@@ -124,12 +120,14 @@ export function ChatPage({
     else typingStop?.(conversationId);
   }
 
-  if (isLoading) return <LoadingScreen message='decrypting messages...' />;
-
   return (
     <main className='flex flex-1 min-w-0 flex-col'>
       <ChatHeader isConnected={isConnected} />
-      <MessageList messages={decrypted} />
+      <MessageList
+        isLoading={messagesIsLoading}
+        loadingMessage='decrypting messages...'
+        messages={decrypted}
+      />
       <ChatInput value={input} onChange={handleTyping} onSend={handleSend} />
     </main>
   );
