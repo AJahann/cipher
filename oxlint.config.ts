@@ -1,4 +1,4 @@
-import { defineConfig } from '@fullstacksjs/oxlint-minimal';
+import { defineConfig } from '@fullstacksjs/oxlint-config';
 
 export default defineConfig({
   modules: {

@@ -18,7 +18,7 @@ export function SessionGate({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const wrapped = localStorage.getItem(STORAGE_KEY);
     if (!wrapped) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // oxlint-disable-next-line react/set-state-in-effect
       setState('need-login');
       return;
     }

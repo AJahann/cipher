@@ -6,7 +6,7 @@
     "dev": "pnpm --parallel dev",
     "build": "pnpm --recursive build",
     "start": "pnpm --parallel start",
-    "lint": "pnpm --recursive lint",
+    "lint": "oxlint --config ./oxlint.config.ts apps packages",
     "clean": "rimraf --glob **/node_modules **/.next **/dist **/build **/coverage playwright-report **/.cache **/.turbo",
     "clean:cache": "rimraf --glob **/.next **/.cache **/.turbo",
     "fresh": "pnpm clean && pnpm install",
@@ -20,15 +20,14 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed --project=chromium",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report",
-    "lint:oxlint": "oxlint --config ./oxlint.config.ts apps packages"
+    "test:e2e:report": "playwright show-report"
   },
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
   },
   "devDependencies": {
-    "@fullstacksjs/oxlint-minimal": "1.1.1",
+    "@fullstacksjs/oxlint-config": "1.1.0",
     "@playwright/test": "^1.62.1",
     "@t3-oss/env-core": "^0.13.11",
     "@testing-library/jest-dom": "^7.0.1",
