@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { ChatPage } from './chat-page';
 import { useMe, useUsersList } from '@/lib/data-layer/user';
+import { SessionGate } from '@/app/_components/session-gate';
 import {
   useChatSocket,
   useChatSocketActions,
@@ -48,16 +49,18 @@ export default function ChatLayout() {
         />
       }
     >
-      {activeConversationId && activeReceiverId && me?.id ? (
-        <ChatPage
-          conversationId={activeConversationId}
-          receiverId={activeReceiverId}
-          myId={me.id}
-          isConnected={socket?.connected ?? false}
-        />
-      ) : (
-        <EmptyState />
-      )}
+      <SessionGate>
+        {activeConversationId && activeReceiverId && me?.id ? (
+          <ChatPage
+            conversationId={activeConversationId}
+            receiverId={activeReceiverId}
+            myId={me.id}
+            isConnected={socket?.connected ?? false}
+          />
+        ) : (
+          <EmptyState />
+        )}
+      </SessionGate>
     </AppShell>
   );
 }
