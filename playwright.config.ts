@@ -1,6 +1,34 @@
 import { defineConfig, devices } from '@playwright/test';
 import { env } from './env';
 
+const webServer = env.CI
+  ? [
+      {
+        command: 'packages/api/node_modules/.bin/tsx packages/api/src/server.ts',
+        url: new URL('/health', env.NEXT_PUBLIC_API_URL).toString(),
+        reuseExistingServer: false,
+        timeout: 120_000,
+        stdout: 'pipe' as const,
+        stderr: 'pipe' as const,
+      },
+      {
+        command: 'cd apps/web && node_modules/.bin/next start',
+        url: env.PLAYWRIGHT_BASE_URL,
+        reuseExistingServer: false,
+        timeout: 120_000,
+        stdout: 'pipe' as const,
+        stderr: 'pipe' as const,
+      },
+    ]
+  : {
+      command: 'pnpm dev',
+      url: env.PLAYWRIGHT_BASE_URL,
+      reuseExistingServer: true,
+      timeout: 120_000,
+      stdout: 'pipe' as const,
+      stderr: 'pipe' as const,
+    };
+
 export default defineConfig({
   testDir: '.',
   testMatch: '**/e2e/**/*.spec.ts',
@@ -50,12 +78,5 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'pnpm dev',
-    url: env.PLAYWRIGHT_BASE_URL,
-    reuseExistingServer: !env.CI,
-    timeout: 120_000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  webServer,
 });
