@@ -17,5 +17,5 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading) return <Loading />;
 
-  return <>{children}</>;
+  return children;
 }

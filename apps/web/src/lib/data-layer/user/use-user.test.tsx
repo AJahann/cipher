@@ -5,7 +5,7 @@ import { server } from '../../../test/msw/server';
 import { useMe } from './use-user';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
-describe('useMe', () => {
+describe(useMe, () => {
   it('returns the user on 200', async () => {
     const { result } = renderHook(() => useMe(), {
       wrapper: makeWrapper(makeClient()),
@@ -19,7 +19,7 @@ describe('useMe', () => {
     let hits = 0;
     server.use(
       http.get(ME_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
       }),
     );
@@ -42,7 +42,7 @@ describe('useMe', () => {
     let hits = 0;
     server.use(
       http.get(ME_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
       }),
     );

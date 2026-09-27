@@ -8,6 +8,7 @@ config({ path: path.resolve(process.cwd(), '.env') });
 export const env = createEnv({
   server: {
     PLAYWRIGHT_BASE_URL: z.url(),
+    NEXT_PUBLIC_API_URL: z.url(),
     CI: z
       .string()
       .transform((v) => v === 'true' || v === '1')

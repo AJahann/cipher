@@ -34,13 +34,14 @@ const { fakeSocket, ioMock } = vi.hoisted(() => {
   };
 });
 
-vi.mock('socket.io-client', () => ({
-  io: ioMock,
+vi.mock(import('socket.io-client'), () => ({
+  io: ioMock as unknown as typeof import('socket.io-client').io,
 }));
 
+// oxlint-disable-next-line import/first -- Vitest hoists this mock before the module import.
 import { useChatRealtimeSync } from './use-chat-socket';
 
-describe('useChatRealtimeSync', () => {
+describe(useChatRealtimeSync, () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -57,7 +58,7 @@ describe('useChatRealtimeSync', () => {
       fakeSocket.trigger('connect');
     });
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).toHaveBeenCalledOnce();
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: userKeys.listRoot(),
     });
@@ -67,6 +68,6 @@ describe('useChatRealtimeSync', () => {
       fakeSocket.trigger('connect');
     });
 
-    expect(invalidateQueries).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).toHaveBeenCalledOnce();
   });
 });

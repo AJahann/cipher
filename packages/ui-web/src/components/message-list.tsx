@@ -1,8 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { MessageBubble } from './message-bubble';
-import type { DecryptedMessage } from './message-bubble';
+import { MessageBubble, type DecryptedMessage } from './message-bubble';
 
 export interface MessageListProps {
   messages: DecryptedMessage[];

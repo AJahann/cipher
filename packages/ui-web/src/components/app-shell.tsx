@@ -18,7 +18,7 @@ export function EmptyState() {
   return (
     <main className='flex flex-1 items-center justify-center'>
       <p className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
-        // select a conversation to begin
+        &#x2F;&#x2F; select a conversation to begin
       </p>
     </main>
   );

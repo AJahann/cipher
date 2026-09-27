@@ -42,7 +42,7 @@ export const buildApp = async () => {
     saveUninitialized: false,
   });
 
-  app.get('/health', async () => ({ status: 'ok' }));
+  app.get('/health', () => ({ status: 'ok' }));
 
   app.register(authController, { prefix: '/auth' });
   app.register(userController, { prefix: '/users' });

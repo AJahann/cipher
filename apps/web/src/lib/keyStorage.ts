@@ -15,8 +15,8 @@ export const KeyStorage = {
     localStorage.removeItem(PUBLIC_KEY);
   },
 
-  async loadPublicKeyRaw(): Promise<Uint8Array | null> {
+  loadPublicKeyRaw(): Promise<Uint8Array | null> {
     const b64 = this.loadPublicKey();
-    return b64 ? KeyManager.fromBase64(b64) : null;
+    return b64 ? KeyManager.fromBase64(b64) : Promise.resolve(null);
   },
 };

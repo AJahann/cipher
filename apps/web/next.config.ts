@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 
 try {
   process.loadEnvFile('../../.env');
-} catch {
+} catch (error) {
   // file not found — rely on process.env / apps/web/.env.local
 }
 

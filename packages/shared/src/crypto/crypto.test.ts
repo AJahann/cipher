@@ -8,7 +8,7 @@ async function tamperBase64(value: string): Promise<string> {
   return KeyManager.toBase64(tampered);
 }
 
-describe('KeyManager', () => {
+describe(KeyManager, () => {
   it('round-trips arbitrary bytes through base64', async () => {
     const input = Uint8Array.from([0, 1, 2, 127, 128, 254, 255]);
     const encoded = await KeyManager.toBase64(input);
@@ -37,7 +37,9 @@ describe('private-key wrapping', () => {
     const { privateKey } = await E2EEncryption.generateKeyPair();
     const wrapped = await wrapPrivateKey(privateKey, 'correct password');
 
-    await expect(unwrapPrivateKey(wrapped, 'wrong password')).rejects.toThrow();
+    await expect(unwrapPrivateKey(wrapped, 'wrong password')).rejects.toThrow(
+      /secret key/i,
+    );
   });
 
   it('uses fresh salt and nonce values for every wrap', async () => {
@@ -59,11 +61,11 @@ describe('private-key wrapping', () => {
         { ...wrapped, ciphertext: await tamperBase64(wrapped.ciphertext) },
         'correct password',
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/secret key/i);
   });
 });
 
-describe('E2EEncryption', () => {
+describe(E2EEncryption, () => {
   it('returns base64 representations of the generated key pair', async () => {
     const pair = await E2EEncryption.generateKeyPair();
 
@@ -150,7 +152,7 @@ describe('E2EEncryption', () => {
         alice.publicKey,
         eve.privateKey,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/key pair/i);
   });
 
   it('rejects tampered message ciphertext', async () => {
@@ -169,6 +171,6 @@ describe('E2EEncryption', () => {
         alice.publicKey,
         bob.privateKey,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow(/key pair/i);
   });
 });

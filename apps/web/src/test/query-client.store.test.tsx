@@ -10,7 +10,7 @@ describe('QueryClient as store', () => {
     let hits = 0;
     server.use(
       http.get(CONV_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json([stubConversation]);
       }),
     );
@@ -26,7 +26,7 @@ describe('QueryClient as store', () => {
     expect(r2.current.isSuccess).toBe(true);
     expect(r2.current.data).toEqual([stubConversation]);
 
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
     expect(hits).toBe(1);
   });
 
@@ -34,7 +34,7 @@ describe('QueryClient as store', () => {
     let hits = 0;
     server.use(
       http.get(CONV_PATH, () => {
-        hits++;
+        hits += 1;
         return HttpResponse.json([stubConversation]);
       }),
     );

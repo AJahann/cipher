@@ -1,3 +1,4 @@
+// oxlint-disable vitest/no-conditional-in-test max-nested-callbacks
 import { CONV_PATH, stubConversation } from '../../../test/msw/handlers';
 import { server } from '../../../test/msw/server';
 import { renderHook, waitFor } from '@testing-library/react';
@@ -5,7 +6,8 @@ import { delay, http, HttpResponse } from 'msw';
 import { useConversations, useCreateConversation } from './use-chat';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
-describe('useConversations', () => {
+// oxlint-disable-next-line max-lines-per-function
+describe(useConversations, () => {
   it('is pending before the first response arrives', async () => {
     server.use(
       http.get(CONV_PATH, async () => {
@@ -66,7 +68,7 @@ describe('useConversations', () => {
 
     server.use(
       http.get(CONV_PATH, () => {
-        hits++;
+        hits += 1;
         return hits <= 2
           ? new HttpResponse(null, { status: 503 })
           : HttpResponse.json([stubConversation]);
@@ -90,7 +92,7 @@ describe('useConversations', () => {
       let hits = 0;
       server.use(
         http.get(CONV_PATH, () => {
-          hits++;
+          hits += 1;
           return HttpResponse.json([stubConversation]);
         }),
       );
@@ -110,7 +112,7 @@ describe('useConversations', () => {
       expect(result.current.isSuccess).toBe(true);
       expect(result.current.data).toEqual([stubConversation]);
 
-      await new Promise((r) => setTimeout(r, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       expect(hits).toBe(1);
     });
 
@@ -118,7 +120,7 @@ describe('useConversations', () => {
       let hits = 0;
       server.use(
         http.get(CONV_PATH, () => {
-          hits++;
+          hits += 1;
           return HttpResponse.json([stubConversation]);
         }),
       );
@@ -141,7 +143,7 @@ describe('useConversations', () => {
     let getHits = 0;
     server.use(
       http.get(CONV_PATH, () => {
-        getHits++;
+        getHits += 1;
         return HttpResponse.json([stubConversation]);
       }),
       http.post(CONV_PATH, () =>

@@ -5,7 +5,7 @@ import { AuthForm } from './auth-form';
 
 const resolved = () => Promise.resolve();
 
-describe('AuthForm', () => {
+describe(AuthForm, () => {
   describe('login mode', () => {
     it('calls onLogin with the submitted username and passphrase', async () => {
       const onLogin = vi.fn().mockResolvedValue(undefined);
