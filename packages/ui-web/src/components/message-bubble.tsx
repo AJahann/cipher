@@ -2,6 +2,7 @@ import * as React from 'react';
 
 export interface DecryptedMessage {
   id: string;
+  clientMessageId?: string;
   senderId: string;
   text: string;
   time: string;

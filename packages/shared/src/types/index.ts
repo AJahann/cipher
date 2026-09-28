@@ -13,7 +13,7 @@ export interface User {
 export interface Message {
   id: string;
   /** Stable client-generated command ID used to make sends idempotent. */
-  clientMessageId?: string;
+  clientMessageId: string;
   conversationId: string;
   senderId: string;
   ciphertext: string;
