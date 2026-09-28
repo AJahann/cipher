@@ -8,25 +8,13 @@ import { chatService } from './chat.service';
 import { sendMessageSchema } from './chat.schema';
 import { userService } from '../user/user.service';
 
-// ── Event shape interfaces ──────────────────────────────────────────────────
-
 interface ServerToClientEvents {
   'message:new': (message: MessagePayload) => void;
   'message:ack': (data: { tempId: string; message: MessagePayload }) => void;
-  /**
-   * Delivered to every member's personal room when a conversation receives a
-   * message.
-   *
-   * `message:new` only reaches sockets that joined the conversation room, and a
-   * client joins that room when the user opens the thread. A recipient who has
-   * never opened it — or who does not even have the sender in their contact
-   * list yet — would otherwise receive nothing until a page refresh.
-   */
   'conversation:updated': (data: {
     conversationId: string;
     message: MessagePayload;
   }) => void;
-  /** Broadcast to all connected clients when a new account is registered. */
   'user:new': (user: { id: string; username: string }) => void;
   'typing:indicator': (data: {
     conversationId: string;
@@ -50,7 +38,7 @@ interface ClientToServerEvents {
 }
 
 interface SendMessageData {
-  tempId: string; // client-generated optimistic ID for ACK correlation
+  tempId: string;
   conversationId: string;
   ciphertext: string;
   nonce: string;
@@ -64,6 +52,7 @@ interface AckResult {
 
 interface MessagePayload {
   id: string;
+  clientMessageId: string;
   conversationId: string;
   senderId: string;
   ciphertext: string;
@@ -91,12 +80,8 @@ type AppIO = SocketIOServer<
   SocketData
 >;
 
-// ── Room helpers ──────────────────────────────────────────────────────────────
-
 const userRoom = (userId: string) => `user:${userId}`;
 const conversationRoom = (conversationId: string) => `conv:${conversationId}`;
-
-// ── Presence helper ───────────────────────────────────────────────────────────
 
 async function broadcastPresence(io: AppIO, userId: string, online: boolean) {
   const conversationIds = await chatService
@@ -107,16 +92,12 @@ async function broadcastPresence(io: AppIO, userId: string, online: boolean) {
   }
 }
 
-// ── Main registration ─────────────────────────────────────────────────────────
-
 export function registerChatSocket(
   io: AppIO,
   log: FastifyBaseLogger,
   store: Store,
   app: FastifyInstance,
 ) {
-  // ── Auth middleware ───────────────────────────────────────────────────────
-
   io.use(async (socket, next) => {
     try {
       const rawCookie = socket.handshake.headers.cookie ?? '';
@@ -129,7 +110,6 @@ export function registerChatSocket(
       if (!unsigned.valid) return next(new Error('UNAUTHORIZED'));
 
       const sid = unsigned.value;
-
       const session = await new Promise<Record<string, unknown> | null>(
         (resolve, reject) => {
           store.get(sid, (err, sess) => {
@@ -152,23 +132,15 @@ export function registerChatSocket(
     }
   });
 
-  // ── Connection handler ────────────────────────────────────────────────────
-
   io.on('connection', async (socket: AppSocket) => {
     const { userId } = socket.data;
-
     socket.join(userRoom(userId));
 
-    // Join every conversation this user already belongs to. Previously a client
-    // only entered a conversation room after the user clicked that contact, so
-    // incoming messages and presence updates never reached anyone who had not
-    // opened the thread in this session.
     const conversationIds = await chatService
       .getConversationIds(userId)
       .catch(() => [] as string[]);
     for (const id of conversationIds) socket.join(conversationRoom(id));
 
-    // Cached once so outgoing message payloads carry a real sender name.
     const profile = await userService.findById(userId).catch(() => null);
     socket.data.username = profile?.username ?? '';
 
@@ -177,16 +149,14 @@ export function registerChatSocket(
       'Socket connected',
     );
 
-    // Broadcast online presence to all shared conversations
     await broadcastPresence(io, userId, true);
-
-    // ── message:send ────────────────────────────────────────────────────────
 
     socket.on('message:send', async (data, ack) => {
       try {
         const parsed = sendMessageSchema.parse(data);
 
         const message = await chatService.sendMessage({
+          clientMessageId: parsed.tempId,
           conversationId: parsed.conversationId,
           senderId: userId,
           ciphertext: parsed.ciphertext,
@@ -200,14 +170,11 @@ export function registerChatSocket(
           sender: { id: userId, username: socket.data.username },
         };
 
-        // 1. Everyone currently viewing the thread.
         io.to(conversationRoom(parsed.conversationId)).emit(
           'message:new',
           payload,
         );
 
-        // 2. Everyone else in the conversation, through their personal room.
-        //    This is what reaches a recipient who has never opened the thread.
         const memberIds = await chatService.getConversationMembers(
           parsed.conversationId,
         );
@@ -215,9 +182,6 @@ export function registerChatSocket(
         for (const memberId of memberIds) {
           if (memberId === userId) continue;
 
-          // Pull their live sockets into the conversation room so subsequent
-          // messages, typing indicators and presence updates arrive directly.
-          // Done after the emit above so they do not receive this message twice.
           io.in(userRoom(memberId)).socketsJoin(
             conversationRoom(parsed.conversationId),
           );
@@ -228,9 +192,10 @@ export function registerChatSocket(
           });
         }
 
-        // ACK back to sender with tempId so optimistic UI can reconcile
-        socket.emit('message:ack', { tempId: data.tempId, message: payload });
-
+        socket.emit('message:ack', {
+          tempId: parsed.tempId,
+          message: payload,
+        });
         ack({ ok: true });
       } catch (err) {
         log.error(err, 'message:send failed');
@@ -238,13 +203,16 @@ export function registerChatSocket(
           ack({ ok: false, error: 'VALIDATION_ERROR' });
         } else if (err instanceof Error && err.message === 'FORBIDDEN') {
           ack({ ok: false, error: 'FORBIDDEN' });
+        } else if (
+          err instanceof Error &&
+          err.message === 'IDEMPOTENCY_CONFLICT'
+        ) {
+          ack({ ok: false, error: 'IDEMPOTENCY_CONFLICT' });
         } else {
           ack({ ok: false, error: 'FAILED_TO_SEND' });
         }
       }
     });
-
-    // ── message:read ────────────────────────────────────────────────────────
 
     socket.on('message:read', async ({ messageId }) => {
       try {
@@ -253,8 +221,6 @@ export function registerChatSocket(
         log.error(err, 'message:read failed');
       }
     });
-
-    // ── typing indicators ────────────────────────────────────────────────────
 
     socket.on('typing:start', ({ conversationId }) => {
       socket.to(conversationRoom(conversationId)).emit('typing:indicator', {
@@ -272,8 +238,6 @@ export function registerChatSocket(
       });
     });
 
-    // ── conversation rooms ───────────────────────────────────────────────────
-
     socket.on('conversation:join', ({ conversationId }) => {
       socket.join(conversationRoom(conversationId));
     });
@@ -281,8 +245,6 @@ export function registerChatSocket(
     socket.on('conversation:leave', ({ conversationId }) => {
       socket.leave(conversationRoom(conversationId));
     });
-
-    // ── disconnect ───────────────────────────────────────────────────────────
 
     socket.on('disconnect', async () => {
       log.info({ userId }, 'Socket disconnected');
