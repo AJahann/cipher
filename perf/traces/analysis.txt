@@ -1,0 +1,300 @@
+{
+  "tracePath": "perf/traces/send-message-before.trace.json",
+  "windowMs": 12.851,
+  "hasLongTaskOver50Ms": false,
+  "hasNamedScrollEvent": false,
+  "breakdown": {
+    "EventDispatch": {
+      "count": 22,
+      "totalMs": 8.694999999999995,
+      "maxMs": 8.187
+    },
+    "FunctionCall": {
+      "count": 50,
+      "totalMs": 5.819999999999998,
+      "maxMs": 4.942
+    },
+    "UpdateLayoutTree": {
+      "count": 3,
+      "totalMs": 2.4539999999999997,
+      "maxMs": 2.264
+    },
+    "Layout": {
+      "count": 1,
+      "totalMs": 0.297,
+      "maxMs": 0.297
+    },
+    "PrePaint": {
+      "count": 3,
+      "totalMs": 0.10300000000000001,
+      "maxMs": 0.093
+    },
+    "Paint": {
+      "count": 2,
+      "totalMs": 0.28600000000000003,
+      "maxMs": 0.152
+    },
+    "Commit": {
+      "count": 1,
+      "totalMs": 0.192,
+      "maxMs": 0.192
+    },
+    "FireAnimationFrame": {
+      "count": 2,
+      "totalMs": 0.049,
+      "maxMs": 0.028
+    },
+    "UpdateLayer": {
+      "count": 3,
+      "totalMs": 0.008,
+      "maxMs": 0.006
+    },
+    "Layerize": {
+      "count": 1,
+      "totalMs": 0.073,
+      "maxMs": 0.073
+    }
+  },
+  "longestEvents": [
+    {
+      "name": "EventDispatch",
+      "durationMs": 8.187,
+      "type": "click",
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "FunctionCall",
+      "durationMs": 4.942,
+      "type": null,
+      "functionName": "",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hcgg1yawnub5.js",
+      "lineNumber": 1,
+      "columnNumber": 174185
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "durationMs": 2.264,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "FunctionCall",
+      "durationMs": 0.362,
+      "type": null,
+      "functionName": "fI",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hcgg1yawnub5.js",
+      "lineNumber": 1,
+      "columnNumber": 216752
+    },
+    {
+      "name": "Layout",
+      "durationMs": 0.297,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "Commit",
+      "durationMs": 0.192,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "Paint",
+      "durationMs": 0.152,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "durationMs": 0.138,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "Paint",
+      "durationMs": 0.134,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "EventDispatch",
+      "durationMs": 0.114,
+      "type": "transitionrun",
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    }
+  ]
+}
+{
+  "tracePath": "perf/traces/send-message-after.trace.json",
+  "windowMs": 23.919,
+  "hasLongTaskOver50Ms": false,
+  "hasNamedScrollEvent": false,
+  "breakdown": {
+    "EventDispatch": {
+      "count": 26,
+      "totalMs": 12.776,
+      "maxMs": 11.799
+    },
+    "FunctionCall": {
+      "count": 53,
+      "totalMs": 12.227000000000016,
+      "maxMs": 10.71
+    },
+    "UpdateLayoutTree": {
+      "count": 4,
+      "totalMs": 3.0700000000000003,
+      "maxMs": 1.804
+    },
+    "Layout": {
+      "count": 1,
+      "totalMs": 1.261,
+      "maxMs": 1.261
+    },
+    "PrePaint": {
+      "count": 3,
+      "totalMs": 0.788,
+      "maxMs": 0.776
+    },
+    "Paint": {
+      "count": 2,
+      "totalMs": 0.361,
+      "maxMs": 0.192
+    },
+    "Commit": {
+      "count": 1,
+      "totalMs": 1.195,
+      "maxMs": 1.195
+    },
+    "FireAnimationFrame": {
+      "count": 2,
+      "totalMs": 0.906,
+      "maxMs": 0.88
+    },
+    "UpdateLayer": {
+      "count": 2,
+      "totalMs": 0.006,
+      "maxMs": 0.005
+    },
+    "Layerize": {
+      "count": 1,
+      "totalMs": 0.082,
+      "maxMs": 0.082
+    }
+  },
+  "longestEvents": [
+    {
+      "name": "EventDispatch",
+      "durationMs": 11.799,
+      "type": "click",
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "FunctionCall",
+      "durationMs": 10.71,
+      "type": null,
+      "functionName": "",
+      "url": "http://127.0.0.1:3000/_next/static/chunks/2hcgg1yawnub5.js",
+      "lineNumber": 1,
+      "columnNumber": 174185
+    },
+    {
+      "name": "Receive mojo message",
+      "durationMs": 3.572,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "durationMs": 1.804,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "Layout",
+      "durationMs": 1.261,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "Commit",
+      "durationMs": 1.195,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "FireAnimationFrame",
+      "durationMs": 0.88,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "FunctionCall",
+      "durationMs": 0.872,
+      "type": null,
+      "functionName": "",
+      "url": "",
+      "lineNumber": 26,
+      "columnNumber": 33
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "durationMs": 0.779,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    },
+    {
+      "name": "PrePaint",
+      "durationMs": 0.776,
+      "type": null,
+      "functionName": null,
+      "url": null,
+      "lineNumber": null,
+      "columnNumber": null
+    }
+  ]
+}
