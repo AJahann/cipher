@@ -9,13 +9,20 @@ export interface SidebarUser {
 export interface SidebarProps {
   users: SidebarUser[];
   activeUserId?: string | null;
+  pendingUserId?: string | null;
+  errorMessage?: string | null;
   onSelect: (userId: string) => void;
 }
 
-export function Sidebar({ users, activeUserId, onSelect }: SidebarProps) {
+export function Sidebar({
+  users,
+  activeUserId,
+  pendingUserId,
+  errorMessage,
+  onSelect,
+}: SidebarProps) {
   return (
     <aside className='flex w-60 flex-shrink-0 flex-col border-r border-[var(--cipher-border)] bg-[var(--cipher-surface)]'>
-      {/* top bar */}
       <div className='flex items-center gap-2 border-b border-[var(--cipher-border)] px-4 py-3.5'>
         <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--cipher-accent)]' />
         <span className='font-[var(--cipher-font-mono)] text-[12px] tracking-[0.08em] text-[var(--cipher-accent)]'>
@@ -27,6 +34,11 @@ export function Sidebar({ users, activeUserId, onSelect }: SidebarProps) {
         <p className='font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]'>
           conversations
         </p>
+        {errorMessage && (
+          <p role='alert' className='mt-2 text-[10px] text-red-400'>
+            {errorMessage}
+          </p>
+        )}
       </div>
 
       <div className='flex-1 overflow-y-auto scrollbar-track-transparent scrollbar-thumb-accent-dim'>
@@ -41,6 +53,8 @@ export function Sidebar({ users, activeUserId, onSelect }: SidebarProps) {
               id={u.id}
               username={u.username}
               isActive={u.id === activeUserId}
+              disabled={Boolean(pendingUserId)}
+              isPending={u.id === pendingUserId}
               onClick={() => onSelect(u.id)}
             />
           ))
