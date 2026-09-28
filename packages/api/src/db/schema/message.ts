@@ -3,19 +3,27 @@ import { relations } from 'drizzle-orm';
 import { conversations } from './conversation';
 import { users } from './user';
 
-export const messages = pgTable('messages', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  conversationId: uuid('conversation_id')
-    .notNull()
-    .references(() => conversations.id, { onDelete: 'cascade' }),
-  senderId: uuid('sender_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  ciphertext: text('ciphertext').notNull(),
-  nonce: text('nonce').notNull(),
-  algorithm: text('algorithm').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+export const messages = pgTable(
+  'messages',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    /** Stable client command ID. Retries must reuse this value. */
+    clientMessageId: uuid('client_message_id').notNull(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    senderId: uuid('sender_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    ciphertext: text('ciphertext').notNull(),
+    nonce: text('nonce').notNull(),
+    algorithm: text('algorithm').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => ({
+    clientCommandUniq: unique().on(t.senderId, t.clientMessageId),
+  }),
+);
 
 export const messageReads = pgTable(
   'message_reads',
