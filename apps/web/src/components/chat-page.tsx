@@ -29,7 +29,7 @@ type PendingMessage = {
   id: string;
   text: string;
   time: string;
-  status: 'sending' | 'failed';
+  status: 'sending' | 'sent' | 'failed';
   payload: SendMessageData;
 };
 
@@ -84,6 +84,7 @@ export function ChatPage({
               );
               return {
                 id: m.id,
+                clientMessageId: m.clientMessageId,
                 senderId: m.senderId,
                 text: plain,
                 time: formatTime(m.createdAt),
@@ -110,6 +111,20 @@ export function ChatPage({
     };
   }, [isLoading, messages, myId, receiverKey?.publicKey]);
 
+  useEffect(() => {
+    const confirmedIds = new Set(
+      decrypted
+        .map((message) => message.clientMessageId)
+        .filter((id): id is string => Boolean(id)),
+    );
+    if (confirmedIds.size === 0) return;
+
+    setPending((current) => {
+      const next = current.filter((item) => !confirmedIds.has(item.id));
+      return next.length === current.length ? current : next;
+    });
+  }, [decrypted]);
+
   async function deliver(item: PendingMessage) {
     setComposerError(null);
     setPending((current) =>
@@ -122,10 +137,14 @@ export function ChatPage({
 
     try {
       await sendMessage(item.payload);
-      await qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
       setPending((current) =>
-        current.filter((candidate) => candidate.id !== item.id),
+        current.map((candidate) =>
+          candidate.id === item.id
+            ? { ...candidate, status: 'sent' }
+            : candidate,
+        ),
       );
+      void qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'FAILED_TO_SEND';
       setComposerError(message);
@@ -151,13 +170,13 @@ export function ChatPage({
         receiverKeyRaw,
         senderPrivateKeyRaw,
       );
-      const tempId = crypto.randomUUID();
+      const clientMessageId = crypto.randomUUID();
       const item: PendingMessage = {
-        id: tempId,
+        id: clientMessageId,
         text,
         time: formatTime(new Date()),
         status: 'sending',
-        payload: { tempId, conversationId, ...ciphertext },
+        payload: { clientMessageId, conversationId, ...ciphertext },
       };
 
       setPending((current) => [...current, item]);
@@ -174,10 +193,20 @@ export function ChatPage({
     else typingStop(conversationId);
   }
 
+  const confirmedIds = new Set(
+    decrypted
+      .map((message) => message.clientMessageId)
+      .filter((id): id is string => Boolean(id)),
+  );
+  const visiblePending = pending.filter(
+    (item) => !confirmedIds.has(item.id),
+  );
+
   const visibleMessages: DecryptedMessage[] = [
     ...decrypted,
-    ...pending.map((item) => ({
+    ...visiblePending.map((item) => ({
       id: item.id,
+      clientMessageId: item.id,
       senderId: myId,
       text: item.text,
       time: item.time,

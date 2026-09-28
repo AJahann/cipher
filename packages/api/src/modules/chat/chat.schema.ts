@@ -12,7 +12,7 @@ export const getMessagesSchema = z.object({
 
 export const sendMessageSchema = z.object({
   /** Stable idempotency key generated once per logical message. */
-  tempId: z.string().uuid(),
+  clientMessageId: z.string().uuid(),
   conversationId: z.string().uuid(),
   ciphertext: z.string().min(1),
   nonce: z.string().min(1),

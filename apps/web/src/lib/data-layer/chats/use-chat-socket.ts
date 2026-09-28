@@ -11,7 +11,10 @@ const SEND_ACK_TIMEOUT_MS = 8_000;
 
 interface ServerToClientEvents {
   'message:new': (message: MessagePayload) => void;
-  'message:ack': (data: { tempId: string; message: MessagePayload }) => void;
+  'message:ack': (data: {
+    clientMessageId: string;
+    message: MessagePayload;
+  }) => void;
   'conversation:updated': (data: {
     conversationId: string;
     message: MessagePayload;
@@ -42,7 +45,7 @@ type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 export interface SendMessageData {
   /** Stable idempotency key. Retry this exact payload with the same value. */
-  tempId: string;
+  clientMessageId: string;
   conversationId: string;
   ciphertext: string;
   nonce: string;
@@ -218,8 +221,8 @@ function useMessageCacheWriters() {
     [qc],
   );
 
-  const replaceTemp = useCallback(
-    (tempId: string, message: MessagePayload) => {
+  const replacePending = useCallback(
+    (clientMessageId: string, message: MessagePayload) => {
       const queries = qc.getQueriesData<Message[]>({
         queryKey: chatKeys.messagesRoot(),
       });
@@ -228,24 +231,27 @@ function useMessageCacheWriters() {
         if (!data) return;
         const params = key[2] as MessagesQueryParams | undefined;
         if (params?.conversationId !== message.conversationId) return;
-        if (!data.some((m) => m.id === tempId)) return;
+        if (!data.some((m) => m.clientMessageId === clientMessageId)) return;
         qc.setQueryData(
           key,
-          data.map((m) => (m.id === tempId ? message : m)),
+          data.map((m) =>
+            m.clientMessageId === clientMessageId ? message : m,
+          ),
         );
       });
     },
     [qc],
   );
 
-  return { upsertMessage, replaceTemp };
+  return { upsertMessage, replacePending };
 }
 
 export function useChatRealtimeMessages() {
-  const { upsertMessage, replaceTemp } = useMessageCacheWriters();
+  const { upsertMessage, replacePending } = useMessageCacheWriters();
   useChatSocketEvents({
     'message:new': upsertMessage,
-    'message:ack': ({ tempId, message }) => replaceTemp(tempId, message),
+    'message:ack': ({ clientMessageId, message }) =>
+      replacePending(clientMessageId, message),
   });
 }
 

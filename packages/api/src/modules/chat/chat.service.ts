@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { db } from '../../db';
 import {
   messages,
@@ -10,34 +9,6 @@ import { eq, lt, and, desc, sql, inArray } from 'drizzle-orm';
 
 function directConversationKey(memberIds: string[]) {
   return `dm:${[...memberIds].sort().join(':')}`;
-}
-
-function messageCommandId(data: {
-  senderId: string;
-  conversationId: string;
-  ciphertext: string;
-  nonce: string;
-  algorithm: string;
-}) {
-  const hex = createHash('sha256')
-    .update(data.senderId)
-    .update('\0')
-    .update(data.conversationId)
-    .update('\0')
-    .update(data.ciphertext)
-    .update('\0')
-    .update(data.nonce)
-    .update('\0')
-    .update(data.algorithm)
-    .digest('hex')
-    .slice(0, 32)
-    .split('');
-
-  // Format the deterministic digest as an RFC 4122-compatible UUID.
-  hex[12] = '5';
-  hex[16] = ((Number.parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
-  const value = hex.join('');
-  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
 }
 
 export const chatService = {
@@ -139,7 +110,7 @@ export const chatService = {
   },
 
   async sendMessage(data: {
-    clientMessageId?: string;
+    clientMessageId: string;
     conversationId: string;
     senderId: string;
     ciphertext: string;
@@ -154,12 +125,9 @@ export const chatService = {
     });
     if (!membership) throw new Error('FORBIDDEN');
 
-    const clientMessageId = data.clientMessageId ?? messageCommandId(data);
-    const values = { ...data, clientMessageId };
-
     const [inserted] = await db
       .insert(messages)
-      .values(values)
+      .values(data)
       .onConflictDoNothing({
         target: [messages.senderId, messages.clientMessageId],
       })
@@ -170,7 +138,7 @@ export const chatService = {
     const existing = await db.query.messages.findFirst({
       where: and(
         eq(messages.senderId, data.senderId),
-        eq(messages.clientMessageId, clientMessageId),
+        eq(messages.clientMessageId, data.clientMessageId),
       ),
     });
 

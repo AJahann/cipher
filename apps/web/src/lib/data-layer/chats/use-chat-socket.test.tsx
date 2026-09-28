@@ -7,9 +7,8 @@ const { fakeSocket, ioMock } = vi.hoisted(() => {
   type Listener = (...args: unknown[]) => void;
 
   const listeners = new Map<string, Set<Listener>>();
-
   const socket = {
-    connected: false,
+    connected: true,
     on: vi.fn((event: string, listener: Listener) => {
       const eventListeners = listeners.get(event) ?? new Set<Listener>();
       eventListeners.add(listener);
@@ -39,10 +38,23 @@ vi.mock(import('socket.io-client'), () => ({
 }));
 
 // oxlint-disable-next-line import/first -- Vitest hoists this mock before the module import.
-import { useChatRealtimeSync } from './use-chat-socket';
+import {
+  useChatRealtimeSync,
+  useChatSocketActions,
+  type SendMessageData,
+} from './use-chat-socket';
 
-describe(useChatRealtimeSync, () => {
+const payload: SendMessageData = {
+  clientMessageId: '44444444-4444-4444-8444-444444444444',
+  conversationId: '33333333-3333-4333-8333-333333333333',
+  ciphertext: 'ciphertext-a',
+  nonce: 'nonce-a',
+  algorithm: 'x25519-xsalsa20-poly1305',
+};
+
+describe('chat socket hooks', () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -69,5 +81,47 @@ describe(useChatRealtimeSync, () => {
     });
 
     expect(invalidateQueries).toHaveBeenCalledOnce();
+  });
+
+  it('rejects an unacknowledged send after the bounded timeout', async () => {
+    vi.useFakeTimers();
+    const { result } = renderHook(() => useChatSocketActions(), {
+      wrapper: makeWrapper(makeClient()),
+    });
+
+    const send = result.current.sendMessage(payload);
+    const rejection = expect(send).rejects.toThrow('MESSAGE_ACK_TIMEOUT');
+
+    await vi.advanceTimersByTimeAsync(8_000);
+    await rejection;
+  });
+
+  it('retries with the original client key and encrypted payload', async () => {
+    fakeSocket.emit.mockImplementation(
+      (event: string, data: SendMessageData, ack?: (value: unknown) => void) => {
+        if (event === 'message:send') {
+          ack?.({ ok: false, error: 'FAILED_TO_SEND' });
+        }
+        return fakeSocket;
+      },
+    );
+
+    const { result } = renderHook(() => useChatSocketActions(), {
+      wrapper: makeWrapper(makeClient()),
+    });
+
+    await expect(result.current.sendMessage(payload)).rejects.toThrow(
+      'FAILED_TO_SEND',
+    );
+    await expect(result.current.sendMessage(payload)).rejects.toThrow(
+      'FAILED_TO_SEND',
+    );
+
+    const sends = fakeSocket.emit.mock.calls.filter(
+      ([event]) => event === 'message:send',
+    );
+    expect(sends).toHaveLength(2);
+    expect(sends[0][1]).toEqual(payload);
+    expect(sends[1][1]).toEqual(payload);
   });
 });
