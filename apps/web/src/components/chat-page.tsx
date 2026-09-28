@@ -74,7 +74,7 @@ export function ChatPage({
         }
 
         const out = await Promise.all(
-          (messages ?? []).map(async (m) => {
+          (messages ?? []).map(async (m): Promise<DecryptedMessage | null> => {
             try {
               const plain = await E2EEncryption.decryptMessage(
                 m.ciphertext,
@@ -88,7 +88,7 @@ export function ChatPage({
                 text: plain,
                 time: formatTime(m.createdAt),
                 isMine: m.senderId === myId,
-                deliveryStatus: 'sent' as const,
+                deliveryStatus: 'sent',
               };
             } catch {
               return null;
