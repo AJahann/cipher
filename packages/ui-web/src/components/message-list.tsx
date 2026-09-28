@@ -21,7 +21,7 @@ export function MessageList({
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: 'auto' });
   }, [messages]);
 
   if (messages.length === 0) {

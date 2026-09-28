@@ -1,0 +1,204 @@
+{
+  "experiment": {
+    "interaction": "Activate Send message → pending bubble painted",
+    "browser": "Chromium 153.0.8010.12",
+    "build": "Next.js production build",
+    "hardware": "host hardware; 4x CPU throttling",
+    "messageCountBeforeEachRun": 0,
+    "cache": "warm browser HTTP cache; fresh page and React state per run",
+    "network": "unthrottled localhost fixture; ack delayed 250 ms",
+    "startMark": "capturing click event on the Send message button",
+    "endMark": "second requestAnimationFrame after the message paragraph enters the DOM",
+    "repetitions": 20,
+    "strictMode": "production build; development Strict Mode timings excluded"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "durationMs": 17.699999999953434,
+      "taskMs": 74.77400000000011,
+      "scriptMs": 14.701999999999993,
+      "layoutMs": 1.251000000000002,
+      "styleMs": 10.102999999999994
+    },
+    {
+      "run": 2,
+      "durationMs": 22.599999999976717,
+      "taskMs": 57.50299999999986,
+      "scriptMs": 14.223999999999986,
+      "layoutMs": 2.012,
+      "styleMs": 11.005
+    },
+    {
+      "run": 3,
+      "durationMs": 17.5,
+      "taskMs": 43.30199999999995,
+      "scriptMs": 6.684999999999997,
+      "layoutMs": 1.15,
+      "styleMs": 10.92
+    },
+    {
+      "run": 4,
+      "durationMs": 17.300000000046566,
+      "taskMs": 37.356999999999864,
+      "scriptMs": 4.876000000000019,
+      "layoutMs": 1.0139999999999993,
+      "styleMs": 6.293
+    },
+    {
+      "run": 5,
+      "durationMs": 20.900000000023283,
+      "taskMs": 35.72199999999981,
+      "scriptMs": 10.846999999999996,
+      "layoutMs": 0.893999999999999,
+      "styleMs": 5.139000000000001
+    },
+    {
+      "run": 6,
+      "durationMs": 19.400000000023283,
+      "taskMs": 34.3,
+      "scriptMs": 9.446999999999983,
+      "layoutMs": 1.4679999999999989,
+      "styleMs": 2.111999999999999
+    },
+    {
+      "run": 7,
+      "durationMs": 36.5,
+      "taskMs": 40.907999999999944,
+      "scriptMs": 4.3799999999999955,
+      "layoutMs": 1.2359999999999993,
+      "styleMs": 5.192999999999996
+    },
+    {
+      "run": 8,
+      "durationMs": 15.599999999976717,
+      "taskMs": 44.783000000000015,
+      "scriptMs": 8.396999999999988,
+      "layoutMs": 1.7770000000000008,
+      "styleMs": 4.25
+    },
+    {
+      "run": 9,
+      "durationMs": 20.79999999993015,
+      "taskMs": 44.84699999999986,
+      "scriptMs": 12.546000000000001,
+      "layoutMs": 1.1129999999999993,
+      "styleMs": 5.062
+    },
+    {
+      "run": 10,
+      "durationMs": 20.29999999993015,
+      "taskMs": 35.53200000000012,
+      "scriptMs": 7.104000000000027,
+      "layoutMs": 0.8840000000000011,
+      "styleMs": 6.967999999999995
+    },
+    {
+      "run": 11,
+      "durationMs": 23,
+      "taskMs": 39.058999999999955,
+      "scriptMs": 10.241,
+      "layoutMs": 0.7810000000000005,
+      "styleMs": 3.6740000000000004
+    },
+    {
+      "run": 12,
+      "durationMs": 18.29999999993015,
+      "taskMs": 35.92800000000018,
+      "scriptMs": 4.258999999999985,
+      "layoutMs": 3.7490000000000006,
+      "styleMs": 4.610999999999997
+    },
+    {
+      "run": 13,
+      "durationMs": 18.29999999993015,
+      "taskMs": 37.46300000000002,
+      "scriptMs": 5.896999999999986,
+      "layoutMs": 1.1090000000000007,
+      "styleMs": 5.144000000000003
+    },
+    {
+      "run": 14,
+      "durationMs": 16.199999999953434,
+      "taskMs": 30.006999999999895,
+      "scriptMs": 6.5570000000000075,
+      "layoutMs": 1.2010000000000007,
+      "styleMs": 3.2290000000000028
+    },
+    {
+      "run": 15,
+      "durationMs": 17.900000000023283,
+      "taskMs": 57.42899999999995,
+      "scriptMs": 14.07999999999998,
+      "layoutMs": 0.4040000000000016,
+      "styleMs": 7.151999999999998
+    },
+    {
+      "run": 16,
+      "durationMs": 13.79999999993015,
+      "taskMs": 45.260999999999996,
+      "scriptMs": 9.459999999999996,
+      "layoutMs": 1.0360000000000005,
+      "styleMs": 6.361000000000006
+    },
+    {
+      "run": 17,
+      "durationMs": 18.099999999976717,
+      "taskMs": 40.18699999999997,
+      "scriptMs": 9.753999999999985,
+      "layoutMs": 1.0929999999999984,
+      "styleMs": 7.671999999999998
+    },
+    {
+      "run": 18,
+      "durationMs": 19.5,
+      "taskMs": 48.44900000000018,
+      "scriptMs": 5.878999999999968,
+      "layoutMs": 0.27800000000000047,
+      "styleMs": 7.682000000000001
+    },
+    {
+      "run": 19,
+      "durationMs": 13.599999999976717,
+      "taskMs": 49.79100000000014,
+      "scriptMs": 7.197000000000009,
+      "layoutMs": 1.1920000000000004,
+      "styleMs": 9.813000000000002
+    },
+    {
+      "run": 20,
+      "durationMs": 15.599999999976717,
+      "taskMs": 56.45300000000009,
+      "scriptMs": 12.316999999999966,
+      "layoutMs": 3.526,
+      "styleMs": 4.091999999999999
+    }
+  ],
+  "summary": {
+    "durationMs": {
+      "p50": 18.099999999976717,
+      "p95": 23,
+      "worst": 36.5
+    },
+    "taskMs": {
+      "p50": 40.907999999999944,
+      "p95": 57.50299999999986,
+      "worst": 74.77400000000011
+    },
+    "scriptMs": {
+      "p50": 8.396999999999988,
+      "p95": 14.223999999999986,
+      "worst": 14.701999999999993
+    },
+    "layoutMs": {
+      "p50": 1.1129999999999993,
+      "p95": 3.526,
+      "worst": 3.7490000000000006
+    },
+    "styleMs": {
+      "p50": 5.192999999999996,
+      "p95": 10.92,
+      "worst": 11.005
+    }
+  }
+}
