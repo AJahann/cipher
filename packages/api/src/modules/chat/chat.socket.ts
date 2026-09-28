@@ -10,7 +10,10 @@ import { userService } from '../user/user.service';
 
 interface ServerToClientEvents {
   'message:new': (message: MessagePayload) => void;
-  'message:ack': (data: { tempId: string; message: MessagePayload }) => void;
+  'message:ack': (data: {
+    clientMessageId: string;
+    message: MessagePayload;
+  }) => void;
   'conversation:updated': (data: {
     conversationId: string;
     message: MessagePayload;
@@ -38,7 +41,7 @@ interface ClientToServerEvents {
 }
 
 interface SendMessageData {
-  tempId: string;
+  clientMessageId: string;
   conversationId: string;
   ciphertext: string;
   nonce: string;
@@ -156,7 +159,7 @@ export function registerChatSocket(
         const parsed = sendMessageSchema.parse(data);
 
         const message = await chatService.sendMessage({
-          clientMessageId: parsed.tempId,
+          clientMessageId: parsed.clientMessageId,
           conversationId: parsed.conversationId,
           senderId: userId,
           ciphertext: parsed.ciphertext,
@@ -193,7 +196,7 @@ export function registerChatSocket(
         }
 
         socket.emit('message:ack', {
-          tempId: parsed.tempId,
+          clientMessageId: parsed.clientMessageId,
           message: payload,
         });
         ack({ ok: true });
