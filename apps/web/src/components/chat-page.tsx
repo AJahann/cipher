@@ -170,13 +170,13 @@ export function ChatPage({
         receiverKeyRaw,
         senderPrivateKeyRaw,
       );
-      const tempId = crypto.randomUUID();
+      const clientMessageId = crypto.randomUUID();
       const item: PendingMessage = {
-        id: tempId,
+        id: clientMessageId,
         text,
         time: formatTime(new Date()),
         status: 'sending',
-        payload: { tempId, conversationId, ...ciphertext },
+        payload: { clientMessageId, conversationId, ...ciphertext },
       };
 
       setPending((current) => [...current, item]);
