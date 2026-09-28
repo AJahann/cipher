@@ -29,7 +29,7 @@ type PendingMessage = {
   id: string;
   text: string;
   time: string;
-  status: 'sending' | 'sent' | 'failed';
+  status: 'sending' | 'failed';
   payload: SendMessageData;
 };
 
@@ -110,17 +110,6 @@ export function ChatPage({
     };
   }, [isLoading, messages, myId, receiverKey?.publicKey]);
 
-  useEffect(() => {
-    const confirmed = new Set(
-      (messages ?? [])
-        .map((message) => message.clientMessageId)
-        .filter((id): id is string => Boolean(id)),
-    );
-    if (confirmed.size > 0) {
-      setPending((current) => current.filter((item) => !confirmed.has(item.id)));
-    }
-  }, [messages]);
-
   async function deliver(item: PendingMessage) {
     setComposerError(null);
     setPending((current) =>
@@ -133,14 +122,10 @@ export function ChatPage({
 
     try {
       await sendMessage(item.payload);
-      setPending((current) =>
-        current.map((candidate) =>
-          candidate.id === item.id
-            ? { ...candidate, status: 'sent' }
-            : candidate,
-        ),
-      );
       await qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
+      setPending((current) =>
+        current.filter((candidate) => candidate.id !== item.id),
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'FAILED_TO_SEND';
       setComposerError(message);
