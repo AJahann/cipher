@@ -4,6 +4,7 @@ import { chromium } from '@playwright/test';
 const baseURL = process.env.PERF_WEB_URL ?? 'http://127.0.0.1:3000';
 const repetitions = Number(process.env.PERF_RUNS ?? 20);
 const cpuThrottleRate = Number(process.env.PERF_CPU_THROTTLE ?? 4);
+const traceOutput = process.env.PERF_TRACE_OUTPUT;
 const passphrase = 'cipher-performance-passphrase';
 const message = 'fixed performance message';
 
@@ -22,6 +23,24 @@ function summarize(values) {
 
 function metricMap(result) {
   return Object.fromEntries(result.metrics.map(({ name, value }) => [name, value]));
+}
+
+async function stopTrace(cdp, outputPath) {
+  const completed = new Promise((resolve) => {
+    cdp.once('Tracing.tracingComplete', resolve);
+  });
+  await cdp.send('Tracing.end');
+  const { stream } = await completed;
+  const chunks = [];
+
+  while (true) {
+    const result = await cdp.send('IO.read', { handle: stream });
+    chunks.push(result.data);
+    if (result.eof) break;
+  }
+
+  await cdp.send('IO.close', { handle: stream });
+  await fs.writeFile(outputPath, chunks.join(''));
 }
 
 const browser = await chromium.launch({
@@ -64,6 +83,10 @@ await page.addInitScript(() => {
       if (button?.getAttribute('aria-label') !== 'Send message') return;
 
       const startedAt = performance.now();
+      performance.clearMarks('cipher:send-start');
+      performance.clearMarks('cipher:pending-painted');
+      performance.clearMeasures('cipher:send-to-pending-paint');
+      performance.mark('cipher:send-start');
       const targetText = window.__sendTargetText;
       const observer = new MutationObserver(() => {
         const paintedMessage = [...document.querySelectorAll('p')].find(
@@ -74,6 +97,12 @@ await page.addInitScript(() => {
         observer.disconnect();
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
+            performance.mark('cipher:pending-painted');
+            performance.measure(
+              'cipher:send-to-pending-paint',
+              'cipher:send-start',
+              'cipher:pending-painted',
+            );
             window.__sendPaintMeasurements.push(
               performance.now() - startedAt,
             );
@@ -120,6 +149,20 @@ await page.waitForFunction(() => window.__sendPaintMeasurements.length === 1);
 const runs = [];
 for (let run = 1; run <= repetitions; run += 1) {
   await prepareInteraction();
+  if (traceOutput && run === 1) {
+    await cdp.send('Tracing.start', {
+      categories: [
+        '-*',
+        'blink.user_timing',
+        'devtools.timeline',
+        'disabled-by-default-devtools.timeline',
+        'disabled-by-default-devtools.timeline.frame',
+        'toplevel',
+      ].join(','),
+      options: 'sampling-frequency=10000',
+      transferMode: 'ReturnAsStream',
+    });
+  }
   const before = metricMap(await cdp.send('Performance.getMetrics'));
   await page.getByRole('button', { name: 'Send message' }).click();
   await page.waitForFunction(
@@ -138,6 +181,11 @@ for (let run = 1; run <= repetitions; run += 1) {
     layoutMs: (after.LayoutDuration - before.LayoutDuration) * 1000,
     styleMs: (after.RecalcStyleDuration - before.RecalcStyleDuration) * 1000,
   });
+
+  if (traceOutput && run === 1) {
+    await page.waitForTimeout(300);
+    await stopTrace(cdp, traceOutput);
+  }
 }
 
 const output = {
@@ -153,6 +201,7 @@ const output = {
     endMark: 'second requestAnimationFrame after the message paragraph enters the DOM',
     repetitions,
     strictMode: 'production build; development Strict Mode timings excluded',
+    trace: traceOutput ?? null,
   },
   runs,
   summary: {

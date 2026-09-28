@@ -32,11 +32,40 @@ Chrome's Performance-domain counters showed that the milestone was local main-th
 - layout: p50 **1.2 ms**, p95 **3.5 ms**;
 - no HTTP response or Socket.IO acknowledgement gates the pending bubble.
 
-`MessageList` started a smooth `scrollIntoView` effect for every new `messages` array, including the first optimistic bubble. That adds animated scroll/style work directly inside the measured paint path. The dominant cost was browser main-thread scripting and rendering; network was not on the critical path.
+`MessageList` starts `scrollIntoView` for every new `messages` array, including the first optimistic bubble. That made scroll behavior a candidate, but aggregate counters alone cannot attribute the measured time to that call. The counters establish only that browser main-thread scripting and rendering—not network—were on the critical path.
+
+## Chrome Performance traces
+
+One baseline and one after trace were captured with the same production fixture, browser, 4× CPU throttling, warm-up, and milestone. The runner emits `cipher:send-start` and `cipher:pending-painted` User Timing marks. The committed traces are compact slices spanning those marks, with a 2 ms margin:
+
+- `perf/traces/send-message-before.trace.json`
+- `perf/traces/send-message-after.trace.json`
+
+They can be loaded in Chrome's trace viewer or analyzed reproducibly with:
+
+```bash
+node perf/analyze-send-message-trace.mjs \
+  perf/traces/send-message-before.trace.json \
+  perf/traces/send-message-after.trace.json
+```
+
+| Main-thread event inside marked window | Baseline trace | After trace |
+|---|---:|---:|
+| Marked interaction window | 12.851 ms | 23.919 ms |
+| Longest `click` `EventDispatch` | 8.187 ms | 11.799 ms |
+| Longest nested `FunctionCall` | 4.942 ms | 10.710 ms |
+| `UpdateLayoutTree` total | 2.454 ms | 3.070 ms |
+| Longest `UpdateLayoutTree` | 2.264 ms | 1.804 ms |
+| `Layout` total | 0.297 ms | 1.261 ms |
+| `Paint` total | 0.286 ms | 0.361 ms |
+| Task over 50 ms | none | none |
+| Named scroll event | none | none |
+
+The baseline trace's actual longest work is the click dispatch and its nested JavaScript function, followed by style-tree update. It does **not** contain a named scroll event that causally attributes that work to `scrollIntoView`. The representative after trace is slower, not faster. These paired traces therefore do not prove that changing smooth scrolling caused the 20-run interaction-p95 movement.
 
 ## Targeted correction
 
-Changed the message-list auto-scroll from `behavior: 'smooth'` to `behavior: 'auto'`. The list still reaches the newest message, but it no longer schedules a smooth-scroll animation on each realtime or optimistic update.
+Changed the message-list auto-scroll from `behavior: 'smooth'` to `behavior: 'auto'`. The list still reaches the newest message and the 20-run interaction sample had a lower p95. The paired traces do not establish a causal performance improvement from this line, so the change and result are reported without stronger attribution.
 
 No memoization, virtualization, dynamic import, or unrelated state refactor was added.
 
@@ -71,13 +100,16 @@ No memoization, virtualization, dynamic import, or unrelated state refactor was 
 p50: 17.6 ms → 18.1 ms
 p95: 29.8 ms → 23.0 ms
 worst run: 38.0 ms → 36.5 ms
-dominant cost: main-thread scripting + smooth-scroll/style work → main-thread scripting; style tail reduced
+dominant traced work: click dispatch / nested JavaScript in both captures; causal attribution remains limited
 ```
 
 - p50 changed by **+0.5 ms (+2.8%)**: effectively unchanged and not claimed as a win.
-- p95 improved by **6.8 ms (22.8%)**.
+- Interaction p95 improved by **6.8 ms (22.8%) in this 20-run lab sample**.
 - worst run improved by **1.5 ms (3.9%)**.
-- Style-recalculation p50 changed from **6.0 ms** to **5.2 ms**; its tail remains noisy, so the claim is limited to the measured interaction distribution above.
+- Style-recalculation p50 changed from **6.0 ms** to **5.2 ms**.
+- Style-recalculation p95 **regressed** from **9.3 ms** to **10.9 ms**.
+- Style-recalculation worst sample changed from **13.7 ms** to **11.0 ms**.
+- Because style p95 did not improve and the representative after trace was slower, there is no supported claim that the correction reduced the style tail or caused the interaction-p95 change.
 
 ## Disproved attempt
 
