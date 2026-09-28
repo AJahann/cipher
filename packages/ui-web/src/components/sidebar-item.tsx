@@ -4,12 +4,16 @@ export interface SidebarItemProps {
   id: string;
   username: string;
   isActive?: boolean;
+  disabled?: boolean;
+  isPending?: boolean;
   onClick: () => void;
 }
 
 export function SidebarItem({
   username,
   isActive = false,
+  disabled = false,
+  isPending = false,
   onClick,
 }: SidebarItemProps) {
   const initials = username.slice(0, 2).toUpperCase();
@@ -17,9 +21,11 @@ export function SidebarItem({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
+      aria-busy={isPending}
       className={[
         'flex w-full items-center gap-3 px-4 py-3 text-left',
-        'transition-colors duration-100',
+        'transition-colors duration-100 disabled:cursor-wait disabled:opacity-60',
         isActive
           ? 'bg-[var(--cipher-surface-2)] border-l-2 border-l-[var(--cipher-accent)]'
           : 'border-l-2 border-l-transparent hover:bg-[var(--cipher-surface-2)]',
@@ -31,7 +37,7 @@ export function SidebarItem({
         </span>
       </div>
       <span className='truncate font-[var(--cipher-font-sans)] text-[13px] text-[var(--cipher-text)]'>
-        {username}
+        {isPending ? `${username} · opening…` : username}
       </span>
     </button>
   );

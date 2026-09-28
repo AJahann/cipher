@@ -12,6 +12,8 @@ export interface User {
 
 export interface Message {
   id: string;
+  /** Stable client-generated command ID used to make sends idempotent. */
+  clientMessageId?: string;
   conversationId: string;
   senderId: string;
   ciphertext: string;
@@ -35,6 +37,7 @@ export interface ConversationMember {
 }
 
 export interface SendMessagePayload {
+  clientMessageId: string;
   conversationId: string;
   ciphertext: string;
   nonce: string;

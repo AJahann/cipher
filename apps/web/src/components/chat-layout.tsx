@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { ChatPage } from './chat-page';
 import { useMe, useUsersList } from '@/lib/data-layer/user';
@@ -17,26 +17,36 @@ export default function ChatLayout() {
   const { data: users = [] } = useUsersList();
 
   const createConversation = useCreateConversation();
-  const [activeConversationId, setActiveConversationId] = useState<
-    string | null
-  >(null);
+  const selectInFlight = useRef(false);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [activeReceiverId, setActiveReceiverId] = useState<string | null>(null);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
 
   const socket = useChatSocket();
   const { joinConversation } = useChatSocketActions();
-
-  // Mounted here rather than inside ChatPage: ChatPage only renders once a
-  // conversation is selected, so a user on the empty state would otherwise have
-  // no listeners and would miss new contacts and incoming messages entirely.
   useChatRealtimeSync();
 
   async function handleSelectUser(receiverId: string) {
-    const created = await createConversation.mutateAsync({
-      memberId: receiverId,
-    });
-    setActiveConversationId(created.id);
-    setActiveReceiverId(receiverId);
-    joinConversation?.(created.id);
+    if (selectInFlight.current) return;
+    selectInFlight.current = true;
+    setPendingUserId(receiverId);
+    setSelectionError(null);
+
+    try {
+      const created = await createConversation.mutateAsync({
+        memberId: receiverId,
+      });
+      setActiveConversationId(created.id);
+      setActiveReceiverId(receiverId);
+      joinConversation(created.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to open conversation';
+      setSelectionError(message);
+    } finally {
+      selectInFlight.current = false;
+      setPendingUserId(null);
+    }
   }
 
   return (
@@ -45,6 +55,8 @@ export default function ChatLayout() {
         <Sidebar
           users={users}
           activeUserId={activeReceiverId}
+          pendingUserId={pendingUserId}
+          errorMessage={selectionError}
           onSelect={handleSelectUser}
         />
       }
@@ -55,7 +67,7 @@ export default function ChatLayout() {
             conversationId={activeConversationId}
             receiverId={activeReceiverId}
             myId={me.id}
-            isConnected={socket?.connected ?? false}
+            isConnected={socket.connected}
           />
         ) : (
           <EmptyState />

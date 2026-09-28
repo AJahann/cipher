@@ -7,12 +7,16 @@ export interface MessageListProps {
   messages: DecryptedMessage[];
   loadingMessage: string;
   isLoading: boolean;
+  isError?: boolean;
+  onRetryMessage?: (id: string) => void;
 }
 
 export function MessageList({
   messages,
   loadingMessage,
   isLoading,
+  isError = false,
+  onRetryMessage,
 }: MessageListProps) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
@@ -23,10 +27,15 @@ export function MessageList({
   if (messages.length === 0) {
     return (
       <div className='flex flex-1 items-center justify-center'>
-        <p className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
+        <p
+          role={isError ? 'alert' : undefined}
+          className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'
+        >
           {isLoading
             ? loadingMessage
-            : '// no messages yet · send the first one'}
+            : isError
+              ? '// messages could not be loaded · refresh to retry'
+              : '// no messages yet · send the first one'}
         </p>
       </div>
     );
@@ -34,8 +43,21 @@ export function MessageList({
 
   return (
     <div className='flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4'>
+      {isError && (
+        <p role='alert' className='text-center text-[11px] text-red-400'>
+          Could not refresh messages. Showing cached messages.
+        </p>
+      )}
       {messages.map((msg) => (
-        <MessageBubble key={msg.id} msg={msg} />
+        <MessageBubble
+          key={msg.id}
+          msg={msg}
+          onRetry={
+            msg.deliveryStatus === 'failed'
+              ? () => onRetryMessage?.(msg.id)
+              : undefined
+          }
+        />
       ))}
       <div ref={bottomRef} />
     </div>
