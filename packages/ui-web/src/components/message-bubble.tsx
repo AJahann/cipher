@@ -6,21 +6,19 @@ export interface DecryptedMessage {
   text: string;
   time: string;
   isMine: boolean;
+  deliveryStatus?: 'sending' | 'sent' | 'failed';
 }
 
 export interface MessageBubbleProps {
   msg: DecryptedMessage;
+  onRetry?: () => void;
 }
 
-export function MessageBubble({ msg }: MessageBubbleProps) {
-  const { isMine, senderId, text, time } = msg;
+export function MessageBubble({ msg, onRetry }: MessageBubbleProps) {
+  const { isMine, senderId, text, time, deliveryStatus } = msg;
 
   return (
-    <div
-      className={['flex items-end gap-2', isMine ? 'justify-end' : ''].join(
-        ' ',
-      )}
-    >
+    <div className={['flex items-end gap-2', isMine ? 'justify-end' : ''].join(' ')}>
       {!isMine && (
         <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-[var(--cipher-border)] bg-[var(--cipher-surface-2)]'>
           <span className='font-[var(--cipher-font-mono)] text-[9px] text-[var(--cipher-muted)]'>
@@ -35,19 +33,32 @@ export function MessageBubble({ msg }: MessageBubbleProps) {
           isMine
             ? 'rounded-br-sm bg-[var(--cipher-accent)] text-white'
             : 'rounded-bl-sm border border-[var(--cipher-border)] bg-[var(--cipher-surface-2)] text-[var(--cipher-text)]',
+          deliveryStatus === 'failed' ? 'ring-1 ring-red-400' : '',
+          deliveryStatus === 'sending' ? 'opacity-70' : '',
         ].join(' ')}
       >
         <p className='font-[var(--cipher-font-sans)] text-[13px] leading-relaxed'>
           {text}
         </p>
-        <p
-          className={[
-            'mt-1 text-right font-[var(--cipher-font-mono)] text-[10px]',
-            isMine ? 'text-white/60' : 'text-[var(--cipher-muted)]',
-          ].join(' ')}
-        >
-          {time}
-        </p>
+        <div className='mt-1 flex items-center justify-end gap-2'>
+          {isMine && deliveryStatus && (
+            <span className='font-[var(--cipher-font-mono)] text-[9px] text-white/60'>
+              {deliveryStatus}
+            </span>
+          )}
+          <span className='font-[var(--cipher-font-mono)] text-[10px] text-white/60'>
+            {time}
+          </span>
+          {deliveryStatus === 'failed' && onRetry && (
+            <button
+              type='button'
+              onClick={onRetry}
+              className='font-[var(--cipher-font-mono)] text-[10px] underline'
+            >
+              retry
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
