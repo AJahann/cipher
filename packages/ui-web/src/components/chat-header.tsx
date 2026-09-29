@@ -85,7 +85,7 @@ export function ChatHeader({ title = 'Chat', isConnected }: ChatHeaderProps) {
           closeShortcuts();
         }}
         onKeyDown={trapFocus}
-        className='w-[min(28rem,calc(100%-2rem))] rounded-xl border border-[var(--cipher-border)] bg-[var(--cipher-surface)] p-0 text-[var(--cipher-text)] shadow-2xl backdrop:bg-black/70'
+        className='m-auto w-[min(28rem,calc(100%-2rem))] rounded-xl border border-[var(--cipher-border)] bg-[var(--cipher-surface)] p-0 text-[var(--cipher-text)] shadow-2xl backdrop:bg-black/70'
       >
         <div className='p-5'>
           <div className='flex items-start gap-4'>
