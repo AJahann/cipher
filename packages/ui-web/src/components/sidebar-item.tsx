@@ -23,8 +23,10 @@ export function SidebarItem({
       onClick={onClick}
       disabled={disabled}
       aria-busy={isPending}
+      aria-pressed={isActive}
       className={[
         'flex w-full items-center gap-3 px-4 py-3 text-left',
+        'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--cipher-accent)]',
         'transition-colors duration-100 disabled:cursor-wait disabled:opacity-60',
         isActive
           ? 'bg-[var(--cipher-surface-2)] border-l-2 border-l-[var(--cipher-accent)]'

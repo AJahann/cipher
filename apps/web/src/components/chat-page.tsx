@@ -229,8 +229,13 @@ export function ChatPage({
         }}
       />
       {composerError && (
-        <p role='alert' className='px-4 py-2 text-xs text-red-400'>
+        <p role='status' className='px-4 py-2 text-xs text-red-400'>
           Message not sent: {composerError}. Retry from the message bubble.
+        </p>
+      )}
+      {!isConnected && (
+        <p role='status' className='sr-only'>
+          Reconnecting. Message sending is temporarily unavailable.
         </p>
       )}
       <ChatInput

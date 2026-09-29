@@ -39,6 +39,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'flex w-full items-center justify-center gap-2',
           'rounded-(--cipher-radius-md) border px-4 py-2.5',
           'font-[var(--cipher-font-sans)] text-[13px]',
+          'outline-none focus-visible:ring-2 focus-visible:ring-[var(--cipher-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--cipher-bg)]',
           'transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed',
           variantClasses[variant],
           className,

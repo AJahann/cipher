@@ -26,7 +26,11 @@ export function ChatInput({
 
   return (
     <div className='flex items-end gap-2 border-t border-[var(--cipher-border)] bg-[var(--cipher-surface)] p-3'>
+      <label htmlFor='message-composer' className='sr-only'>
+        Message
+      </label>
       <textarea
+        id='message-composer'
         rows={1}
         value={value}
         disabled={disabled}
@@ -39,6 +43,7 @@ export function ChatInput({
           'font-[var(--cipher-font-sans)] text-[13px] text-[var(--cipher-text)]',
           'placeholder:text-[var(--cipher-muted)] outline-none',
           'transition-colors focus:border-[var(--cipher-accent-dim)]',
+          'focus-visible:ring-2 focus-visible:ring-[var(--cipher-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--cipher-bg)]',
           'max-h-32 overflow-y-auto disabled:cursor-not-allowed disabled:opacity-60',
         ].join(' ')}
       />
@@ -49,6 +54,7 @@ export function ChatInput({
         className={[
           'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full',
           'bg-[var(--cipher-accent)] text-white transition-all duration-150',
+          'outline-none focus-visible:ring-2 focus-visible:ring-[var(--cipher-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--cipher-bg)]',
           'hover:bg-[var(--cipher-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
         ].join(' ')}
       >
