@@ -14,6 +14,7 @@ function Setup({ onSend = noop }: { onSend?: () => void }) {
 describe(ChatInput, () => {
   it('send button has an accessible name', () => {
     render(<Setup />);
+    expect(screen.getByLabelText('Message')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Send message' }),
     ).toBeInTheDocument();

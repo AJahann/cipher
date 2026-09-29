@@ -22,7 +22,10 @@ export function Sidebar({
   onSelect,
 }: SidebarProps) {
   return (
-    <aside className='flex w-60 flex-shrink-0 flex-col border-r border-[var(--cipher-border)] bg-[var(--cipher-surface)]'>
+    <aside
+      aria-label='Conversations'
+      className='flex w-60 flex-shrink-0 flex-col border-r border-[var(--cipher-border)] bg-[var(--cipher-surface)]'
+    >
       <div className='flex items-center gap-2 border-b border-[var(--cipher-border)] px-4 py-3.5'>
         <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--cipher-accent)]' />
         <span className='font-[var(--cipher-font-mono)] text-[12px] tracking-[0.08em] text-[var(--cipher-accent)]'>
@@ -35,7 +38,7 @@ export function Sidebar({
           conversations
         </p>
         {errorMessage && (
-          <p role='alert' className='mt-2 text-[10px] text-red-400'>
+          <p role='status' className='mt-2 text-[10px] text-red-400'>
             {errorMessage}
           </p>
         )}
@@ -47,17 +50,20 @@ export function Sidebar({
             no users found
           </p>
         ) : (
-          users.map((u) => (
-            <SidebarItem
-              key={u.id}
-              id={u.id}
-              username={u.username}
-              isActive={u.id === activeUserId}
-              disabled={Boolean(pendingUserId)}
-              isPending={u.id === pendingUserId}
-              onClick={() => onSelect(u.id)}
-            />
-          ))
+          <ul>
+            {users.map((u) => (
+              <li key={u.id}>
+                <SidebarItem
+                  id={u.id}
+                  username={u.username}
+                  isActive={u.id === activeUserId}
+                  disabled={Boolean(pendingUserId)}
+                  isPending={u.id === pendingUserId}
+                  onClick={() => onSelect(u.id)}
+                />
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </aside>

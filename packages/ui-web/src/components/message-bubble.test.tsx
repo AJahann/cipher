@@ -23,7 +23,11 @@ describe(MessageBubble, () => {
     );
 
     expect(screen.getAllByText('retry me')).toHaveLength(1);
-    await userEvent.click(screen.getByRole('button', { name: 'retry' }));
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Retry sending message: retry me',
+      }),
+    );
     expect(onRetry).toHaveBeenCalledOnce();
   });
 });

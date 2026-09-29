@@ -54,7 +54,8 @@ export function MessageBubble({ msg, onRetry }: MessageBubbleProps) {
             <button
               type='button'
               onClick={onRetry}
-              className='font-[var(--cipher-font-mono)] text-[10px] underline'
+              aria-label={`Retry sending message: ${text}`}
+              className='rounded font-[var(--cipher-font-mono)] text-[10px] underline outline-none focus-visible:ring-2 focus-visible:ring-white'
             >
               retry
             </button>

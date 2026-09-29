@@ -28,7 +28,7 @@ export function MessageList({
     return (
       <div className='flex flex-1 items-center justify-center'>
         <p
-          role={isError ? 'alert' : undefined}
+          role='status'
           className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'
         >
           {isLoading
@@ -42,9 +42,15 @@ export function MessageList({
   }
 
   return (
-    <div className='flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4'>
+    <div
+      role='log'
+      aria-label='Messages'
+      aria-live='polite'
+      aria-relevant='additions text'
+      className='flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4'
+    >
       {isError && (
-        <p role='alert' className='text-center text-[11px] text-red-400'>
+        <p role='status' className='text-center text-[11px] text-red-400'>
           Could not refresh messages. Showing cached messages.
         </p>
       )}
