@@ -98,7 +98,11 @@ describe('chat socket hooks', () => {
 
   it('retries with the original client key and encrypted payload', async () => {
     fakeSocket.emit.mockImplementation(
-      (event: string, data: SendMessageData, ack?: (value: unknown) => void) => {
+      (
+        event: string,
+        data: SendMessageData,
+        ack?: (value: unknown) => void,
+      ) => {
         if (event === 'message:send') {
           ack?.({ ok: false, error: 'FAILED_TO_SEND' });
         }

@@ -18,7 +18,9 @@ export default function ChatLayout() {
 
   const createConversation = useCreateConversation();
   const selectInFlight = useRef(false);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<
+    string | null
+  >(null);
   const [activeReceiverId, setActiveReceiverId] = useState<string | null>(null);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -41,7 +43,8 @@ export default function ChatLayout() {
       setActiveReceiverId(receiverId);
       joinConversation(created.id);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to open conversation';
+      const message =
+        error instanceof Error ? error.message : 'Unable to open conversation';
       setSelectionError(message);
     } finally {
       selectInFlight.current = false;

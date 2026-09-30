@@ -16,7 +16,9 @@ const testState = vi.hoisted(() => {
         findFirst: vi.fn(async () => messageRows.values().next().value),
       },
     },
-    transaction: vi.fn(async (callback: (tx: unknown) => unknown) => callback(db)),
+    transaction: vi.fn(async (callback: (tx: unknown) => unknown) =>
+      callback(db),
+    ),
     select: vi.fn(() => ({
       from: () => ({
         where: async () => {

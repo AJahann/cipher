@@ -64,7 +64,9 @@ describe(AuthForm, () => {
 
     it('focuses the announced error summary after authentication fails', async () => {
       const user = userEvent.setup();
-      const onLogin = vi.fn().mockRejectedValue(new Error('invalid credentials'));
+      const onLogin = vi
+        .fn()
+        .mockRejectedValue(new Error('invalid credentials'));
       render(<AuthForm onLogin={onLogin} onRegister={resolved} />);
 
       await user.type(screen.getByLabelText('username'), 'ashkan');

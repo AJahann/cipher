@@ -26,7 +26,10 @@ describe(KeyManager, () => {
 describe('private-key wrapping', () => {
   it('unwraps a private key with the same password', async () => {
     const { privateKey } = await E2EEncryption.generateKeyPair();
-    const wrapped = await wrapPrivateKey(privateKey, 'correct horse battery staple');
+    const wrapped = await wrapPrivateKey(
+      privateKey,
+      'correct horse battery staple',
+    );
 
     await expect(
       unwrapPrivateKey(wrapped, 'correct horse battery staple'),

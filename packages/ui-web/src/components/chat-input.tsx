@@ -58,7 +58,13 @@ export function ChatInput({
           'hover:bg-[var(--cipher-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
         ].join(' ')}
       >
-        <svg width='14' height='14' viewBox='0 0 14 14' fill='none' aria-hidden='true'>
+        <svg
+          width='14'
+          height='14'
+          viewBox='0 0 14 14'
+          fill='none'
+          aria-hidden='true'
+        >
           <path d='M12.5 7L1.5 1.5L4 7L1.5 12.5L12.5 7Z' fill='currentColor' />
         </svg>
       </button>

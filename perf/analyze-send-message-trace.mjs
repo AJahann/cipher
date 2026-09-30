@@ -38,7 +38,8 @@ for (const tracePath of tracePaths) {
   );
   const start = marks['cipher:send-start'];
   const end = marks['cipher:pending-painted'];
-  if (!start || !end) throw new Error(`Missing milestone marks in ${tracePath}`);
+  if (!start || !end)
+    throw new Error(`Missing milestone marks in ${tracePath}`);
 
   const mainThread = [start.pid, start.tid];
   const inWindow = events.filter(
@@ -53,8 +54,7 @@ for (const tracePath of tracePaths) {
     eventNames.map((name) => {
       const matches = inWindow.filter((event) => event.name === name);
       const durations = matches.map(
-        (event) =>
-          clippedDuration(event, start.ts, end.ts) / 1000,
+        (event) => clippedDuration(event, start.ts, end.ts) / 1000,
       );
       return [
         name,
@@ -74,8 +74,7 @@ for (const tracePath of tracePaths) {
     )
     .map((event) => ({
       name: event.name,
-      durationMs:
-        clippedDuration(event, start.ts, end.ts) / 1000,
+      durationMs: clippedDuration(event, start.ts, end.ts) / 1000,
       type: event.args?.data?.type ?? null,
       functionName: event.args?.data?.functionName ?? null,
       url: event.args?.data?.url ?? null,

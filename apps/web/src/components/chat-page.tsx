@@ -46,8 +46,11 @@ export function ChatPage({
 }) {
   const qc = useQueryClient();
   const { sendMessage, typingStart, typingStop } = useChatSocketActions();
-  const { data: messages, isLoading: messagesIsLoading, isError } =
-    useMessages(conversationId);
+  const {
+    data: messages,
+    isLoading: messagesIsLoading,
+    isError,
+  } = useMessages(conversationId);
   useChatRealtimeMessages();
 
   const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
@@ -198,9 +201,7 @@ export function ChatPage({
       .map((message) => message.clientMessageId)
       .filter((id): id is string => Boolean(id)),
   );
-  const visiblePending = pending.filter(
-    (item) => !confirmedIds.has(item.id),
-  );
+  const visiblePending = pending.filter((item) => !confirmedIds.has(item.id));
 
   const visibleMessages: DecryptedMessage[] = [
     ...decrypted,
