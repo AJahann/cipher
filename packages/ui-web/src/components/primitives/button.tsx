@@ -2,7 +2,8 @@ import * as React from 'react';
 
 export type ButtonVariant = 'default' | 'ghost' | 'danger';
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   isLoading?: boolean;
   loadingText?: string;

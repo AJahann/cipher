@@ -22,7 +22,9 @@ function summarize(values) {
 }
 
 function metricMap(result) {
-  return Object.fromEntries(result.metrics.map(({ name, value }) => [name, value]));
+  return Object.fromEntries(
+    result.metrics.map(({ name, value }) => [name, value]),
+  );
 }
 
 async function stopTrace(cdp, outputPath) {
@@ -53,9 +55,7 @@ const bootstrapPage = await bootstrapContext.newPage();
 await bootstrapPage.goto(baseURL);
 await bootstrapPage.getByRole('button', { name: 'register' }).click();
 await bootstrapPage.getByLabel('username', { exact: true }).fill('perf-sender');
-await bootstrapPage
-  .getByLabel('passphrase', { exact: true })
-  .fill(passphrase);
+await bootstrapPage.getByLabel('passphrase', { exact: true }).fill(passphrase);
 await bootstrapPage
   .getByLabel('confirm passphrase', { exact: true })
   .fill(passphrase);
@@ -103,9 +103,7 @@ await page.addInitScript(() => {
               'cipher:send-start',
               'cipher:pending-painted',
             );
-            window.__sendPaintMeasurements.push(
-              performance.now() - startedAt,
-            );
+            window.__sendPaintMeasurements.push(performance.now() - startedAt);
           });
         });
       });
@@ -131,9 +129,7 @@ async function prepareInteraction() {
     .getByRole('button', { name: 'Send message' })
     .waitFor({ state: 'visible' });
   await page.waitForFunction(() => {
-    const button = document.querySelector(
-      'button[aria-label="Send message"]',
-    );
+    const button = document.querySelector('button[aria-label="Send message"]');
     return button && !button.disabled;
   });
   await page.evaluate((targetText) => {
@@ -165,12 +161,10 @@ for (let run = 1; run <= repetitions; run += 1) {
   }
   const before = metricMap(await cdp.send('Performance.getMetrics'));
   await page.getByRole('button', { name: 'Send message' }).click();
-  await page.waitForFunction(
-    () => window.__sendPaintMeasurements.length === 1,
-  );
+  await page.waitForFunction(() => window.__sendPaintMeasurements.length === 1);
   const after = metricMap(await cdp.send('Performance.getMetrics'));
-  const duration = await page.evaluate(
-    () => window.__sendPaintMeasurements.at(-1),
+  const duration = await page.evaluate(() =>
+    window.__sendPaintMeasurements.at(-1),
   );
 
   runs.push({
@@ -198,7 +192,8 @@ const output = {
     cache: 'warm browser HTTP cache; fresh page and React state per run',
     network: 'unthrottled localhost fixture; ack delayed 250 ms',
     startMark: 'capturing click event on the Send message button',
-    endMark: 'second requestAnimationFrame after the message paragraph enters the DOM',
+    endMark:
+      'second requestAnimationFrame after the message paragraph enters the DOM',
     repetitions,
     strictMode: 'production build; development Strict Mode timings excluded',
     trace: traceOutput ?? null,
@@ -213,8 +208,7 @@ const output = {
   },
 };
 
-const outputPath =
-  process.env.PERF_OUTPUT ?? 'perf/send-message-profile.json';
+const outputPath = process.env.PERF_OUTPUT ?? 'perf/send-message-profile.json';
 await fs.writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`);
 console.log(JSON.stringify(output.summary, null, 2));
 

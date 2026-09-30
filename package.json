@@ -10,6 +10,9 @@
     "start": "pnpm --parallel start",
     "lint": "oxlint --config ./oxlint.config.ts apps packages",
     "lint:fix": "oxlint --config ./oxlint.config.ts --fix apps packages",
+    "format": "biome format --write",
+    "format:check": "biome format",
+    "typecheck": "pnpm --recursive typecheck",
     "clean": "rimraf --glob **/node_modules **/.next **/dist **/build **/coverage playwright-report **/.cache **/.turbo",
     "clean:cache": "rimraf --glob **/.next **/.cache **/.turbo",
     "fresh": "pnpm clean && pnpm install",
@@ -30,6 +33,7 @@
     "pnpm": ">=12.6.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@fullstacksjs/oxlint-config": "1.1.0",
     "@playwright/test": "^1.62.1",
     "@t3-oss/env-core": "^0.13.11",
@@ -37,7 +41,6 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.6",
-    "@types/jest": "^30.0.0",
     "@types/node": "^26.3.0",
     "@vitejs/plugin-react": "^6.1.0",
     "@vitest/coverage-v8": "^4.1.11",

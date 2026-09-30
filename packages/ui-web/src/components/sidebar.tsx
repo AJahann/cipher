@@ -38,9 +38,9 @@ export function Sidebar({
           conversations
         </p>
         {errorMessage && (
-          <p role='status' className='mt-2 text-[10px] text-red-400'>
+          <output className='mt-2 block text-[10px] text-red-400'>
             {errorMessage}
-          </p>
+          </output>
         )}
       </div>
 

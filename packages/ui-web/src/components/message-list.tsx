@@ -27,16 +27,13 @@ export function MessageList({
   if (messages.length === 0) {
     return (
       <div className='flex flex-1 items-center justify-center'>
-        <p
-          role='status'
-          className='font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'
-        >
+        <output className='block font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
           {isLoading
             ? loadingMessage
             : isError
               ? '// messages could not be loaded · refresh to retry'
               : '// no messages yet · send the first one'}
-        </p>
+        </output>
       </div>
     );
   }
@@ -50,9 +47,9 @@ export function MessageList({
       className='flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4'
     >
       {isError && (
-        <p role='status' className='text-center text-[11px] text-red-400'>
+        <output className='block text-center text-[11px] text-red-400'>
           Could not refresh messages. Showing cached messages.
-        </p>
+        </output>
       )}
       {messages.map((msg) => (
         <MessageBubble

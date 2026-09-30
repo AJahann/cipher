@@ -19,7 +19,11 @@ export function MessageBubble({ msg, onRetry }: MessageBubbleProps) {
   const { isMine, senderId, text, time, deliveryStatus } = msg;
 
   return (
-    <div className={['flex items-end gap-2', isMine ? 'justify-end' : ''].join(' ')}>
+    <div
+      className={['flex items-end gap-2', isMine ? 'justify-end' : ''].join(
+        ' ',
+      )}
+    >
       {!isMine && (
         <div className='flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-[var(--cipher-border)] bg-[var(--cipher-surface-2)]'>
           <span className='font-[var(--cipher-font-mono)] text-[9px] text-[var(--cipher-muted)]'>

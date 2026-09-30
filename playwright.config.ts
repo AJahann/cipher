@@ -4,7 +4,8 @@ import { env } from './env';
 const webServer = env.CI
   ? [
       {
-        command: 'packages/api/node_modules/.bin/tsx packages/api/src/server.ts',
+        command:
+          'packages/api/node_modules/.bin/tsx packages/api/src/server.ts',
         url: new URL('/health', env.NEXT_PUBLIC_API_URL).toString(),
         reuseExistingServer: false,
         timeout: 120_000,

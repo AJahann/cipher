@@ -96,10 +96,7 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
-  if (
-    request.method === 'POST' &&
-    url.pathname === '/chat/conversations'
-  ) {
+  if (request.method === 'POST' && url.pathname === '/chat/conversations') {
     sendJson(response, 201, {
       id: 'perf-conversation',
       createdAt: '2026-01-01T00:00:00.000Z',

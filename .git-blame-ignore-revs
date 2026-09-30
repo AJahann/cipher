@@ -1,0 +1,5 @@
+# Commits listed here are skipped by `git blame`.
+# Enable locally with: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format codebase with Biome
+2b10555784afb134c2be251c5e5aa1b28114d3bd

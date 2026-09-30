@@ -63,11 +63,11 @@ export function ChatHeader({ title = 'Chat', isConnected }: ChatHeaderProps) {
       <h1 className='font-[var(--cipher-font-sans)] text-[13px] font-medium text-[var(--cipher-text)]'>
         {title}
       </h1>
-      <span role='status' aria-live='polite' aria-atomic='true'>
+      <output aria-live='polite' aria-atomic='true'>
         <Badge variant={isConnected ? 'connected' : 'disconnected'}>
           {isConnected ? 'connected' : 'disconnected'}
         </Badge>
-      </span>
+      </output>
       <button
         ref={triggerRef}
         type='button'

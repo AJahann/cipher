@@ -34,6 +34,120 @@ const INITIAL: FormState = {
   isPending: false,
 };
 
+const MODES: AuthMode[] = ['login', 'register'];
+
+function validate(state: FormState, mode: AuthMode): FieldErrors {
+  const errors: FieldErrors = {};
+  if (!state.username.trim()) errors.username = 'username is required';
+  if (!state.password) errors.password = 'passphrase is required';
+  if (mode === 'register') {
+    if (!state.confirm) {
+      errors.confirm = 'confirm your passphrase';
+    } else if (state.password !== state.confirm) {
+      errors.confirm = 'passphrases do not match';
+    }
+  }
+  return errors;
+}
+
+function AuthBrand() {
+  return (
+    <div className='mb-10 flex flex-col gap-3'>
+      <div className='flex items-center gap-2.5'>
+        <span className='h-2 w-2 animate-pulse rounded-full bg-(--cipher-accent)' />
+        <span className='font-(--cipher-font-mono) text-[13px] tracking-[0.08em] text-(--cipher-accent)'>
+          cipher
+        </span>
+      </div>
+      <Badge variant='encrypted'>end-to-end encrypted</Badge>
+    </div>
+  );
+}
+
+function ModeSwitcher({
+  mode,
+  disabled,
+  onSwitch,
+}: {
+  mode: AuthMode;
+  disabled: boolean;
+  onSwitch: (next: AuthMode) => void;
+}) {
+  return (
+    <fieldset
+      aria-label='Authentication mode'
+      className='mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)'
+    >
+      {MODES.map((m) => (
+        <button
+          key={m}
+          type='button'
+          aria-pressed={mode === m}
+          disabled={disabled}
+          onClick={() => onSwitch(m)}
+          className={[
+            'flex-1 py-2 font-(--cipher-font-mono) text-[12px] tracking-[0.06em] transition-colors duration-150',
+            'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--cipher-accent)',
+            mode === m
+              ? 'bg-(--cipher-surface-2) text-(--cipher-text)'
+              : 'bg-transparent text-(--cipher-muted) hover:text-(--cipher-text)',
+          ].join(' ')}
+        >
+          {m}
+        </button>
+      ))}
+    </fieldset>
+  );
+}
+
+function AuthHeading({ isRegister }: { isRegister: boolean }) {
+  return (
+    <div className='mb-7'>
+      <h1 className='font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)'>
+        {isRegister ? 'Create account' : 'Welcome back'}
+      </h1>
+      <p className='mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
+        {isRegister
+          ? '// keys generated locally in your browser'
+          : '// session keys derived from your passphrase'}
+      </p>
+    </div>
+  );
+}
+
+function FormFeedback({
+  formError,
+  isPending,
+  isRegister,
+  errorRef,
+}: {
+  formError: string | null;
+  isPending: boolean;
+  isRegister: boolean;
+  errorRef: React.Ref<HTMLDivElement>;
+}) {
+  return (
+    <>
+      {formError && (
+        <div
+          ref={errorRef}
+          role='alert'
+          tabIndex={-1}
+          className='rounded-(--cipher-radius-md) border border-(--cipher-danger) p-3 font-(--cipher-font-mono) text-[11px] text-(--cipher-danger) outline-none focus-visible:ring-2 focus-visible:ring-(--cipher-danger)'
+        >
+          Authentication failed: {formError}
+        </div>
+      )}
+
+      {isPending && (
+        <output className='sr-only'>
+          {isRegister ? 'Creating account' : 'Signing in'}
+        </output>
+      )}
+    </>
+  );
+}
+
 export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
   const [mode, setMode] = React.useState<AuthMode>('login');
   const [state, setState] = React.useState<FormState>(INITIAL);
@@ -48,6 +162,10 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
     setState((s) => ({ ...s, ...patch }));
   }
 
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((errors) => ({ ...errors, [field]: undefined }));
+  }
+
   function switchMode(next: AuthMode) {
     if (pendingRef.current) return;
     setMode(next);
@@ -59,17 +177,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
     e.preventDefault();
     if (pendingRef.current) return;
 
-    const nextErrors: FieldErrors = {};
-    if (!state.username.trim()) nextErrors.username = 'username is required';
-    if (!state.password) nextErrors.password = 'passphrase is required';
-    if (mode === 'register') {
-      if (!state.confirm) {
-        nextErrors.confirm = 'confirm your passphrase';
-      } else if (state.password !== state.confirm) {
-        nextErrors.confirm = 'passphrases do not match';
-      }
-    }
-
+    const nextErrors = validate(state, mode);
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       update({ formError: null });
@@ -106,56 +214,14 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
   return (
     <div className='flex min-h-screen items-center justify-center bg-(--cipher-bg) px-4'>
       <div className='w-full max-w-sm'>
-        {/* logo + badge */}
-        <div className='mb-10 flex flex-col gap-3'>
-          <div className='flex items-center gap-2.5'>
-            <span className='h-2 w-2 animate-pulse rounded-full bg-(--cipher-accent)' />
-            <span className='font-(--cipher-font-mono) text-[13px] tracking-[0.08em] text-(--cipher-accent)'>
-              cipher
-            </span>
-          </div>
-          <Badge variant='encrypted'>end-to-end encrypted</Badge>
-        </div>
+        <AuthBrand />
+        <ModeSwitcher
+          mode={mode}
+          disabled={state.isPending}
+          onSwitch={switchMode}
+        />
+        <AuthHeading isRegister={isRegister} />
 
-        {/* tab switcher */}
-        <div
-          role='group'
-          aria-label='Authentication mode'
-          className='mb-8 flex overflow-hidden rounded-lg border border-(--cipher-border)'
-        >
-          {(['login', 'register'] as AuthMode[]).map((m) => (
-            <button
-              key={m}
-              type='button'
-              aria-pressed={mode === m}
-              disabled={state.isPending}
-              onClick={() => switchMode(m)}
-              className={[
-                'flex-1 py-2 font-(--cipher-font-mono) text-[12px] tracking-[0.06em] transition-colors duration-150',
-                'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--cipher-accent)',
-                mode === m
-                  ? 'bg-(--cipher-surface-2) text-(--cipher-text)'
-                  : 'bg-transparent text-(--cipher-muted) hover:text-(--cipher-text)',
-              ].join(' ')}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-
-        {/* heading */}
-        <div className='mb-7'>
-          <h1 className='font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)'>
-            {isRegister ? 'Create account' : 'Welcome back'}
-          </h1>
-          <p className='mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)'>
-            {isRegister
-              ? '// keys generated locally in your browser'
-              : '// session keys derived from your passphrase'}
-          </p>
-        </div>
-
-        {/* form */}
         <form
           noValidate
           aria-busy={state.isPending}
@@ -170,7 +236,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
             value={state.username}
             onChange={(e) => {
               update({ username: e.target.value });
-              setFieldErrors((errors) => ({ ...errors, username: undefined }));
+              clearFieldError('username');
             }}
             autoComplete='username'
             error={fieldErrors.username}
@@ -184,7 +250,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
             value={state.password}
             onChange={(e) => {
               update({ password: e.target.value });
-              setFieldErrors((errors) => ({ ...errors, password: undefined }));
+              clearFieldError('password');
             }}
             autoComplete={isRegister ? 'new-password' : 'current-password'}
             error={fieldErrors.password}
@@ -199,7 +265,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
               value={state.confirm}
               onChange={(e) => {
                 update({ confirm: e.target.value });
-                setFieldErrors((errors) => ({ ...errors, confirm: undefined }));
+                clearFieldError('confirm');
               }}
               autoComplete='new-password'
               error={fieldErrors.confirm}
@@ -207,22 +273,12 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
             />
           )}
 
-          {state.formError && (
-            <div
-              ref={errorSummaryRef}
-              role='alert'
-              tabIndex={-1}
-              className='rounded-(--cipher-radius-md) border border-(--cipher-danger) p-3 font-(--cipher-font-mono) text-[11px] text-(--cipher-danger) outline-none focus-visible:ring-2 focus-visible:ring-(--cipher-danger)'
-            >
-              Authentication failed: {state.formError}
-            </div>
-          )}
-
-          {state.isPending && (
-            <p role='status' className='sr-only'>
-              {isRegister ? 'Creating account' : 'Signing in'}
-            </p>
-          )}
+          <FormFeedback
+            formError={state.formError}
+            isPending={state.isPending}
+            isRegister={isRegister}
+            errorRef={errorSummaryRef}
+          />
 
           <Button
             type='submit'

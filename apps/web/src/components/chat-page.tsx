@@ -25,47 +25,83 @@ function formatTime(ts?: string | number | Date) {
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
 }
 
-type PendingMessage = {
+type MessagesData = ReturnType<typeof useMessages>['data'];
+type EncryptedMessage = NonNullable<MessagesData>[number];
+
+interface PendingMessage {
   id: string;
   text: string;
   time: string;
   status: 'sending' | 'sent' | 'failed';
   payload: SendMessageData;
-};
+}
 
-export function ChatPage({
-  conversationId,
-  receiverId,
-  myId,
-  isConnected,
-}: {
+interface ChatPageProps {
   conversationId: string;
   receiverId: string;
   myId: string;
   isConnected: boolean;
-}) {
-  const qc = useQueryClient();
-  const { sendMessage, typingStart, typingStop } = useChatSocketActions();
-  const { data: messages, isLoading: messagesIsLoading, isError } =
-    useMessages(conversationId);
-  useChatRealtimeMessages();
+}
 
-  const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
-  const [input, setInput] = useState('');
+function getConfirmedIds(messages: DecryptedMessage[]) {
+  return new Set(
+    messages
+      .map((message) => message.clientMessageId)
+      .filter((id): id is string => Boolean(id)),
+  );
+}
+
+async function decryptOne(
+  message: EncryptedMessage,
+  receiverKeyRaw: Uint8Array,
+  sessionPrivateKey: ReturnType<typeof getSessionPrivateKey>,
+  myId: string,
+): Promise<DecryptedMessage | null> {
+  try {
+    const plain = await E2EEncryption.decryptMessage(
+      message.ciphertext,
+      message.nonce,
+      receiverKeyRaw,
+      sessionPrivateKey,
+    );
+    return {
+      id: message.id,
+      clientMessageId: message.clientMessageId,
+      senderId: message.senderId,
+      text: plain,
+      time: formatTime(message.createdAt),
+      isMine: message.senderId === myId,
+      deliveryStatus: 'sent',
+    };
+  } catch (_error) {
+    // Messages that cannot be decrypted are hidden instead of breaking the list.
+    return null;
+  }
+}
+
+function useDecryptedMessages({
+  messages,
+  receiverPublicKey,
+  isKeyLoading,
+  myId,
+}: {
+  messages: MessagesData;
+  receiverPublicKey: string | undefined;
+  isKeyLoading: boolean;
+  myId: string;
+}) {
   const [decrypted, setDecrypted] = useState<DecryptedMessage[]>([]);
-  const [pending, setPending] = useState<PendingMessage[]>([]);
-  const [composerError, setComposerError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isKeyLoading) return;
     let cancelled = false;
 
     async function run() {
       try {
         const sessionPrivateKey = getSessionPrivateKey();
         const myPublicKeyRaw = await KeyStorage.loadPublicKeyRaw();
-        const receiverKeyRaw = receiverKey?.publicKey
-          ? await KeyManager.fromBase64(receiverKey.publicKey)
+        const receiverKeyRaw = receiverPublicKey
+          ? await KeyManager.fromBase64(receiverPublicKey)
           : null;
 
         if (!myPublicKeyRaw || !receiverKeyRaw) {
@@ -74,33 +110,16 @@ export function ChatPage({
         }
 
         const out = await Promise.all(
-          (messages ?? []).map(async (m): Promise<DecryptedMessage | null> => {
-            try {
-              const plain = await E2EEncryption.decryptMessage(
-                m.ciphertext,
-                m.nonce,
-                receiverKeyRaw,
-                sessionPrivateKey,
-              );
-              return {
-                id: m.id,
-                clientMessageId: m.clientMessageId,
-                senderId: m.senderId,
-                text: plain,
-                time: formatTime(m.createdAt),
-                isMine: m.senderId === myId,
-                deliveryStatus: 'sent',
-              };
-            } catch {
-              return null;
-            }
-          }),
+          (messages ?? []).map((message) =>
+            decryptOne(message, receiverKeyRaw, sessionPrivateKey, myId),
+          ),
         );
 
         if (!cancelled) {
           setDecrypted(out.filter((x): x is DecryptedMessage => x !== null));
         }
-      } catch {
+      } catch (_error) {
+        // Without usable keys nothing can be shown, so fall back to an empty list.
         if (!cancelled) setDecrypted([]);
       }
     }
@@ -109,14 +128,19 @@ export function ChatPage({
     return () => {
       cancelled = true;
     };
-  }, [isLoading, messages, myId, receiverKey?.publicKey]);
+  }, [isKeyLoading, messages, myId, receiverPublicKey]);
+
+  return decrypted;
+}
+
+function useOutbox(decrypted: DecryptedMessage[]) {
+  const qc = useQueryClient();
+  const { sendMessage } = useChatSocketActions();
+  const [pending, setPending] = useState<PendingMessage[]>([]);
+  const [composerError, setComposerError] = useState<string | null>(null);
 
   useEffect(() => {
-    const confirmedIds = new Set(
-      decrypted
-        .map((message) => message.clientMessageId)
-        .filter((id): id is string => Boolean(id)),
-    );
+    const confirmedIds = getConfirmedIds(decrypted);
     if (confirmedIds.size === 0) return;
 
     setPending((current) => {
@@ -125,38 +149,98 @@ export function ChatPage({
     });
   }, [decrypted]);
 
-  async function deliver(item: PendingMessage) {
-    setComposerError(null);
+  function setStatus(id: string, status: PendingMessage['status']) {
     setPending((current) =>
       current.map((candidate) =>
-        candidate.id === item.id
-          ? { ...candidate, status: 'sending' }
-          : candidate,
+        candidate.id === id ? { ...candidate, status } : candidate,
       ),
     );
+  }
+
+  async function deliver(item: PendingMessage) {
+    setComposerError(null);
+    setStatus(item.id, 'sending');
 
     try {
       await sendMessage(item.payload);
-      setPending((current) =>
-        current.map((candidate) =>
-          candidate.id === item.id
-            ? { ...candidate, status: 'sent' }
-            : candidate,
-        ),
-      );
+      setStatus(item.id, 'sent');
       void qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'FAILED_TO_SEND';
       setComposerError(message);
-      setPending((current) =>
-        current.map((candidate) =>
-          candidate.id === item.id
-            ? { ...candidate, status: 'failed' }
-            : candidate,
-        ),
-      );
+      setStatus(item.id, 'failed');
     }
   }
+
+  function enqueue(item: PendingMessage) {
+    setPending((current) => [...current, item]);
+    void deliver(item);
+  }
+
+  function retry(id: string) {
+    const item = pending.find((candidate) => candidate.id === id);
+    if (item) void deliver(item);
+  }
+
+  const confirmedIds = getConfirmedIds(decrypted);
+  const visiblePending = pending.filter((item) => !confirmedIds.has(item.id));
+
+  return {
+    visiblePending,
+    composerError,
+    setComposerError,
+    enqueue,
+    retry,
+  };
+}
+
+function ChatNotices({
+  composerError,
+  isConnected,
+}: {
+  composerError: string | null;
+  isConnected: boolean;
+}) {
+  return (
+    <>
+      {composerError && (
+        <output className='block px-4 py-2 text-xs text-red-400'>
+          Message not sent: {composerError}. Retry from the message bubble.
+        </output>
+      )}
+      {!isConnected && (
+        <output className='sr-only'>
+          Reconnecting. Message sending is temporarily unavailable.
+        </output>
+      )}
+    </>
+  );
+}
+
+export function ChatPage({
+  conversationId,
+  receiverId,
+  myId,
+  isConnected,
+}: ChatPageProps) {
+  const { typingStart, typingStop } = useChatSocketActions();
+  const {
+    data: messages,
+    isLoading: messagesIsLoading,
+    isError,
+  } = useMessages(conversationId);
+  useChatRealtimeMessages();
+
+  const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
+  const [input, setInput] = useState('');
+  const decrypted = useDecryptedMessages({
+    messages,
+    receiverPublicKey: receiverKey?.publicKey,
+    isKeyLoading: isLoading,
+    myId,
+  });
+  const { visiblePending, composerError, setComposerError, enqueue, retry } =
+    useOutbox(decrypted);
 
   async function handleSend() {
     const text = input.trim();
@@ -171,18 +255,16 @@ export function ChatPage({
         senderPrivateKeyRaw,
       );
       const clientMessageId = crypto.randomUUID();
-      const item: PendingMessage = {
+
+      setInput('');
+      enqueue({
         id: clientMessageId,
         text,
         time: formatTime(new Date()),
         status: 'sending',
         payload: { clientMessageId, conversationId, ...ciphertext },
-      };
-
-      setPending((current) => [...current, item]);
-      setInput('');
-      void deliver(item);
-    } catch {
+      });
+    } catch (_error) {
       setComposerError('ENCRYPTION_FAILED');
     }
   }
@@ -192,15 +274,6 @@ export function ChatPage({
     if (value.trim()) typingStart(conversationId);
     else typingStop(conversationId);
   }
-
-  const confirmedIds = new Set(
-    decrypted
-      .map((message) => message.clientMessageId)
-      .filter((id): id is string => Boolean(id)),
-  );
-  const visiblePending = pending.filter(
-    (item) => !confirmedIds.has(item.id),
-  );
 
   const visibleMessages: DecryptedMessage[] = [
     ...decrypted,
@@ -223,21 +296,9 @@ export function ChatPage({
         isError={isError}
         loadingMessage='decrypting messages...'
         messages={visibleMessages}
-        onRetryMessage={(id) => {
-          const item = pending.find((candidate) => candidate.id === id);
-          if (item) void deliver(item);
-        }}
+        onRetryMessage={retry}
       />
-      {composerError && (
-        <p role='status' className='px-4 py-2 text-xs text-red-400'>
-          Message not sent: {composerError}. Retry from the message bubble.
-        </p>
-      )}
-      {!isConnected && (
-        <p role='status' className='sr-only'>
-          Reconnecting. Message sending is temporarily unavailable.
-        </p>
-      )}
+      <ChatNotices composerError={composerError} isConnected={isConnected} />
       <ChatInput
         value={input}
         onChange={handleTyping}

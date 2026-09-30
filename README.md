@@ -121,6 +121,9 @@ Open [http://localhost:3000](http://localhost:3000). The API uses the port confi
 | `pnpm build` | Build all packages and applications |
 | `pnpm start` | Start all production servers |
 | `pnpm lint` | Lint all workspaces |
+| `pnpm format` | Format the codebase with Biome |
+| `pnpm format:check` | Check formatting without writing changes |
+| `pnpm typecheck` | Type-check every workspace package |
 | `pnpm test:unit` | Run the Vitest suite |
 | `pnpm test:unit:coverage` | Run unit tests with coverage |
 | `pnpm test:e2e` | Run Playwright end-to-end tests |
@@ -161,7 +164,7 @@ Please report suspected vulnerabilities privately to the repository owner instea
 
 1. Fork the repository and create a feature branch.
 2. Make a focused change with tests where appropriate.
-3. Run linting and the relevant test suites.
+3. Run `pnpm format`, `pnpm lint`, `pnpm typecheck`, and the relevant test suites.
 4. Open a pull request describing the change and its motivation.
 
 ## License

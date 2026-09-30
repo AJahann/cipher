@@ -68,9 +68,11 @@ export const chatService = {
 
     return db.transaction(async (tx) => {
       const [conv] = await tx.insert(conversations).values({}).returning();
-      await tx.insert(conversationMembers).values(
-        sortedIds.map((userId) => ({ conversationId: conv.id, userId })),
-      );
+      await tx
+        .insert(conversationMembers)
+        .values(
+          sortedIds.map((userId) => ({ conversationId: conv.id, userId })),
+        );
       return conv;
     });
   },
