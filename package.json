@@ -12,7 +12,7 @@
     "lint:fix": "oxlint --config ./oxlint.config.ts --fix apps packages",
     "format": "biome format --write",
     "format:check": "biome format",
-    "typecheck": "pnpm --recursive --no-bail exec tsc --noEmit",
+    "typecheck": "pnpm --recursive typecheck",
     "clean": "rimraf --glob **/node_modules **/.next **/dist **/build **/coverage playwright-report **/.cache **/.turbo",
     "clean:cache": "rimraf --glob **/.next **/.cache **/.turbo",
     "fresh": "pnpm clean && pnpm install",

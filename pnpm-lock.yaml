@@ -272,6 +272,9 @@ importers:
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@26.6.2)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/api:
     dependencies:
@@ -368,7 +371,11 @@ importers:
         specifier: ^5
         version: 5.9.3
 
-  packages/ui-tokens: {}
+  packages/ui-tokens:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/ui-web:
     dependencies:

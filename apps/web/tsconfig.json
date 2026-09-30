@@ -25,7 +25,8 @@
       "@chat-app/ui-tokens/css": ["../../packages/ui-tokens/tokens.css"],
       "@chat-app/ui-web": ["../../packages/ui-web/src"],
       "@chat-app/shared/*": ["../../packages/shared/src/*"]
-    }
+    },
+    "types": ["node", "vitest/globals"]
   },
   "include": [
     "next-env.d.ts",

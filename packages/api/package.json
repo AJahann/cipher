@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "tsx dist/src/server.js"
+    "start": "tsx dist/src/server.js",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@chat-app/shared": "workspace:*",

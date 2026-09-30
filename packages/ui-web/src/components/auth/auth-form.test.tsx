@@ -1,9 +1,25 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 import { AuthForm } from './auth-form';
 
 const resolved = () => Promise.resolve();
+
+const expectFocus = (element: HTMLElement) =>
+  waitFor(() => expect(element).toHaveFocus());
+
+function deferred() {
+  let settle!: () => void;
+  const promise = new Promise<void>((resolve) => {
+    settle = resolve;
+  });
+  return { promise, resolve: settle };
+}
 
 describe(AuthForm, () => {
   describe('login mode', () => {
@@ -36,15 +52,13 @@ describe(AuthForm, () => {
       const username = screen.getByLabelText('username');
       expect(username).toHaveAttribute('aria-invalid', 'true');
       expect(username).toHaveAccessibleDescription('username is required');
-      await waitFor(() => expect(username).toHaveFocus());
+      await expectFocus(username);
     });
 
     it('exposes pending state and prevents duplicate submission', async () => {
       const user = userEvent.setup();
-      let resolveLogin!: () => void;
-      const onLogin = vi.fn(
-        () => new Promise<void>((resolve) => (resolveLogin = resolve)),
-      );
+      const login = deferred();
+      const onLogin = vi.fn().mockReturnValue(login.promise);
       render(<AuthForm onLogin={onLogin} onRegister={resolved} />);
 
       await user.type(screen.getByLabelText('username'), 'ashkan');
@@ -56,10 +70,8 @@ describe(AuthForm, () => {
       expect(
         screen.getByRole('button', { name: 'authenticating...' }),
       ).toBeDisabled();
-      resolveLogin();
-      await waitFor(() =>
-        expect(screen.queryByRole('status')).not.toBeInTheDocument(),
-      );
+      login.resolve();
+      await waitForElementToBeRemoved(screen.getByRole('status'));
     });
 
     it('focuses the announced error summary after authentication fails', async () => {
@@ -77,7 +89,7 @@ describe(AuthForm, () => {
       expect(alert).toHaveTextContent(
         'Authentication failed: invalid credentials',
       );
-      await waitFor(() => expect(alert).toHaveFocus());
+      await expectFocus(alert);
     });
   });
 
@@ -114,7 +126,7 @@ describe(AuthForm, () => {
 
       const confirm = screen.getByLabelText('confirm passphrase');
       expect(confirm).toHaveAccessibleDescription('passphrases do not match');
-      await waitFor(() => expect(confirm).toHaveFocus());
+      await expectFocus(confirm);
       expect(onRegister).not.toHaveBeenCalled();
     });
   });
