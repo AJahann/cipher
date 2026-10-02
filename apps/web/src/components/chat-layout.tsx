@@ -14,7 +14,7 @@ import {
 
 export default function ChatLayout() {
   const { data: me } = useMe();
-  const { data: users = [] } = useUsersList();
+  const { data: users = [] } = useUsersList(100);
 
   const createConversation = useCreateConversation();
   const selectInFlight = useRef(false);

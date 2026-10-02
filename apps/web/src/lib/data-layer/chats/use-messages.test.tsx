@@ -11,7 +11,7 @@ describe(useMessages, () => {
     server.use(
       http.get(MESSAGES_PATH, () => {
         hits += 1;
-        return HttpResponse.json([stubMessage]);
+        return HttpResponse.json({ items: [stubMessage], nextCursor: null });
       }),
     );
 
@@ -30,7 +30,7 @@ describe(useMessages, () => {
     server.use(
       http.get(MESSAGES_PATH, ({ request }) => {
         capturedUrl = request.url;
-        return HttpResponse.json([stubMessage]);
+        return HttpResponse.json({ items: [stubMessage], nextCursor: null });
       }),
     );
 
@@ -50,7 +50,7 @@ describe(useMessages, () => {
     server.use(
       http.get(MESSAGES_PATH, () => {
         hits += 1;
-        return HttpResponse.json([stubMessage]);
+        return HttpResponse.json({ items: [stubMessage], nextCursor: null });
       }),
     );
 

@@ -9,6 +9,7 @@ import { userController } from './modules/user/user.controller';
 import { chatController } from './modules/chat/chat.controller';
 import { registerChatSocket } from './modules/chat/chat.socket';
 import { sessionStore } from './db/session';
+import { registerErrorHandling } from './http/errors';
 
 export const buildApp = async () => {
   const app = Fastify({ logger: true });
@@ -19,6 +20,9 @@ export const buildApp = async () => {
   // them a late-bound reference instead of capturing `null` forever.
   let io: SocketIOServer | null = null;
   app.decorate('io', { getter: () => io });
+
+  // One error envelope for every route, registered before any plugin.
+  registerErrorHandling(app);
 
   await app.register(cors, {
     origin: env.CLIENT_ORIGIN,

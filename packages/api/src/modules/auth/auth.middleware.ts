@@ -1,8 +1,7 @@
-import type { FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyRequest } from 'fastify';
+import { AppError } from '../../http/errors';
 
 // oxlint-disable-next-line require-await
-export async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
-  if (!req.session.userId) {
-    return reply.code(401).send({ error: 'Not authenticated' });
-  }
+export async function requireAuth(req: FastifyRequest) {
+  if (!req.session.userId) throw new AppError('UNAUTHENTICATED');
 }

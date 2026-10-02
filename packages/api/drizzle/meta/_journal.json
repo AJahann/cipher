@@ -15,6 +15,13 @@
       "when": 1790605627000,
       "tag": "0001_idempotent_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793000000000,
+      "tag": "0002_membership_and_history_indexes",
+      "breakpoints": true
     }
   ]
 }

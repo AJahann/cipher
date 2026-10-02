@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, uuid, unique } from 'drizzle-orm/pg-core';
+import {
+  index,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { conversations } from './conversation';
 import { users } from './user';
@@ -22,6 +29,12 @@ export const messages = pgTable(
   },
   (t) => ({
     clientCommandUniq: unique().on(t.senderId, t.clientMessageId),
+    // Keyset index for history: (created_at, id) within a conversation.
+    history: index('messages_conversation_created_id_idx').on(
+      t.conversationId,
+      t.createdAt,
+      t.id,
+    ),
   }),
 );
 

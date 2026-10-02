@@ -1,8 +1,11 @@
 import type { FastifyInstance } from 'fastify';
-import { ZodError } from 'zod';
+import {
+  loginUserSchema,
+  registerUserSchema,
+} from '@chat-app/shared/contracts';
 import { userService } from '../user/user.service';
-import { registerUserSchema, loginUserSchema } from '../user/user.schema';
 import { requireAuth } from './auth.middleware';
+import { AppError } from '../../http/errors';
 
 export const authController = (app: FastifyInstance) => {
   app.post('/register', async (req, reply) => {
@@ -34,25 +37,11 @@ export const authController = (app: FastifyInstance) => {
 
   app.get('/me', { preHandler: requireAuth }, async (req, reply) => {
     const user = await userService.findById(req.session.userId!);
-    if (!user) return reply.code(404).send({ error: 'User not found' });
-    app.log.info({ userId: req.session.userId }, 'HTTP session check');
+    if (!user) {
+      // The account behind this session is gone: the session is dead too.
+      await req.session.destroy();
+      throw new AppError('UNAUTHENTICATED');
+    }
     return reply.send(user);
-  });
-
-  app.setErrorHandler((error, _req, reply) => {
-    if (error instanceof ZodError) {
-      return reply
-        .code(400)
-        .send({ error: 'Validation failed', issues: error.issues });
-    }
-    const message = error instanceof Error ? error.message : String(error);
-    if (message === 'USERNAME_TAKEN') {
-      return reply.code(409).send({ error: 'Username already taken' });
-    }
-    if (message === 'INVALID_CREDENTIALS') {
-      return reply.code(401).send({ error: 'Invalid credentials' });
-    }
-    app.log.error(error);
-    return reply.code(500).send({ error: 'Internal server error' });
   });
 };

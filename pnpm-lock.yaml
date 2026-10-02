@@ -375,6 +375,9 @@ importers:
       libsodium-wrappers-sumo:
         specifier: ^0.8.4
         version: 0.8.4
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.5
     devDependencies:
       typescript:
         specifier: ^5

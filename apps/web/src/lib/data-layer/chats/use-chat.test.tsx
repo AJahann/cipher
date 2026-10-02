@@ -50,7 +50,10 @@ describe(useConversations, () => {
   it('exposes an error with status 500 when the server returns 500', async () => {
     server.use(
       http.get(CONV_PATH, () =>
-        HttpResponse.json({ error: 'boom' }, { status: 500 }),
+        HttpResponse.json(
+          { code: 'INTERNAL', message: 'Internal server error' },
+          { status: 500 },
+        ),
       ),
     );
 

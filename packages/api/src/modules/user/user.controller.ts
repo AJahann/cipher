@@ -1,41 +1,30 @@
 import type { FastifyInstance } from 'fastify';
-import { ZodError, z } from 'zod';
+import {
+  listUsersQuerySchema,
+  userIdParamsSchema,
+} from '@chat-app/shared/contracts';
 import { userService } from './user.service';
 import { requireAuth } from '../auth/auth.middleware';
+import { AppError } from '../../http/errors';
 
 export const userController = (app: FastifyInstance) => {
   app.addHook('preHandler', requireAuth);
 
+  /** GET /users?limit=&cursor= — directory, everyone except the caller. */
   app.get('/', async (req, reply) => {
-    const { limit, after } = z
-      .object({
-        limit: z.coerce.number().int().min(1).max(100).default(50),
-        after: z.string().uuid().optional(),
-      })
-      .parse(req.query);
-
-    const result = await userService.listUsers(
+    const { limit, cursor } = listUsersQuerySchema.parse(req.query);
+    const page = await userService.listUsers(
       req.session.userId!,
       limit,
-      after,
+      cursor,
     );
-    return reply.send(result);
+    return reply.send(page);
   });
 
   app.get('/:id/public-key', async (req, reply) => {
-    const { id } = req.params as { id: string };
+    const { id } = userIdParamsSchema.parse(req.params);
     const key = await userService.getPublicKey(id);
-    if (!key) return reply.code(404).send({ error: 'User not found' });
+    if (!key) throw new AppError('USER_NOT_FOUND');
     return reply.send({ publicKey: key });
-  });
-
-  app.setErrorHandler((error, _req, reply) => {
-    if (error instanceof ZodError) {
-      return reply
-        .code(400)
-        .send({ error: 'Validation failed', issues: error.issues });
-    }
-    app.log.error(error);
-    return reply.code(500).send({ error: 'Internal server error' });
   });
 };

@@ -1,20 +1,33 @@
 import type { FastifyInstance } from 'fastify';
-import { ZodError } from 'zod';
+import {
+  createConversationSchema,
+  listMessagesQuerySchema,
+} from '@chat-app/shared/contracts';
 import { chatService } from './chat.service';
-import { createConversationSchema, getMessagesSchema } from './chat.schema';
+import { userService } from '../user/user.service';
 import { requireAuth } from '../auth/auth.middleware';
+import { AppError } from '../../http/errors';
 
 export const chatController = (app: FastifyInstance) => {
   app.addHook('preHandler', requireAuth);
 
-  /** POST /chat/conversations — create or return existing DM conversation */
+  /**
+   * POST /chat/conversations — get-or-create the DM with `memberId`.
+   * 201 when this call created it, 200 when it already existed.
+   */
   app.post('/conversations', async (req, reply) => {
     const { memberId } = createConversationSchema.parse(req.body);
-    const conversation = await chatService.createConversation([
-      req.session.userId!,
-      memberId,
-    ]);
-    return reply.code(201).send(conversation);
+    const userId = req.session.userId!;
+    if (memberId === userId) throw new AppError('INVALID_MEMBER');
+    if (!(await userService.findById(memberId))) {
+      throw new AppError('USER_NOT_FOUND');
+    }
+
+    const { conversation, created } =
+      await chatService.getOrCreateDirectConversation(userId, memberId);
+    return reply
+      .code(created ? 201 : 200)
+      .send({ id: conversation.id, createdAt: conversation.createdAt });
   });
 
   /** GET /chat/conversations — list conversations for current user */
@@ -25,33 +38,17 @@ export const chatController = (app: FastifyInstance) => {
     return reply.send(conversations);
   });
 
-  /** GET /chat/messages?conversationId=&limit=&before= */
+  /** GET /chat/messages?conversationId=&limit=&cursor= */
   app.get('/messages', async (req, reply) => {
-    const { conversationId, limit, before } = getMessagesSchema.parse(
+    const { conversationId, limit, cursor } = listMessagesQuerySchema.parse(
       req.query,
     );
-    const result = await chatService.getMessages(
+    const page = await chatService.getMessages(
       conversationId,
       req.session.userId!,
       limit,
-      before,
+      cursor,
     );
-    return reply.send(result);
-  });
-
-  app.setErrorHandler((error, _req, reply) => {
-    if (error instanceof ZodError) {
-      return reply
-        .code(400)
-        .send({ error: 'Validation failed', issues: error.issues });
-    }
-    const message = error instanceof Error ? error.message : String(error);
-    if (message === 'FORBIDDEN') {
-      return reply
-        .code(403)
-        .send({ error: 'Not a member of this conversation' });
-    }
-    app.log.error(error);
-    return reply.code(500).send({ error: 'Internal server error' });
+    return reply.send(page);
   });
 };

@@ -3,67 +3,18 @@ import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
 import { parseCookie } from 'cookie';
 import type { Store } from 'express-session';
-import { ZodError } from 'zod';
+import {
+  conversationRefSchema,
+  messageReadSchema,
+  sendMessageSchema,
+  type ClientToServerEvents,
+  type MessageDto,
+  type SendMessageAck,
+  type ServerToClientEvents,
+} from '@chat-app/shared/contracts';
 import { chatService } from './chat.service';
-import { sendMessageSchema } from './chat.schema';
 import { userService } from '../user/user.service';
-
-interface ServerToClientEvents {
-  'message:new': (message: MessagePayload) => void;
-  'message:ack': (data: {
-    clientMessageId: string;
-    message: MessagePayload;
-  }) => void;
-  'conversation:updated': (data: {
-    conversationId: string;
-    message: MessagePayload;
-  }) => void;
-  'user:new': (user: { id: string; username: string }) => void;
-  'typing:indicator': (data: {
-    conversationId: string;
-    userId: string;
-    isTyping: boolean;
-  }) => void;
-  'presence:update': (data: { userId: string; online: boolean }) => void;
-  error: (data: { code: string; message: string }) => void;
-}
-
-interface ClientToServerEvents {
-  'message:send': (
-    data: SendMessageData,
-    ack: (result: AckResult) => void,
-  ) => void;
-  'typing:start': (data: { conversationId: string }) => void;
-  'typing:stop': (data: { conversationId: string }) => void;
-  'message:read': (data: { messageId: string; conversationId: string }) => void;
-  'conversation:join': (data: { conversationId: string }) => void;
-  'conversation:leave': (data: { conversationId: string }) => void;
-}
-
-interface SendMessageData {
-  clientMessageId: string;
-  conversationId: string;
-  ciphertext: string;
-  nonce: string;
-  algorithm: string;
-}
-
-interface AckResult {
-  ok: boolean;
-  error?: string;
-}
-
-interface MessagePayload {
-  id: string;
-  clientMessageId: string;
-  conversationId: string;
-  senderId: string;
-  ciphertext: string;
-  nonce: string;
-  algorithm: string;
-  createdAt: string;
-  sender: { id: string; username: string };
-}
+import { AppError, toApiError } from '../../http/errors';
 
 interface SocketData {
   userId: string;
@@ -86,6 +37,15 @@ type AppIO = SocketIOServer<
 const userRoom = (userId: string) => `user:${userId}`;
 const conversationRoom = (conversationId: string) => `conv:${conversationId}`;
 
+/** Connection refusal; the client reads `err.message` and `err.data`. */
+function unauthenticated() {
+  const err = new Error('UNAUTHENTICATED') as Error & {
+    data: { code: 'UNAUTHENTICATED'; message: string };
+  };
+  err.data = { code: 'UNAUTHENTICATED', message: 'Not authenticated' };
+  return err;
+}
+
 async function broadcastPresence(io: AppIO, userId: string, online: boolean) {
   const conversationIds = await chatService
     .getConversationIds(userId)
@@ -107,10 +67,10 @@ export function registerChatSocket(
       const cookies = parseCookie(rawCookie);
       const rawSid = cookies.sessionId;
 
-      if (!rawSid) return next(new Error('UNAUTHORIZED'));
+      if (!rawSid) return next(unauthenticated());
 
       const unsigned = app.unsignCookie(rawSid);
-      if (!unsigned.valid) return next(new Error('UNAUTHORIZED'));
+      if (!unsigned.valid) return next(unauthenticated());
 
       const sid = unsigned.value;
       const session = await new Promise<Record<string, unknown> | null>(
@@ -125,13 +85,13 @@ export function registerChatSocket(
       log.info({ sid, userId: session?.userId }, 'Socket session loaded');
 
       const userId = session?.userId as string | undefined;
-      if (!userId) return next(new Error('UNAUTHORIZED'));
+      if (!userId) return next(unauthenticated());
 
       socket.data.userId = userId;
       next();
     } catch (err) {
       log.error(err, 'Socket auth error');
-      next(new Error('UNAUTHORIZED'));
+      next(unauthenticated());
     }
   });
 
@@ -154,99 +114,115 @@ export function registerChatSocket(
 
     await broadcastPresence(io, userId, true);
 
+    /** Reports a rejected fire-and-forget event back to the sender only. */
+    const reject = (event: keyof ClientToServerEvents, err: unknown) => {
+      const { status, body } = toApiError(err);
+      if (status >= 500) log.error(err, `${event} failed`);
+      socket.emit('error', { event, error: body });
+    };
+
     socket.on('message:send', async (data, ack) => {
+      const reply = (result: SendMessageAck) => {
+        if (typeof ack === 'function') ack(result);
+      };
       try {
         const parsed = sendMessageSchema.parse(data);
 
-        const message = await chatService.sendMessage({
-          clientMessageId: parsed.clientMessageId,
-          conversationId: parsed.conversationId,
+        const { message, replayed } = await chatService.sendMessage({
+          ...parsed,
           senderId: userId,
-          ciphertext: parsed.ciphertext,
-          nonce: parsed.nonce,
-          algorithm: parsed.algorithm,
         });
 
-        const payload: MessagePayload = {
+        const payload: MessageDto = {
           ...message,
           createdAt: message.createdAt.toISOString(),
           sender: { id: userId, username: socket.data.username },
         };
 
-        io.to(conversationRoom(parsed.conversationId)).emit(
-          'message:new',
-          payload,
-        );
-
-        const memberIds = await chatService.getConversationMembers(
-          parsed.conversationId,
-        );
-
-        for (const memberId of memberIds) {
-          if (memberId === userId) continue;
-
-          io.in(userRoom(memberId)).socketsJoin(
-            conversationRoom(parsed.conversationId),
+        // A replay is a retry of a message every member already received, so
+        // only the sender hears about it again. Clients dedupe by `id`.
+        if (!replayed) {
+          io.to(conversationRoom(parsed.conversationId)).emit(
+            'message:new',
+            payload,
           );
 
-          io.to(userRoom(memberId)).emit('conversation:updated', {
-            conversationId: parsed.conversationId,
-            message: payload,
-          });
+          const memberIds = await chatService.getConversationMembers(
+            parsed.conversationId,
+          );
+
+          for (const memberId of memberIds) {
+            if (memberId === userId) continue;
+
+            io.in(userRoom(memberId)).socketsJoin(
+              conversationRoom(parsed.conversationId),
+            );
+
+            io.to(userRoom(memberId)).emit('conversation:updated', {
+              conversationId: parsed.conversationId,
+              message: payload,
+            });
+          }
         }
 
         socket.emit('message:ack', {
           clientMessageId: parsed.clientMessageId,
           message: payload,
         });
-        ack({ ok: true });
+        reply({ ok: true, message: payload, replayed });
       } catch (err) {
-        log.error(err, 'message:send failed');
-        if (err instanceof ZodError) {
-          ack({ ok: false, error: 'VALIDATION_ERROR' });
-        } else if (err instanceof Error && err.message === 'FORBIDDEN') {
-          ack({ ok: false, error: 'FORBIDDEN' });
-        } else if (
-          err instanceof Error &&
-          err.message === 'IDEMPOTENCY_CONFLICT'
-        ) {
-          ack({ ok: false, error: 'IDEMPOTENCY_CONFLICT' });
-        } else {
-          ack({ ok: false, error: 'FAILED_TO_SEND' });
-        }
+        const { status, body } = toApiError(err);
+        if (status >= 500) log.error(err, 'message:send failed');
+        reply({ ok: false, error: body });
       }
     });
 
-    socket.on('message:read', async ({ messageId }) => {
+    socket.on('message:read', async (data) => {
       try {
-        await chatService.markRead(messageId, userId);
+        const { messageId, conversationId } = messageReadSchema.parse(data);
+        await chatService.markRead(messageId, conversationId, userId);
       } catch (err) {
-        log.error(err, 'message:read failed');
+        reject('message:read', err);
       }
     });
 
-    socket.on('typing:start', ({ conversationId }) => {
-      socket.to(conversationRoom(conversationId)).emit('typing:indicator', {
-        conversationId,
-        userId,
-        isTyping: true,
-      });
+    const typing =
+      (event: 'typing:start' | 'typing:stop', isTyping: boolean) =>
+      (data: unknown) => {
+        const parsed = conversationRefSchema.safeParse(data);
+        if (!parsed.success) return reject(event, parsed.error);
+        const room = conversationRoom(parsed.data.conversationId);
+        // Rooms are only ever joined after a membership check, so being in the
+        // room is the authorisation. Typing is ephemeral: no DB round-trip.
+        if (!socket.rooms.has(room)) {
+          return reject(event, new AppError('CONVERSATION_NOT_FOUND'));
+        }
+        socket.to(room).emit('typing:indicator', {
+          conversationId: parsed.data.conversationId,
+          userId,
+          isTyping,
+        });
+      };
+
+    socket.on('typing:start', typing('typing:start', true));
+    socket.on('typing:stop', typing('typing:stop', false));
+
+    socket.on('conversation:join', async (data) => {
+      try {
+        const { conversationId } = conversationRefSchema.parse(data);
+        if (!(await chatService.isMember(conversationId, userId))) {
+          throw new AppError('CONVERSATION_NOT_FOUND');
+        }
+        socket.join(conversationRoom(conversationId));
+      } catch (err) {
+        reject('conversation:join', err);
+      }
     });
 
-    socket.on('typing:stop', ({ conversationId }) => {
-      socket.to(conversationRoom(conversationId)).emit('typing:indicator', {
-        conversationId,
-        userId,
-        isTyping: false,
-      });
-    });
-
-    socket.on('conversation:join', ({ conversationId }) => {
-      socket.join(conversationRoom(conversationId));
-    });
-
-    socket.on('conversation:leave', ({ conversationId }) => {
-      socket.leave(conversationRoom(conversationId));
+    socket.on('conversation:leave', (data) => {
+      const parsed = conversationRefSchema.safeParse(data);
+      if (!parsed.success) return reject('conversation:leave', parsed.error);
+      socket.leave(conversationRoom(parsed.data.conversationId));
     });
 
     socket.on('disconnect', async () => {

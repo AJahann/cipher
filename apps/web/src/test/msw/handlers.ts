@@ -27,6 +27,8 @@ export const ME_PATH = /\/auth\/me$/;
 
 export const handlers = [
   http.get(CONV_PATH, () => HttpResponse.json([stubConversation])),
-  http.get(MESSAGES_PATH, () => HttpResponse.json([stubMessage])),
+  http.get(MESSAGES_PATH, () =>
+    HttpResponse.json({ items: [stubMessage], nextCursor: null }),
+  ),
   http.get(ME_PATH, () => HttpResponse.json(stubUser)),
 ];

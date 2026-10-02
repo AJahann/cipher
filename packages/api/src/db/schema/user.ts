@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  index,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { conversations } from './conversation';
 
@@ -20,15 +27,24 @@ export const userKeys = pgTable('user_keys', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const conversationMembers = pgTable('conversation_members', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  conversationId: uuid('conversation_id')
-    .notNull()
-    .references(() => conversations.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-});
+export const conversationMembers = pgTable(
+  'conversation_members',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+  },
+  (t) => ({
+    // A user is a member of a conversation at most once.
+    memberUniq: unique().on(t.conversationId, t.userId),
+    // "Which conversations am I in?" runs on every socket connect.
+    byUser: index('conversation_members_user_id_idx').on(t.userId),
+  }),
+);
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   key: one(userKeys, {
