@@ -1,3 +1,4 @@
+import type { SendMessageInput } from '@chat-app/shared/contracts';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeClient, makeWrapper } from '../../../test/helpers';
@@ -38,7 +39,6 @@ vi.mock(import('socket.io-client'), () => ({
 }));
 
 // oxlint-disable-next-line import/first -- Vitest hoists this mock before the module import.
-import type { SendMessageInput } from '@chat-app/shared/contracts';
 import { useChatRealtimeSync, useChatSocketActions } from './use-chat-socket';
 
 function rejectMessageSends(

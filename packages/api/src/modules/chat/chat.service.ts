@@ -32,8 +32,10 @@ export const chatService = {
    * `conversations.direct_key` is UNIQUE, so concurrent callers converge on
    * one row; `created` tells the caller which of them inserted it.
    */
-  async getOrCreateDirectConversation(userId: string, memberId: string) {
-    if (userId === memberId) throw new AppError('INVALID_MEMBER');
+  getOrCreateDirectConversation(userId: string, memberId: string) {
+    if (userId === memberId) {
+      return Promise.reject(new AppError('INVALID_MEMBER'));
+    }
     const sortedIds = [userId, memberId].sort();
     const directKey = directConversationKey(sortedIds);
 

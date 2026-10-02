@@ -13,7 +13,7 @@ const valid = {
   algorithm: 'x25519-xsalsa20-poly1305',
 };
 
-describe('sendMessageSchema', () => {
+describe('send-message payload contract', () => {
   it('accepts a well-formed payload', () => {
     expect(sendMessageSchema.parse(valid)).toEqual(valid);
   });
@@ -30,7 +30,7 @@ describe('sendMessageSchema', () => {
   });
 });
 
-describe('sendMessageAckSchema', () => {
+describe('send-message ack contract', () => {
   it('requires an error envelope on failure', () => {
     expect(
       sendMessageAckSchema.safeParse({ ok: false, error: 'FAILED_TO_SEND' })
@@ -45,7 +45,7 @@ describe('sendMessageAckSchema', () => {
   });
 });
 
-describe('listMessagesQuerySchema', () => {
+describe('message history query contract', () => {
   it('coerces limit from the query string and defaults it to 50', () => {
     const id = valid.conversationId;
     expect(listMessagesQuerySchema.parse({ conversationId: id })).toEqual({

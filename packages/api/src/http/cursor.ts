@@ -16,14 +16,24 @@ export function encodeCursor(kind: CursorKind, id: string): string {
   );
 }
 
-export function decodeCursor(kind: CursorKind, cursor: string): string {
+function parseCursor(cursor: string): unknown {
   try {
-    const raw = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
-    if (raw?.v === 1 && raw.k === kind && typeof raw.id === 'string') {
-      if (UUID.test(raw.id)) return raw.id;
-    }
-  } catch {
-    // fall through
+    return JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+  } catch (error) {
+    // Not base64url JSON: treated exactly like any other invalid cursor.
+    return { invalid: error };
+  }
+}
+
+export function decodeCursor(kind: CursorKind, cursor: string): string {
+  const raw = parseCursor(cursor) as { v?: unknown; k?: unknown; id?: unknown };
+  if (
+    raw?.v === 1 &&
+    raw.k === kind &&
+    typeof raw.id === 'string' &&
+    UUID.test(raw.id)
+  ) {
+    return raw.id;
   }
   throw new AppError('INVALID_CURSOR');
 }
