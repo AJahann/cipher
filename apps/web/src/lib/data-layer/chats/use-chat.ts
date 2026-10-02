@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Conversation, Message } from '@chat-app/shared/types';
+import type { Conversation } from '@chat-app/shared/types';
+import type { MessagesPage } from '@chat-app/shared/contracts';
 import { apiFetch } from '../client';
 
 export interface MessagesQueryParams {
   conversationId?: string;
   limit?: number;
-  before?: string;
+  /** Opaque `nextCursor` from a previous page; omit for the newest page. */
+  cursor?: string;
 }
 
 export const chatKeys = {
@@ -20,8 +22,8 @@ export const chatKeys = {
    * nothing. Filter on this prefix and narrow on `conversationId` yourself.
    */
   messagesRoot: () => [...chatKeys.all, 'messages'] as const,
-  messages: (conversationId?: string, limit?: number, before?: string) =>
-    [...chatKeys.messagesRoot(), { conversationId, limit, before }] as const,
+  messages: (conversationId?: string, limit?: number, cursor?: string) =>
+    [...chatKeys.messagesRoot(), { conversationId, limit, cursor }] as const,
 };
 
 interface CreateConversationPayload {
@@ -36,19 +38,22 @@ const createConversation = (payload: CreateConversationPayload) =>
 
 const listConversations = () => apiFetch<Conversation[]>('/chat/conversations');
 
-type MessagesResponse = Message[];
-
-const getMessages = (
+/**
+ * The cache holds the page's `items` (oldest → newest) so realtime writers can
+ * append to a plain array. `nextCursor` is not surfaced yet: the UI has no
+ * "load older" control (tracked in docs/api-spec.md).
+ */
+const getMessages = async (
   conversationId: string,
   limit?: number,
-  before?: string,
+  cursor?: string,
 ) => {
   const params = new URLSearchParams();
   params.set('conversationId', conversationId);
   if (limit) params.set('limit', String(limit));
-  if (before) params.set('before', before);
-  const qs = params.toString();
-  return apiFetch<MessagesResponse>(`/chat/messages?${qs}`);
+  if (cursor) params.set('cursor', cursor);
+  const page = await apiFetch<MessagesPage>(`/chat/messages?${params}`);
+  return page.items;
 };
 
 export function useConversations() {
@@ -71,11 +76,11 @@ export function useCreateConversation() {
 export function useMessages(
   conversationId?: string,
   limit?: number,
-  before?: string,
+  cursor?: string,
 ) {
   return useQuery({
-    queryKey: chatKeys.messages(conversationId, limit, before),
-    queryFn: () => getMessages(conversationId!, limit, before),
+    queryKey: chatKeys.messages(conversationId, limit, cursor),
+    queryFn: () => getMessages(conversationId!, limit, cursor),
     enabled: Boolean(conversationId),
   });
 }

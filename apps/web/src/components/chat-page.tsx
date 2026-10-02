@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { chatKeys, useMessages } from '@/lib/data-layer/chats';
 import { useUserPublicKey } from '@/lib/data-layer/user';
+import type { SendMessageInput } from '@chat-app/shared/contracts';
 import {
-  type SendMessageData,
   useChatSocketActions,
   useChatRealtimeMessages,
 } from '@/lib/data-layer/chats/use-chat-socket';
@@ -33,7 +33,7 @@ interface PendingMessage {
   text: string;
   time: string;
   status: 'sending' | 'sent' | 'failed';
-  payload: SendMessageData;
+  payload: SendMessageInput;
 }
 
 interface ChatPageProps {

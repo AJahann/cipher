@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./crypto": "./src/crypto/index.ts",
-    "./types": "./src/types/index.ts"
+    "./types": "./src/types/index.ts",
+    "./contracts": "./src/contracts/index.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -16,7 +17,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "libsodium-wrappers-sumo": "^0.8.4"
+    "libsodium-wrappers-sumo": "^0.8.4",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "typescript": "^5"

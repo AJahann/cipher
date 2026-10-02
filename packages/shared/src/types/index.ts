@@ -1,3 +1,9 @@
+import type {
+  LoginUserInput,
+  MessageDto,
+  RegisterUserInput,
+} from '../contracts';
+
 export interface User {
   id: string;
   username: string;
@@ -10,18 +16,10 @@ export interface User {
   };
 }
 
-export interface Message {
-  id: string;
-  /** Stable client-generated command ID used to make sends idempotent. */
-  clientMessageId: string;
-  conversationId: string;
-  senderId: string;
-  ciphertext: string;
-  nonce: string;
-  algorithm: string;
-  createdAt: string;
-  sender?: Pick<User, 'id' | 'username'>;
-}
+/** A stored message. Derived from the wire contract, not redeclared. */
+export type Message = Omit<MessageDto, 'sender'> & {
+  sender?: MessageDto['sender'];
+};
 
 export interface Conversation {
   id: string;
@@ -36,26 +34,7 @@ export interface ConversationMember {
   user?: Pick<User, 'id' | 'username'>;
 }
 
-export interface SendMessagePayload {
-  clientMessageId: string;
-  conversationId: string;
-  ciphertext: string;
-  nonce: string;
-  algorithm: string;
-}
-
-export interface RegisterUserPayload {
-  username: string;
-  password: string;
-  publicKey: string;
-  wrappedPrivateKey: {
-    ciphertext: string;
-    salt: string;
-    nonce: string;
-  };
-}
-
-export interface LoginUserPayload {
-  username: string;
-  password: string;
-}
+// Request payloads are the zod contracts' inferred types; there is no second,
+// hand-written definition to drift from what the server parses.
+export type RegisterUserPayload = RegisterUserInput;
+export type LoginUserPayload = LoginUserInput;

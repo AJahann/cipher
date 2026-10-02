@@ -5,75 +5,62 @@ import {
   conversationMembers,
   messageReads,
 } from '../../db/schema';
-import { eq, lt, and, desc, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
+import type { SendMessageInput } from '@chat-app/shared/contracts';
+import { AppError } from '../../http/errors';
+import { decodeCursor, encodeCursor } from '../../http/cursor';
 
 function directConversationKey(memberIds: string[]) {
   return `dm:${[...memberIds].sort().join(':')}`;
 }
 
+type MessageRow = typeof messages.$inferSelect;
+
 export const chatService = {
-  async createConversation(memberIds: string[]) {
-    const sortedIds = [...new Set(memberIds)].sort();
-    const memberCount = sortedIds.length;
+  async isMember(conversationId: string, userId: string): Promise<boolean> {
+    const membership = await db.query.conversationMembers.findFirst({
+      where: and(
+        eq(conversationMembers.conversationId, conversationId),
+        eq(conversationMembers.userId, userId),
+      ),
+    });
+    return Boolean(membership);
+  },
 
-    if (memberCount === 2) {
-      const directKey = directConversationKey(sortedIds);
-
-      return db.transaction(async (tx) => {
-        const [created] = await tx
-          .insert(conversations)
-          .values({ directKey })
-          .onConflictDoNothing({ target: conversations.directKey })
-          .returning();
-
-        if (created) {
-          await tx.insert(conversationMembers).values(
-            sortedIds.map((userId) => ({
-              conversationId: created.id,
-              userId,
-            })),
-          );
-          return created;
-        }
-
-        const [existing] = await tx
-          .select()
-          .from(conversations)
-          .where(eq(conversations.directKey, directKey));
-
-        if (!existing) throw new Error('CONVERSATION_CREATE_CONFLICT');
-        return existing;
-      });
-    }
-
-    const existing = await db
-      .select({ conversationId: conversationMembers.conversationId })
-      .from(conversationMembers)
-      .where(inArray(conversationMembers.userId, sortedIds))
-      .groupBy(conversationMembers.conversationId)
-      .having(
-        sql`COUNT(*) = ${memberCount} AND COUNT(*) = (
-          SELECT COUNT(*) FROM ${conversationMembers} cm2
-          WHERE cm2.conversation_id = ${conversationMembers.conversationId}
-        )`,
-      );
-
-    if (existing.length > 0) {
-      const [conv] = await db
-        .select()
-        .from(conversations)
-        .where(eq(conversations.id, existing[0].conversationId));
-      return conv!;
-    }
+  /**
+   * Get-or-create the direct conversation between two distinct users.
+   * `conversations.direct_key` is UNIQUE, so concurrent callers converge on
+   * one row; `created` tells the caller which of them inserted it.
+   */
+  async getOrCreateDirectConversation(userId: string, memberId: string) {
+    if (userId === memberId) throw new AppError('INVALID_MEMBER');
+    const sortedIds = [userId, memberId].sort();
+    const directKey = directConversationKey(sortedIds);
 
     return db.transaction(async (tx) => {
-      const [conv] = await tx.insert(conversations).values({}).returning();
-      await tx
-        .insert(conversationMembers)
-        .values(
-          sortedIds.map((userId) => ({ conversationId: conv.id, userId })),
+      const [created] = await tx
+        .insert(conversations)
+        .values({ directKey })
+        .onConflictDoNothing({ target: conversations.directKey })
+        .returning();
+
+      if (created) {
+        await tx.insert(conversationMembers).values(
+          sortedIds.map((id) => ({
+            conversationId: created.id,
+            userId: id,
+          })),
         );
-      return conv;
+        return { conversation: created, created: true };
+      }
+
+      const [existing] = await tx
+        .select()
+        .from(conversations)
+        .where(eq(conversations.directKey, directKey));
+
+      if (!existing) throw new Error('CONVERSATION_CREATE_CONFLICT');
+      return { conversation: existing, created: false };
     });
   },
 
@@ -111,21 +98,17 @@ export const chatService = {
     return rows.map((r) => r.userId);
   },
 
-  async sendMessage(data: {
-    clientMessageId: string;
-    conversationId: string;
-    senderId: string;
-    ciphertext: string;
-    nonce: string;
-    algorithm: string;
-  }) {
-    const membership = await db.query.conversationMembers.findFirst({
-      where: and(
-        eq(conversationMembers.conversationId, data.conversationId),
-        eq(conversationMembers.userId, data.senderId),
-      ),
-    });
-    if (!membership) throw new Error('FORBIDDEN');
+  /**
+   * Idempotent on (senderId, clientMessageId). A retry with the same key and
+   * the same payload returns the stored row with `replayed: true`; the same
+   * key with a different payload is IDEMPOTENCY_CONFLICT. Keys never expire.
+   */
+  async sendMessage(
+    data: SendMessageInput & { senderId: string },
+  ): Promise<{ message: MessageRow; replayed: boolean }> {
+    if (!(await chatService.isMember(data.conversationId, data.senderId))) {
+      throw new AppError('CONVERSATION_NOT_FOUND');
+    }
 
     const [inserted] = await db
       .insert(messages)
@@ -135,7 +118,7 @@ export const chatService = {
       })
       .returning();
 
-    if (inserted) return inserted;
+    if (inserted) return { message: inserted, replayed: false };
 
     const existing = await db.query.messages.findFirst({
       where: and(
@@ -152,44 +135,80 @@ export const chatService = {
       existing.nonce === data.nonce &&
       existing.algorithm === data.algorithm;
 
-    if (!sameCommand) throw new Error('IDEMPOTENCY_CONFLICT');
-    return existing;
+    if (!sameCommand) throw new AppError('IDEMPOTENCY_CONFLICT');
+    return { message: existing, replayed: true };
   },
 
+  /**
+   * Keyset page, newest first by `(created_at DESC, id DESC)` — `id` breaks
+   * ties so the order is total. The cursor names the oldest message already
+   * returned; its sort key is resolved inside Postgres so microsecond
+   * precision never round-trips through a JS Date. Items in a page are
+   * returned oldest → newest for rendering.
+   */
   async getMessages(
     conversationId: string,
     requesterId: string,
     limit: number,
-    before?: string,
+    cursor?: string,
   ) {
-    const membership = await db.query.conversationMembers.findFirst({
-      where: and(
-        eq(conversationMembers.conversationId, conversationId),
-        eq(conversationMembers.userId, requesterId),
-      ),
-    });
-    if (!membership) throw new Error('FORBIDDEN');
+    if (!(await chatService.isMember(conversationId, requesterId))) {
+      throw new AppError('CONVERSATION_NOT_FOUND');
+    }
 
-    let cursorCondition;
-    if (before) {
-      const cursor = await db.query.messages.findFirst({
-        where: eq(messages.id, before),
+    let anchorId: string | undefined;
+    if (cursor) {
+      anchorId = decodeCursor('messages', cursor);
+      const anchor = await db.query.messages.findFirst({
+        where: and(
+          eq(messages.id, anchorId),
+          eq(messages.conversationId, conversationId),
+        ),
+        columns: { id: true },
       });
-      if (cursor) cursorCondition = lt(messages.createdAt, cursor.createdAt);
+      if (!anchor) throw new AppError('INVALID_CURSOR');
     }
 
     const rows = await db.query.messages.findMany({
-      where: and(eq(messages.conversationId, conversationId), cursorCondition),
-      orderBy: [desc(messages.createdAt)],
-      limit,
+      where: (m, { and: allOf, eq: equals }) =>
+        allOf(
+          equals(m.conversationId, conversationId),
+          anchorId
+            ? sql`(${m.createdAt}, ${m.id}) < (select anchor.created_at, anchor.id from messages anchor where anchor.id = ${anchorId})`
+            : undefined,
+        ),
+      orderBy: (m, { desc }) => [desc(m.createdAt), desc(m.id)],
+      limit: limit + 1,
       with: {
         sender: { columns: { id: true, username: true } },
       },
     });
-    return rows.reverse();
+
+    const page = rows.slice(0, limit);
+    const oldest = page.at(-1);
+    return {
+      items: page.reverse(),
+      nextCursor:
+        rows.length > limit && oldest
+          ? encodeCursor('messages', oldest.id)
+          : null,
+    };
   },
 
-  async markRead(messageId: string, userId: string) {
+  /** Records a read receipt. Idempotent via UNIQUE(message_id, user_id). */
+  async markRead(messageId: string, conversationId: string, userId: string) {
+    if (!(await chatService.isMember(conversationId, userId))) {
+      throw new AppError('CONVERSATION_NOT_FOUND');
+    }
+    const message = await db.query.messages.findFirst({
+      where: and(
+        eq(messages.id, messageId),
+        eq(messages.conversationId, conversationId),
+      ),
+      columns: { id: true },
+    });
+    if (!message) throw new AppError('MESSAGE_NOT_FOUND');
+
     await db
       .insert(messageReads)
       .values({ messageId, userId })

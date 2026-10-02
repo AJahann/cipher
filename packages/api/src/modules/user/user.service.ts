@@ -2,6 +2,9 @@ import bcrypt from 'bcrypt';
 import { db } from '../../db';
 import { users, userKeys } from '../../db/schema';
 import { eq, ne, and, gt, asc } from 'drizzle-orm';
+import type { RegisterUserInput, UsersPage } from '@chat-app/shared/contracts';
+import { AppError, isUniqueViolation } from '../../http/errors';
+import { decodeCursor, encodeCursor } from '../../http/cursor';
 
 const SALT_ROUNDS = 12;
 
@@ -17,37 +20,39 @@ export const userService = {
     password,
     publicKey,
     wrappedPrivateKey,
-  }: {
-    username: string;
-    password: string;
-    publicKey: string;
-    wrappedPrivateKey: { ciphertext: string; salt: string; nonce: string };
-  }) {
+  }: RegisterUserInput) {
     const existing = await db.query.users.findFirst({
       where: eq(users.username, username),
     });
-    if (existing) throw new Error('USERNAME_TAKEN');
+    if (existing) throw new AppError('USERNAME_TAKEN');
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    return db.transaction(async (tx) => {
-      const [user] = await tx
-        .insert(users)
-        .values({ username, passwordHash })
-        .returning({
-          id: users.id,
-          username: users.username,
-          createdAt: users.createdAt,
+    // The pre-check above is only a fast path: two concurrent registrations
+    // both pass it, and the UNIQUE(username) constraint decides the winner.
+    try {
+      return await db.transaction(async (tx) => {
+        const [user] = await tx
+          .insert(users)
+          .values({ username, passwordHash })
+          .returning({
+            id: users.id,
+            username: users.username,
+            createdAt: users.createdAt,
+          });
+
+        await tx.insert(userKeys).values({
+          userId: user.id,
+          publicKey,
+          wrappedPrivateKey: JSON.stringify(wrappedPrivateKey),
         });
 
-      await tx.insert(userKeys).values({
-        userId: user.id,
-        publicKey,
-        wrappedPrivateKey: JSON.stringify(wrappedPrivateKey),
+        return user;
       });
-
-      return user;
-    });
+    } catch (error) {
+      if (isUniqueViolation(error)) throw new AppError('USERNAME_TAKEN');
+      throw error;
+    }
   },
 
   async login({ username, password }: { username: string; password: string }) {
@@ -60,7 +65,7 @@ export const userService = {
       user?.passwordHash ??
       '$2b$12$invalidhashpaddingtopreventimenumeration000000000000000';
     const valid = await bcrypt.compare(password, hashToCompare);
-    if (!user || !valid) throw new Error('INVALID_CREDENTIALS');
+    if (!user || !valid) throw new AppError('INVALID_CREDENTIALS');
 
     const wrappedPrivateKey = user.key?.wrappedPrivateKey
       ? JSON.parse(user.key.wrappedPrivateKey)
@@ -82,18 +87,31 @@ export const userService = {
     });
   },
 
-  listUsers(excludeUserId: string, limit: number, after?: string) {
+  /**
+   * Keyset page ordered by `id ASC` (unique, so the order is total and stable
+   * under concurrent inserts). The cursor encodes the last id returned.
+   */
+  async listUsers(
+    excludeUserId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<UsersPage> {
     const conditions = [ne(users.id, excludeUserId)];
-    if (after) {
-      conditions.push(gt(users.id, after));
-    }
+    if (cursor) conditions.push(gt(users.id, decodeCursor('users', cursor)));
 
-    return db.query.users.findMany({
+    const rows = await db.query.users.findMany({
       where: and(...conditions),
       columns: { id: true, username: true },
       orderBy: [asc(users.id)],
-      limit,
+      limit: limit + 1,
     });
+    const items = rows.slice(0, limit);
+    const last = items.at(-1);
+    return {
+      items,
+      nextCursor:
+        rows.length > limit && last ? encodeCursor('users', last.id) : null,
+    };
   },
 
   async getPublicKey(userId: string): Promise<string | null> {

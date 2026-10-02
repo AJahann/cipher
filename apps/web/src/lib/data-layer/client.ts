@@ -1,3 +1,4 @@
+import { apiErrorSchema } from '@chat-app/shared/contracts';
 import { env } from '../../config/env';
 
 export class ApiError extends Error {
@@ -26,13 +27,14 @@ export async function apiFetch<T>(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new ApiError(
-      res.status,
-      body.error ?? 'UNKNOWN',
-      body.error ?? `HTTP ${res.status}`,
-      body.issues,
-    );
+    // Every API error uses the shared envelope `{ code, message, issues? }`.
+    const raw = await res.json().catch(() => null);
+    const parsed = apiErrorSchema.safeParse(raw);
+    if (parsed.success) {
+      const { code, message, issues } = parsed.data;
+      throw new ApiError(res.status, code, message, issues);
+    }
+    throw new ApiError(res.status, 'UNKNOWN', `HTTP ${res.status}`);
   }
 
   // 204 No Content — return undefined cast to T

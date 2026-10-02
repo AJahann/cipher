@@ -121,11 +121,19 @@ const command = {
 describe('chatService idempotency', () => {
   beforeEach(() => testState.reset());
 
-  it('returns the original message for the same sender, key, and payload', async () => {
+  it('stores a first send and reports it as not replayed', async () => {
+    const first = await chatService.sendMessage(command);
+
+    expect(first.replayed).toBe(false);
+    expect(first.message).toMatchObject({ clientMessageId, senderId });
+  });
+
+  it('returns the original message, flagged replayed, for an identical retry', async () => {
     const first = await chatService.sendMessage(command);
     const retried = await chatService.sendMessage({ ...command });
 
-    expect(retried).toEqual(first);
+    expect(retried.message).toEqual(first.message);
+    expect(retried.replayed).toBe(true);
     expect(testState.messageRows.size).toBe(1);
   });
 
@@ -137,19 +145,70 @@ describe('chatService idempotency', () => {
         ...command,
         ciphertext: 'different-ciphertext',
       }),
-    ).rejects.toThrow('IDEMPOTENCY_CONFLICT');
+    ).rejects.toMatchObject({ code: 'IDEMPOTENCY_CONFLICT' });
 
     expect(testState.messageRows.size).toBe(1);
   });
 
+  it('answers a non-member with CONVERSATION_NOT_FOUND and stores nothing', async () => {
+    testState.db.query.conversationMembers.findFirst.mockResolvedValueOnce(
+      undefined,
+    );
+
+    await expect(chatService.sendMessage(command)).rejects.toMatchObject({
+      code: 'CONVERSATION_NOT_FOUND',
+    });
+    expect(testState.messageRows.size).toBe(0);
+  });
+});
+
+describe('chatService direct conversations', () => {
+  beforeEach(() => testState.reset());
+
   it('returns one conversation for two concurrent direct-message requests', async () => {
     const [first, second] = await Promise.all([
-      chatService.createConversation([senderId, receiverId]),
-      chatService.createConversation([receiverId, senderId]),
+      chatService.getOrCreateDirectConversation(senderId, receiverId),
+      chatService.getOrCreateDirectConversation(receiverId, senderId),
     ]);
 
-    expect(second.id).toBe(first.id);
+    expect(second.conversation.id).toBe(first.conversation.id);
+    expect([first.created, second.created].sort()).toEqual([false, true]);
     expect(testState.conversationsByKey.size).toBe(1);
     expect(testState.membershipRows).toHaveLength(2);
+  });
+
+  it('reports created=false when the conversation already exists', async () => {
+    const first = await chatService.getOrCreateDirectConversation(
+      senderId,
+      receiverId,
+    );
+    const again = await chatService.getOrCreateDirectConversation(
+      senderId,
+      receiverId,
+    );
+
+    expect(first.created).toBe(true);
+    expect(again).toEqual({ conversation: first.conversation, created: false });
+  });
+
+  it('refuses a conversation with yourself', async () => {
+    await expect(
+      chatService.getOrCreateDirectConversation(senderId, senderId),
+    ).rejects.toMatchObject({ code: 'INVALID_MEMBER' });
+    expect(testState.conversationsByKey.size).toBe(0);
+  });
+});
+
+describe('chatService history access', () => {
+  beforeEach(() => testState.reset());
+
+  it('hides a conversation from non-members behind CONVERSATION_NOT_FOUND', async () => {
+    testState.db.query.conversationMembers.findFirst.mockResolvedValueOnce(
+      undefined,
+    );
+
+    await expect(
+      chatService.getMessages(conversationId, receiverId, 50),
+    ).rejects.toMatchObject({ code: 'CONVERSATION_NOT_FOUND' });
   });
 });

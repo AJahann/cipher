@@ -20,7 +20,10 @@ describe(useMe, () => {
     server.use(
       http.get(ME_PATH, () => {
         hits += 1;
-        return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
+        return HttpResponse.json(
+          { code: 'UNAUTHENTICATED', message: 'Not authenticated' },
+          { status: 401 },
+        );
       }),
     );
 
@@ -43,7 +46,10 @@ describe(useMe, () => {
     server.use(
       http.get(ME_PATH, () => {
         hits += 1;
-        return HttpResponse.json({ error: 'unauthorized' }, { status: 401 });
+        return HttpResponse.json(
+          { code: 'UNAUTHENTICATED', message: 'Not authenticated' },
+          { status: 401 },
+        );
       }),
     );
 

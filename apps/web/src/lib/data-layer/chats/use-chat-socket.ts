@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@chat-app/shared/types';
+import type {
+  ClientToServerEvents,
+  MessageDto,
+  SendMessageAck,
+  SendMessageInput,
+  ServerToClientEvents,
+} from '@chat-app/shared/contracts';
 import { chatKeys, type MessagesQueryParams } from './use-chat';
 import { userKeys } from '../user/use-user';
 import { env } from '../../../config/env';
@@ -9,57 +16,9 @@ import { env } from '../../../config/env';
 const SOCKET_URL = env.NEXT_PUBLIC_API_URL;
 const SEND_ACK_TIMEOUT_MS = 8_000;
 
-interface ServerToClientEvents {
-  'message:new': (message: MessagePayload) => void;
-  'message:ack': (data: {
-    clientMessageId: string;
-    message: MessagePayload;
-  }) => void;
-  'conversation:updated': (data: {
-    conversationId: string;
-    message: MessagePayload;
-  }) => void;
-  'user:new': (user: { id: string; username: string }) => void;
-  'typing:indicator': (data: {
-    conversationId: string;
-    userId: string;
-    isTyping: boolean;
-  }) => void;
-  'presence:update': (data: { userId: string; online: boolean }) => void;
-  error: (data: { code: string; message: string }) => void;
-}
-
-interface ClientToServerEvents {
-  'message:send': (
-    data: SendMessageData,
-    ack: (result: AckResult) => void,
-  ) => void;
-  'typing:start': (data: { conversationId: string }) => void;
-  'typing:stop': (data: { conversationId: string }) => void;
-  'message:read': (data: { messageId: string; conversationId: string }) => void;
-  'conversation:join': (data: { conversationId: string }) => void;
-  'conversation:leave': (data: { conversationId: string }) => void;
-}
-
 type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-export interface SendMessageData {
-  /** Stable idempotency key. Retry this exact payload with the same value. */
-  clientMessageId: string;
-  conversationId: string;
-  ciphertext: string;
-  nonce: string;
-  algorithm: string;
-}
-
-interface AckResult {
-  ok: boolean;
-  error?: string;
-}
-
-type MessagePayload = Message & {
-  sender: { id: string; username: string };
-};
+type MessagePayload = MessageDto;
 
 let socketInstance: AppSocket | null = null;
 let refCount = 0;
@@ -139,8 +98,8 @@ export function useChatSocketActions() {
   const { socket } = useChatSocket(true);
 
   const sendMessage = useCallback(
-    (data: SendMessageData) =>
-      new Promise<AckResult>((resolve, reject) => {
+    (data: SendMessageInput) =>
+      new Promise<Extract<SendMessageAck, { ok: true }>>((resolve, reject) => {
         if (!socket.connected) {
           reject(new Error('SOCKET_DISCONNECTED'));
           return;
@@ -158,7 +117,8 @@ export function useChatSocketActions() {
           window.clearTimeout(timer);
 
           if (!ack.ok) {
-            reject(new Error(ack.error ?? 'FAILED_TO_SEND'));
+            // Machine-readable code from the shared error envelope.
+            reject(new Error(ack.error.code));
             return;
           }
           resolve(ack);

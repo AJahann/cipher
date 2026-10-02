@@ -4,6 +4,7 @@ import type {
   RegisterUserPayload,
   LoginUserPayload,
 } from '@chat-app/shared/types';
+import type { UsersPage } from '@chat-app/shared/contracts';
 import { apiFetch } from '../client';
 
 export const userKeys = {
@@ -17,8 +18,8 @@ export const userKeys = {
    * invalidate on this prefix so paginated variants are covered too.
    */
   listRoot: () => [...userKeys.all, 'list'] as const,
-  list: (limit?: number, after?: string) =>
-    [...userKeys.listRoot(), { limit, after }] as const,
+  list: (limit?: number, cursor?: string) =>
+    [...userKeys.listRoot(), { limit, cursor }] as const,
   publicKey: (id: string) => [...userKeys.all, 'publicKey', id] as const,
 };
 
@@ -38,15 +39,17 @@ const login = (payload: LoginUserPayload) =>
 
 const logout = () => apiFetch<{ ok: true }>('/auth/logout', { method: 'POST' });
 
-/** GET /users returns a bare array — there is no envelope or cursor yet. */
-type UsersListResponse = User[];
-
-const listUsers = (limit?: number, after?: string) => {
+/**
+ * GET /users is cursor-paginated. The directory currently renders only the
+ * first page (`limit` up to 100); see docs/api-spec.md for the follow-up.
+ */
+const listUsers = async (limit?: number, cursor?: string): Promise<User[]> => {
   const params = new URLSearchParams();
   if (limit) params.set('limit', String(limit));
-  if (after) params.set('after', after);
+  if (cursor) params.set('cursor', cursor);
   const qs = params.toString();
-  return apiFetch<UsersListResponse>(`/users${qs ? `?${qs}` : ''}`);
+  const page = await apiFetch<UsersPage>(`/users${qs ? `?${qs}` : ''}`);
+  return page.items as User[];
 };
 
 const getPublicKey = (userId: string) =>
@@ -97,10 +100,10 @@ export function useLogout() {
   });
 }
 
-export function useUsersList(limit?: number, after?: string) {
+export function useUsersList(limit?: number, cursor?: string) {
   return useQuery({
-    queryKey: userKeys.list(limit, after),
-    queryFn: () => listUsers(limit, after),
+    queryKey: userKeys.list(limit, cursor),
+    queryFn: () => listUsers(limit, cursor),
   });
 }
 

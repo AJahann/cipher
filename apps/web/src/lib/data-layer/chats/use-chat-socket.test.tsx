@@ -38,24 +38,24 @@ vi.mock(import('socket.io-client'), () => ({
 }));
 
 // oxlint-disable-next-line import/first -- Vitest hoists this mock before the module import.
-import {
-  useChatRealtimeSync,
-  useChatSocketActions,
-  type SendMessageData,
-} from './use-chat-socket';
+import type { SendMessageInput } from '@chat-app/shared/contracts';
+import { useChatRealtimeSync, useChatSocketActions } from './use-chat-socket';
 
 function rejectMessageSends(
   event: string,
-  _data: SendMessageData,
+  _data: SendMessageInput,
   ack?: (value: unknown) => void,
 ) {
   if (event === 'message:send') {
-    ack?.({ ok: false, error: 'FAILED_TO_SEND' });
+    ack?.({
+      ok: false,
+      error: { code: 'INTERNAL', message: 'Internal server error' },
+    });
   }
   return fakeSocket;
 }
 
-const payload: SendMessageData = {
+const payload: SendMessageInput = {
   clientMessageId: '44444444-4444-4444-8444-444444444444',
   conversationId: '33333333-3333-4333-8333-333333333333',
   ciphertext: 'ciphertext-a',
@@ -117,10 +117,10 @@ describe('chat socket hooks', () => {
     });
 
     await expect(result.current.sendMessage(payload)).rejects.toThrow(
-      'FAILED_TO_SEND',
+      'INTERNAL',
     );
     await expect(result.current.sendMessage(payload)).rejects.toThrow(
-      'FAILED_TO_SEND',
+      'INTERNAL',
     );
 
     const sends = fakeSocket.emit.mock.calls.filter(
