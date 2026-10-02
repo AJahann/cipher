@@ -1,0 +1,58 @@
+[
+  {
+    "route": "/chat",
+    "state": "checking (prerendered loading, pre-hydration)",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/chat",
+    "score": 80,
+    "failing": ["color-contrast", "landmark-one-main"]
+  },
+  {
+    "route": "/",
+    "state": "anonymous · login mode",
+    "mode": "navigation",
+    "url": "http://localhost:3000/",
+    "score": 93,
+    "failing": ["color-contrast", "landmark-one-main"]
+  },
+  {
+    "route": "/",
+    "state": "anonymous · register mode",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/",
+    "score": 93,
+    "failing": ["color-contrast", "landmark-one-main"]
+  },
+  {
+    "route": "/chat",
+    "state": "ready · no conversation selected",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/chat",
+    "score": 95,
+    "failing": ["color-contrast"]
+  },
+  {
+    "route": "/chat",
+    "state": "ready · conversation with messages",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/chat",
+    "score": 96,
+    "failing": ["color-contrast"]
+  },
+  {
+    "route": "/chat",
+    "state": "need-unlock",
+    "mode": "navigation",
+    "url": "http://localhost:3000/chat",
+    "score": 94,
+    "failing": ["color-contrast", "landmark-one-main"]
+  },
+  {
+    "route": "/chat → /",
+    "state": "need-login (SessionGate redirect)",
+    "mode": "navigation",
+    "url": "http://localhost:3000/",
+    "score": 93,
+    "failing": ["color-contrast", "landmark-one-main"]
+  }
+]

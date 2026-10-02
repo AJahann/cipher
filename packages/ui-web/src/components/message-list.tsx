@@ -8,6 +8,7 @@ export interface MessageListProps {
   loadingMessage: string;
   isLoading: boolean;
   isError?: boolean;
+  peerName?: string;
   onRetryMessage?: (id: string) => void;
 }
 
@@ -16,6 +17,7 @@ export function MessageList({
   loadingMessage,
   isLoading,
   isError = false,
+  peerName,
   onRetryMessage,
 }: MessageListProps) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -55,6 +57,7 @@ export function MessageList({
         <MessageBubble
           key={msg.id}
           msg={msg}
+          peerName={peerName}
           onRetry={
             msg.deliveryStatus === 'failed'
               ? () => onRetryMessage?.(msg.id)

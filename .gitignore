@@ -48,3 +48,8 @@ next-env.d.ts
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# a11y audit: session cookie + generated usernames (never commit)
+a11y/results/.alice-state.json
+a11y/results/.users.json
+a11y/results/*.png

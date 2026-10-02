@@ -25,21 +25,25 @@ export function SidebarItem({
       aria-busy={isPending}
       aria-pressed={isActive}
       className={[
-        'flex w-full items-center gap-3 px-4 py-3 text-left',
+        'flex w-full items-center gap-3 px-4 py-3 text-start',
         'outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--cipher-accent)]',
         'transition-colors duration-100 disabled:cursor-wait disabled:opacity-60',
         isActive
-          ? 'bg-[var(--cipher-surface-2)] border-l-2 border-l-[var(--cipher-accent)]'
-          : 'border-l-2 border-l-transparent hover:bg-[var(--cipher-surface-2)]',
+          ? 'bg-[var(--cipher-surface-2)] border-s-2 border-s-[var(--cipher-accent)]'
+          : 'border-s-2 border-s-transparent hover:bg-[var(--cipher-surface-2)]',
       ].join(' ')}
     >
-      <div className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[var(--cipher-border)] bg-[var(--cipher-surface)]'>
+      <div
+        aria-hidden='true'
+        className='flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[var(--cipher-border)] bg-[var(--cipher-surface)]'
+      >
         <span className='font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]'>
           {initials}
         </span>
       </div>
       <span className='truncate font-[var(--cipher-font-sans)] text-[13px] text-[var(--cipher-text)]'>
-        {isPending ? `${username} · opening…` : username}
+        <bdi>{username}</bdi>
+        {isPending ? ' · opening…' : null}
       </span>
     </button>
   );

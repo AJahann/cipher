@@ -3,6 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { ChatHeader } from './chat-header';
 
 describe(ChatHeader, () => {
+  it('uses the contact name as the page heading', () => {
+    render(<ChatHeader title='bob' isConnected />);
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'bob' }),
+    ).toBeInTheDocument();
+  });
+
   it('opens keyboard help, traps focus, closes with Escape, and restores focus', async () => {
     const user = userEvent.setup();
     render(<ChatHeader isConnected />);

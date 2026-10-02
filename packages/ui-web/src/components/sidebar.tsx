@@ -24,7 +24,7 @@ export function Sidebar({
   return (
     <aside
       aria-label='Conversations'
-      className='flex w-60 flex-shrink-0 flex-col border-r border-[var(--cipher-border)] bg-[var(--cipher-surface)]'
+      className='flex w-60 flex-shrink-0 flex-col border-e border-[var(--cipher-border)] bg-[var(--cipher-surface)]'
     >
       <div className='flex items-center gap-2 border-b border-[var(--cipher-border)] px-4 py-3.5'>
         <span className='h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--cipher-accent)]' />

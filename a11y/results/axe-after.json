@@ -1,0 +1,86 @@
+[
+  {
+    "route": "/chat",
+    "state": "checking (prerendered loading, pre-hydration)",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/",
+    "state": "anonymous · login mode",
+    "url": "http://localhost:3000/",
+    "violations": []
+  },
+  {
+    "route": "/",
+    "state": "anonymous · login validation errors",
+    "url": "http://localhost:3000/",
+    "violations": []
+  },
+  {
+    "route": "/",
+    "state": "anonymous · authentication failed",
+    "url": "http://localhost:3000/",
+    "violations": []
+  },
+  {
+    "route": "/",
+    "state": "anonymous · register mode",
+    "url": "http://localhost:3000/",
+    "violations": []
+  },
+  {
+    "route": "/chat → /",
+    "state": "no session (AuthGuard redirect)",
+    "url": "http://localhost:3000/",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready · no conversation selected",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready · empty conversation",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready · conversation with messages",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready · keyboard-shortcuts dialog open",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "need-unlock",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "need-unlock · wrong passphrase",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready (after unlock) · conversation with messages",
+    "url": "http://localhost:3000/chat",
+    "violations": []
+  },
+  {
+    "route": "/chat → /",
+    "state": "need-login (SessionGate redirect)",
+    "url": "http://localhost:3000/",
+    "violations": []
+  }
+]

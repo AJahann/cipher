@@ -1,0 +1,58 @@
+[
+  {
+    "route": "/chat",
+    "state": "checking (prerendered loading, pre-hydration)",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/chat",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/",
+    "state": "anonymous · login mode",
+    "mode": "navigation",
+    "url": "http://localhost:3000/",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/",
+    "state": "anonymous · register mode",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready · no conversation selected",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/chat",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/chat",
+    "state": "ready · conversation with messages",
+    "mode": "snapshot",
+    "url": "http://localhost:3000/chat",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/chat",
+    "state": "need-unlock",
+    "mode": "navigation",
+    "url": "http://localhost:3000/chat",
+    "score": 100,
+    "failing": []
+  },
+  {
+    "route": "/chat → /",
+    "state": "need-login (SessionGate redirect)",
+    "mode": "navigation",
+    "url": "http://localhost:3000/",
+    "score": 100,
+    "failing": []
+  }
+]

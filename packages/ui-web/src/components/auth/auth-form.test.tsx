@@ -22,6 +22,15 @@ function deferred() {
 }
 
 describe(AuthForm, () => {
+  it('renders the whole form inside the main landmark', () => {
+    render(<AuthForm onLogin={resolved} onRegister={resolved} />);
+    const main = screen.getByRole('main');
+    expect(main).toContainElement(screen.getByRole('heading', { level: 1 }));
+    expect(main).toContainElement(
+      screen.getByRole('group', { name: 'Authentication mode' }),
+    );
+  });
+
   describe('login mode', () => {
     it('has a logical tab order and submits with Enter', async () => {
       const user = userEvent.setup();

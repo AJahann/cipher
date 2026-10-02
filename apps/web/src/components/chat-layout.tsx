@@ -52,6 +52,9 @@ export default function ChatLayout() {
     }
   }
 
+  const activeReceiverName =
+    users.find((u) => u.id === activeReceiverId)?.username ?? 'Chat';
+
   return (
     <AppShell
       sidebar={
@@ -69,6 +72,7 @@ export default function ChatLayout() {
           <ChatPage
             conversationId={activeConversationId}
             receiverId={activeReceiverId}
+            receiverName={activeReceiverName}
             myId={me.id}
             isConnected={socket.connected}
           />

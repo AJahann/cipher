@@ -1,0 +1,1018 @@
+[
+  {
+    "route": "/chat",
+    "state": "checking (prerendered loading, pre-hydration)",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": "p",
+            "html": "<p class=\"font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">loading...</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "help": "Page should contain a level-one heading",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Page must have a level-one heading"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".flex-1",
+            "html": "<div class=\"flex flex-1 items-center justify-center\"><p class=\"font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">loading...</p></div>",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "state": "anonymous · login mode",
+    "url": "http://localhost:3000/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".bg-transparent",
+            "html": "<button type=\"button\" aria-pressed=\"false\" class=\"flex-1 py-2 font-(--...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "p",
+            "html": "<p class=\"mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// session keys derived from your passphrase</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"username\"]",
+            "html": "<label for=\"username\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">username</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"passphrase\"]",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".gap-2",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": "fieldset",
+            "html": "<fieldset aria-label=\"Authentication mode\" class=\"mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)\">Welcome back</h1><p class=\"mt-1 font-(--cipher-font-mono",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(1)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(2)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "state": "anonymous · login validation errors",
+    "url": "http://localhost:3000/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".bg-transparent",
+            "html": "<button type=\"button\" aria-pressed=\"false\" class=\"flex-1 py-2 font-(--...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".mb-7 > .mt-1",
+            "html": "<p class=\"mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// session keys derived from your passphrase</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"username\"]",
+            "html": "<label for=\"username\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">username</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"passphrase\"]",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".gap-2",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": "fieldset",
+            "html": "<fieldset aria-label=\"Authentication mode\" class=\"mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)\">Welcome back</h1><p class=\"mt-1 font-(--cipher-font-mono",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(1)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(2)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "state": "anonymous · authentication failed",
+    "url": "http://localhost:3000/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".bg-transparent",
+            "html": "<button type=\"button\" aria-pressed=\"false\" class=\"flex-1 py-2 font-(--...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "p",
+            "html": "<p class=\"mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// session keys derived from your passphrase</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"username\"]",
+            "html": "<label for=\"username\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">username</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"passphrase\"]",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".gap-2",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": "fieldset",
+            "html": "<fieldset aria-label=\"Authentication mode\" class=\"mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)\">Welcome back</h1><p class=\"mt-1 font-(--cipher-font-mono",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col.flex:nth-child(1)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col.flex:nth-child(2)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/",
+    "state": "anonymous · register mode",
+    "url": "http://localhost:3000/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".bg-transparent",
+            "html": "<button type=\"button\" aria-pressed=\"false\" class=\"flex-1 py-2 font-(--...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "p",
+            "html": "<p class=\"mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// keys generated locally in your browser</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"username\"]",
+            "html": "<label for=\"username\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">username</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"passphrase\"]",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"confirm-passphrase\"]",
+            "html": "<label for=\"confirm-passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">confirm passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".gap-2",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": "fieldset",
+            "html": "<fieldset aria-label=\"Authentication mode\" class=\"mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)\">Create account</h1><p class=\"mt-1 font-(--cipher-font-mo",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(1)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(2)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(3)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat → /",
+    "state": "no session (AuthGuard redirect)",
+    "url": "http://localhost:3000/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".bg-transparent",
+            "html": "<button type=\"button\" aria-pressed=\"false\" class=\"flex-1 py-2 font-(--...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "p",
+            "html": "<p class=\"mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// session keys derived from your passphrase</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"username\"]",
+            "html": "<label for=\"username\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">username</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"passphrase\"]",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".gap-2",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": "fieldset",
+            "html": "<fieldset aria-label=\"Authentication mode\" class=\"mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)\">Welcome back</h1><p class=\"mt-1 font-(--cipher-font-mono",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(1)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(2)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "ready · no conversation selected",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".uppercase",
+            "html": "<p class=\"font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]\">conversations</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(1) > button > .h-8.w-8.border > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(2) > button > .h-8.w-8.border > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(3) > button > .h-8.w-8.border > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(4) > button > .h-8.w-8.border > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(5) > button > .h-8.w-8.border > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".font-\\(--cipher-font-mono\\)",
+            "html": "<p class=\"font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// select a conversation to begin</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "page-has-heading-one",
+        "impact": "moderate",
+        "help": "Page should contain a level-one heading",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Page must have a level-one heading"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "ready · empty conversation",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".uppercase",
+            "html": "<p class=\"font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]\">conversations</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(1) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.flex-shrink-0 > .text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\].text-\\[var\\(--cipher-muted\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(2) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.flex-shrink-0 > .text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\].text-\\[var\\(--cipher-muted\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(3) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.flex-shrink-0 > .text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\].text-\\[var\\(--cipher-muted\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".border-l-\\[var\\(--cipher-accent\\)\\] > .h-8.w-8.flex-shrink-0 > .text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\].text-\\[var\\(--cipher-muted\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(5) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.flex-shrink-0 > .text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\].text-\\[var\\(--cipher-muted\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".ml-auto",
+            "html": "<button type=\"button\" class=\"ml-auto rounded px-2 py-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)] outline-none hover:text-[var(--ciph",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".block",
+            "html": "<output class=\"block font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// no messages yet · send the first one</output>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "ready · conversation with messages",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".uppercase",
+            "html": "<p class=\"font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]\">conversations</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(1) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(2) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(3) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".border-l-\\[var\\(--cipher-accent\\)\\] > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(5) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".ml-auto",
+            "html": "<button type=\"button\" class=\"ml-auto rounded px-2 py-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)] outline-none hover:text-[var(--ciph",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".rounded-br-sm > .leading-relaxed",
+            "html": "<p class=\"font-[var(--cipher-font-sans)] text-[13px] leading-relaxed\">سلام! این پیام با React 19 و Next.js تست شد.</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".text-\\[9px\\].text-white\\/60.font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[9px] text-white/60\">sent</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 2.38 (foreground color: #cbc5fd, background color: #7c6dfa, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".rounded-br-sm > .mt-1.justify-end.gap-2 > .text-white\\/60.text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-white/60\">12:12</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 2.38 (foreground color: #cbc5fd, background color: #7c6dfa, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".text-\\[9px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[9px] text-[var(--cipher-muted)]\">BA</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.35 (foreground color: #6b6b75, background color: #18181c, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "ready · keyboard-shortcuts dialog open",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".text-\\[12px\\].mt-1",
+            "html": "<p class=\"mt-1 text-[12px] text-[var(--cipher-muted)]\">Work in a conversation without reaching for the mouse.</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "need-unlock",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".tracking-\\[0\\.1em\\]",
+            "html": "<p class=\"font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]\">conversations</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(1) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(2) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(3) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(4) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(5) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".text-\\[11px\\]",
+            "html": "<p class=\"mt-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)]\">// enter passphrase to restore your private key</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".focus-visible\\:ring-offset-\\[var\\(--cipher-bg\\)\\]",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-[var(--cipher-font-sans)] text-[22px] font-light tracking-tight text-[var(--cipher-text)]\">Unlock session</h1><p class=\"mt-1 f",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "need-unlock · wrong passphrase",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".tracking-\\[0\\.1em\\]",
+            "html": "<p class=\"font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]\">conversations</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(1) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(2) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(3) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(4) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(5) > .text-left.focus-visible\\:ring-inset.duration-100 > .h-8.w-8.flex-shrink-0 > .text-\\[var\\(--cipher-muted\\)\\].text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".mt-1.text-\\[11px\\]",
+            "html": "<p class=\"mt-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)]\">// enter passphrase to restore your private key</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-[var(--cipher-font-sans)] text-[22px] font-light tracking-tight text-[var(--cipher-text)]\">Unlock session</h1><p class=\"mt-1 f",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat",
+    "state": "ready (after unlock) · conversation with messages",
+    "url": "http://localhost:3000/chat",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".uppercase",
+            "html": "<p class=\"font-[var(--cipher-font-mono)] text-[10px] uppercase tracking-[0.1em] text-[var(--cipher-muted)]\">conversations</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(1) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(2) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(3) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".border-l-\\[var\\(--cipher-accent\\)\\] > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">BO</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "li:nth-child(5) > .border-l-transparent.hover\\:bg-\\[var\\(--cipher-surface-2\\)\\].w-full > .h-8.w-8.justify-center > .text-\\[10px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-[var(--cipher-muted)]\">AL</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".ml-auto",
+            "html": "<button type=\"button\" class=\"ml-auto rounded px-2 py-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)] outline-none hover:text-[var(--ciph",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.57 (foreground color: #6b6b75, background color: #111113, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".rounded-br-sm > .leading-relaxed",
+            "html": "<p class=\"font-[var(--cipher-font-sans)] text-[13px] leading-relaxed\">سلام! این پیام با React 19 و Next.js تست شد.</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".text-\\[9px\\].text-white\\/60.font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[9px] text-white/60\">sent</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 2.38 (foreground color: #cbc5fd, background color: #7c6dfa, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".rounded-br-sm > .mt-1.justify-end.gap-2 > .text-white\\/60.text-\\[10px\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[10px] text-white/60\">12:12</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 2.38 (foreground color: #cbc5fd, background color: #7c6dfa, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".text-\\[9px\\].text-\\[var\\(--cipher-muted\\)\\].font-\\[var\\(--cipher-font-mono\\)\\]",
+            "html": "<span class=\"font-[var(--cipher-font-mono)] text-[9px] text-[var(--cipher-muted)]\">BA</span>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.35 (foreground color: #6b6b75, background color: #18181c, font size: 6.8pt (9px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/chat → /",
+    "state": "need-login (SessionGate redirect)",
+    "url": "http://localhost:3000/",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "nodes": [
+          {
+            "target": ".bg-transparent",
+            "html": "<button type=\"button\" aria-pressed=\"false\" class=\"flex-1 py-2 font-(--...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "p",
+            "html": "<p class=\"mt-1 font-(--cipher-font-mono) text-[11px] text-(--cipher-muted)\">// session keys derived from your passphrase</p>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"username\"]",
+            "html": "<label for=\"username\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">username</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": "label[for=\"passphrase\"]",
+            "html": "<label for=\"passphrase\" class=\"font-(--cipher-font-mono) text-[10px] uppercase tracking-[0.08em] text-(--cipher-muted)\">passphrase</label>",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.75 (foreground color: #6b6b75, background color: #0a0a0b, font size: 7.5pt (10px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": ".gap-2",
+            "html": "<button type=\"submit\" class=\"flex w-full items-ce...\">",
+            "summary": "Fix any of the following:   Element has insufficient color contrast of 3.87 (foreground color: #ffffff, background color: #7c6dfa, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "help": "Document should have one main landmark",
+        "nodes": [
+          {
+            "target": "html",
+            "html": "<html lang=\"en\" class=\"h-full antialiased\">",
+            "summary": "Fix all of the following:   Document does not have a main landmark"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "help": "All page content should be contained by landmarks",
+        "nodes": [
+          {
+            "target": ".mb-10",
+            "html": "<div class=\"mb-10 flex flex-col gap-3\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": "fieldset",
+            "html": "<fieldset aria-label=\"Authentication mode\" class=\"mb-8 flex min-w-0 overflow-hidden rounded-lg border border-(--cipher-border)\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".mb-7",
+            "html": "<div class=\"mb-7\"><h1 class=\"font-(--cipher-font-sans) text-[22px] tracking-tight text-(--cipher-text)\">Welcome back</h1><p class=\"mt-1 font-(--cipher-font-mono",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(1)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          },
+          {
+            "target": ".gap-1\\.5.flex-col:nth-child(2)",
+            "html": "<div class=\"flex flex-col gap-1.5\">",
+            "summary": "Fix any of the following:   Some page content is not contained by landmarks"
+          }
+        ]
+      }
+    ]
+  }
+]
