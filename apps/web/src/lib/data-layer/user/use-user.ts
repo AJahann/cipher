@@ -4,7 +4,7 @@ import type {
   RegisterUserPayload,
   LoginUserPayload,
 } from '@chat-app/shared/types';
-import type { UsersPage } from '@chat-app/shared/contracts';
+import type { UserSummary, UsersPage } from '@chat-app/shared/contracts';
 import { apiFetch } from '../client';
 
 export const userKeys = {
@@ -43,13 +43,16 @@ const logout = () => apiFetch<{ ok: true }>('/auth/logout', { method: 'POST' });
  * GET /users is cursor-paginated. The directory currently renders only the
  * first page (`limit` up to 100); see docs/api-spec.md for the follow-up.
  */
-const listUsers = async (limit?: number, cursor?: string): Promise<User[]> => {
+const listUsers = async (
+  limit?: number,
+  cursor?: string,
+): Promise<UserSummary[]> => {
   const params = new URLSearchParams();
   if (limit) params.set('limit', String(limit));
   if (cursor) params.set('cursor', cursor);
   const qs = params.toString();
   const page = await apiFetch<UsersPage>(`/users${qs ? `?${qs}` : ''}`);
-  return page.items as User[];
+  return page.items;
 };
 
 const getPublicKey = (userId: string) =>

@@ -1,5 +1,8 @@
 -- Duplicate membership rows made a user appear twice in a conversation and
--- double-counted members. Keep the first row per (conversation, user).
+-- double-counted members. Keep one arbitrary row per (conversation, user):
+-- `a.id > b.id` compares random v4 UUIDs, which says nothing about insertion
+-- order. That is only safe because duplicates here are identical apart from
+-- `id`; where rows differ, pick the survivor by an explicit column instead.
 DELETE FROM "conversation_members" a
 USING "conversation_members" b
 WHERE a.conversation_id = b.conversation_id

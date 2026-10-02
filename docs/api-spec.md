@@ -472,6 +472,14 @@ foreign keys are `ON DELETE CASCADE`.
   membership checks and "members of a conversation".
 - **INDEX(user_id)** *(added in 0002)* — "my conversations", run on every
   socket connect and `GET /chat/conversations`.
+- **Why a surrogate `id` plus UNIQUE pair, not a composite PK:** the pair is
+  the real identity and the UNIQUE constraint enforces it just as a PK would.
+  The surrogate is kept because it is already exposed (`members[].id` in
+  `GET /chat/conversations`), it gives a stable single-column handle if
+  membership grows its own attributes or child rows (role, muted, last-read
+  pointer), and dropping it would be a breaking migration for no integrity
+  gain. The cost is one extra index and column; a greenfield table would use
+  `PRIMARY KEY (conversation_id, user_id)`.
 
 ### `messages`
 
@@ -535,7 +543,8 @@ NOT NULL, index on `expire`.
 | Usernames are case-sensitive (`Alice` ≠ `alice`).                                                       | Impersonation-looking duplicates.                                                   | `citext` or a `lower(username)` unique index, after checking existing data.      |
 | Group conversations: `direct_key` is NULL, so nothing prevents duplicate groups; the API only creates DMs. | None today.                                                                         | Decide group semantics before exposing them.                                     |
 | `GET /chat/conversations` is unpaginated, unordered, and exposes `directKey` and member row ids.        | Grows with the user; leaks internals.                                               | Page by last activity; slim DTO in `contracts`.                                  |
-| Web renders only the first page of `/users` (100) and of history (50); no "load older".                 | Older messages and users beyond 100 are unreachable in the UI.                      | `useInfiniteQuery` on `nextCursor`.                                              |
+| Web renders only the first page of `/users` (100) and of history (50); no "load older".                 | Users beyond #100 never appear in the sidebar; older messages are unreachable.      | `useInfiniteQuery` on `nextCursor`. **Due by end of Week 3.**                    |
+| `User`, `Conversation`, `ConversationMember` in `shared/src/types` are still hand-written interfaces.   | They can drift from what the API returns, unchecked.                                | Replace with `z.infer` of contract schemas (next after the message contract).    |
 | `message:read` stores receipts but nothing emits them.                                                  | Read receipts are write-only.                                                       | Emit `message:read` to `conv:<id>`; add `GET` for receipts.                      |
 | Login does not regenerate the session id.                                                               | Session fixation if an attacker can plant a cookie.                                 | `req.session.regenerate()` on login/register.                                    |
 | Expired `user_sessions` rows rely on `connect-pg-simple`'s pruning; table is not in migrations.          | Schema drift between environments.                                                 | Add the table to a migration; disable `createTableIfMissing`.                    |
