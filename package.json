@@ -33,6 +33,7 @@
     "pnpm": ">=12.6.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@biomejs/biome": "2.5.14",
     "@fullstacksjs/oxlint-config": "1.1.0",
     "@playwright/test": "^1.62.1",
@@ -46,8 +47,10 @@
     "@vitest/coverage-v8": "^4.1.11",
     "dotenv": "^17.4.2",
     "jsdom": "^30.0.1",
+    "lighthouse": "13.5.0",
     "msw": "^2.15.0",
     "oxlint": "1.85.0",
+    "puppeteer-core": "25.12.0",
     "vitest": "^4.1.11",
     "zod": "^4.4.3"
   }

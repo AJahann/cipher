@@ -60,7 +60,10 @@ export function ChatHeader({ title = 'Chat', isConnected }: ChatHeaderProps) {
 
   return (
     <header className='flex items-center gap-3 border-b border-[var(--cipher-border)] bg-[var(--cipher-surface)] px-5 py-3.5'>
-      <h1 className='font-[var(--cipher-font-sans)] text-[13px] font-medium text-[var(--cipher-text)]'>
+      <h1
+        dir='auto'
+        className='font-[var(--cipher-font-sans)] text-[13px] font-medium text-[var(--cipher-text)]'
+      >
         {title}
       </h1>
       <output aria-live='polite' aria-atomic='true'>
@@ -72,7 +75,7 @@ export function ChatHeader({ title = 'Chat', isConnected }: ChatHeaderProps) {
         ref={triggerRef}
         type='button'
         onClick={() => setShortcutsOpen(true)}
-        className='ml-auto rounded px-2 py-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)] outline-none hover:text-[var(--cipher-text)] focus-visible:ring-2 focus-visible:ring-[var(--cipher-accent)]'
+        className='ms-auto rounded px-2 py-1 font-[var(--cipher-font-mono)] text-[11px] text-[var(--cipher-muted)] outline-none hover:text-[var(--cipher-text)] focus-visible:ring-2 focus-visible:ring-[var(--cipher-accent)]'
       >
         Keyboard shortcuts
       </button>

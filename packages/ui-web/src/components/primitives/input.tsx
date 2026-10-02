@@ -48,7 +48,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             'focus-visible:ring-2 focus-visible:ring-(--cipher-accent) focus-visible:ring-offset-2 focus-visible:ring-offset-(--cipher-bg)',
             error
               ? 'border-(--cipher-danger) focus:border-(--cipher-danger)'
-              : 'border-(--cipher-border) focus:border-(--cipher-accent-dim)',
+              : 'border-(--cipher-border-input) focus:border-(--cipher-accent)',
             className,
           ].join(' ')}
           {...props}

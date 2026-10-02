@@ -20,6 +20,11 @@ describe(ChatInput, () => {
     ).toBeInTheDocument();
   });
 
+  it('composer resolves its own text direction', () => {
+    render(<Setup />);
+    expect(screen.getByLabelText('Message')).toHaveAttribute('dir', 'auto');
+  });
+
   it('send button is disabled when the textarea is empty', () => {
     render(<Setup />);
     expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();

@@ -11,7 +11,7 @@ export interface ButtonProps
 
 const variantClasses: Record<ButtonVariant, string> = {
   default:
-    'bg-[var(--cipher-accent)] hover:bg-[var(--cipher-accent-hover)] text-white border-transparent',
+    'bg-[var(--cipher-accent-strong)] hover:bg-[var(--cipher-accent-strong-hover)] text-white border-transparent',
   ghost:
     'bg-transparent border-[var(--cipher-border)] text-[var(--cipher-muted)] hover:border-[var(--cipher-border-hi)] hover:text-[var(--cipher-text)]',
   danger:

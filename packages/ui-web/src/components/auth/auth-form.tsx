@@ -212,7 +212,7 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
   const isRegister = mode === 'register';
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-(--cipher-bg) px-4'>
+    <main className='flex min-h-screen items-center justify-center bg-(--cipher-bg) px-4'>
       <div className='w-full max-w-sm'>
         <AuthBrand />
         <ModeSwitcher
@@ -292,6 +292,6 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
           </Button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }

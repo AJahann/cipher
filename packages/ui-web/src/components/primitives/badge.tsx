@@ -18,7 +18,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   connected:
     'text-[var(--cipher-success)] border-[var(--cipher-success-border)]',
   disconnected:
-    'text-[var(--cipher-danger)] border-[var(--cipher-dangerMuted)]',
+    'text-[var(--cipher-danger)] border-[var(--cipher-danger-muted)]',
   default: 'text-[var(--cipher-muted)] border-[var(--cipher-border)]',
 };
 

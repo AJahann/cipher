@@ -39,6 +39,7 @@ interface PendingMessage {
 interface ChatPageProps {
   conversationId: string;
   receiverId: string;
+  receiverName: string;
   myId: string;
   isConnected: boolean;
 }
@@ -220,6 +221,7 @@ function ChatNotices({
 export function ChatPage({
   conversationId,
   receiverId,
+  receiverName,
   myId,
   isConnected,
 }: ChatPageProps) {
@@ -290,12 +292,13 @@ export function ChatPage({
 
   return (
     <main className='flex flex-1 min-w-0 flex-col'>
-      <ChatHeader isConnected={isConnected} />
+      <ChatHeader title={receiverName} isConnected={isConnected} />
       <MessageList
         isLoading={messagesIsLoading}
         isError={isError}
         loadingMessage='decrypting messages...'
         messages={visibleMessages}
+        peerName={receiverName}
         onRetryMessage={retry}
       />
       <ChatNotices composerError={composerError} isConnected={isConnected} />

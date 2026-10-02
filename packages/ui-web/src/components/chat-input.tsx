@@ -31,6 +31,7 @@ export function ChatInput({
       </label>
       <textarea
         id='message-composer'
+        dir='auto'
         rows={1}
         value={value}
         disabled={disabled}
@@ -38,7 +39,7 @@ export function ChatInput({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className={[
-          'flex-1 resize-none rounded-xl border border-[var(--cipher-border)]',
+          'flex-1 resize-none rounded-xl border border-[var(--cipher-border-input)]',
           'bg-[var(--cipher-surface-2)] px-3.5 py-2.5',
           'font-[var(--cipher-font-sans)] text-[13px] text-[var(--cipher-text)]',
           'placeholder:text-[var(--cipher-muted)] outline-none',
@@ -53,9 +54,9 @@ export function ChatInput({
         aria-label='Send message'
         className={[
           'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full',
-          'bg-[var(--cipher-accent)] text-white transition-all duration-150',
+          'bg-[var(--cipher-accent-strong)] text-white transition-all duration-150',
           'outline-none focus-visible:ring-2 focus-visible:ring-[var(--cipher-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--cipher-bg)]',
-          'hover:bg-[var(--cipher-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
+          'hover:bg-[var(--cipher-accent-strong-hover)] disabled:opacity-40 disabled:cursor-not-allowed',
         ].join(' ')}
       >
         <svg

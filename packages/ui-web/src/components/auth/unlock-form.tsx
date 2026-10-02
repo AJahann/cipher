@@ -28,7 +28,7 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
   }
 
   return (
-    <div className='w-full flex min-h-screen items-center justify-center bg-(--cipher-bg) px-4'>
+    <main className='w-full flex min-h-screen items-center justify-center bg-(--cipher-bg) px-4'>
       <div className='w-full max-w-sm'>
         <div className='mb-10 flex flex-col gap-3'>
           <div className='flex items-center gap-2.5'>
@@ -70,6 +70,6 @@ export function UnlockForm({ onUnlock }: UnlockFormProps) {
           </Button>
         </form>
       </div>
-    </div>
+    </main>
   );
 }
