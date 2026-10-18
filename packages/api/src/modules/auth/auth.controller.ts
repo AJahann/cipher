@@ -6,11 +6,16 @@ import {
 import { userService } from '../user/user.service';
 import { requireAuth } from './auth.middleware';
 import { AppError } from '../../http/errors';
+import { destroySession } from '../../db/session';
 
 export const authController = (app: FastifyInstance) => {
   app.post('/register', async (req, reply) => {
     const body = registerUserSchema.parse(req.body);
     const user = await userService.register(body);
+    const previousSessionId = req.session.sessionId;
+    await req.session.regenerate();
+    // @fastify/session regenerates without deleting the old store row.
+    await destroySession(previousSessionId);
     req.session.userId = user.id;
     await req.session.save();
 
@@ -25,6 +30,10 @@ export const authController = (app: FastifyInstance) => {
   app.post('/login', async (req, reply) => {
     const body = loginUserSchema.parse(req.body);
     const user = await userService.login(body);
+    const previousSessionId = req.session.sessionId;
+    await req.session.regenerate();
+    // @fastify/session regenerates without deleting the old store row.
+    await destroySession(previousSessionId);
     req.session.userId = user.id;
     await req.session.save();
     return reply.send(user);
@@ -40,6 +49,7 @@ export const authController = (app: FastifyInstance) => {
     if (!user) {
       // The account behind this session is gone: the session is dead too.
       await req.session.destroy();
+      reply.clearCookie('sessionId', { path: '/' });
       throw new AppError('UNAUTHENTICATED');
     }
     return reply.send(user);

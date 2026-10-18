@@ -511,9 +511,11 @@ foreign keys are `ON DELETE CASCADE`.
 
 ### `user_sessions`
 
-Created at runtime by `connect-pg-simple` (`createTableIfMissing`), not by a
-migration: `sid` varchar **PK**, `sess` json NOT NULL, `expire` timestamp(6)
-NOT NULL, index on `expire`.
+Created by migration `0003_user_sessions`: `sid` varchar **PK**, `sess` json
+NOT NULL, `expire` timestamp(6) NOT NULL, index on `expire`. Runtime
+`createTableIfMissing` is false; deploy migrations before starting the API.
+The migration also adopts an existing adapter-created table without deleting
+its sessions. Expired rows continue to use `connect-pg-simple` pruning.
 
 ## Known gaps
 
@@ -535,6 +537,18 @@ NOT NULL, index on `expire`.
 | `SendMessagePayload` / socket event types duplicated in api and web.                          | `packages/shared/src/contracts`, zod + `z.infer`.                                         |
 | No length limits on ciphertext / nonce / algorithm.                                           | 65 536 / 256 / 64.                                                                        |
 
+### Day 16 — session hardening
+
+- Login and registration await `req.session.regenerate()` before storing
+  `userId`, explicitly delete the old store row, and then save the new session.
+  Replaying the old cookie cannot authenticate. The explicit deletion is
+  necessary because `@fastify/session` 11.1.2 does not delete it on regeneration.
+- `user_sessions` is migration-owned; runtime table creation is disabled.
+- `/auth/me` retains its deleted-user session destruction and 401 response and
+  also expires the browser cookie.
+- Password verification remains bcrypt cost 12. Cookie authentication and
+  client-side key wrapping/unwrapping are unchanged; no JWT is introduced.
+
 ### Scheduled (not fixed here)
 
 | Gap                                                                                                     | Impact                                                                              | Proposed fix                                                                     |
@@ -546,7 +560,5 @@ NOT NULL, index on `expire`.
 | Web renders only the first page of `/users` (100) and of history (50); no "load older".                 | Users beyond #100 never appear in the sidebar; older messages are unreachable.      | `useInfiniteQuery` on `nextCursor`. **Due by end of Week 3.**                    |
 | `User`, `Conversation`, `ConversationMember` in `shared/src/types` are still hand-written interfaces.   | They can drift from what the API returns, unchecked.                                | Replace with `z.infer` of contract schemas (next after the message contract).    |
 | `message:read` stores receipts but nothing emits them.                                                  | Read receipts are write-only.                                                       | Emit `message:read` to `conv:<id>`; add `GET` for receipts.                      |
-| Login does not regenerate the session id.                                                               | Session fixation if an attacker can plant a cookie.                                 | `req.session.regenerate()` on login/register.                                    |
-| Expired `user_sessions` rows rely on `connect-pg-simple`'s pruning; table is not in migrations.          | Schema drift between environments.                                                 | Add the table to a migration; disable `createTableIfMissing`.                    |
 | No rate limiting on `/auth/*` or `message:send`.                                                        | Brute force / spam.                                                                 | `@fastify/rate-limit` + per-socket token bucket.                                 |
 | Presence is per socket: closing one of two tabs broadcasts `online: false`.                              | Wrong presence.                                                                     | Count sockets in `user:<id>` before emitting offline.                            |
