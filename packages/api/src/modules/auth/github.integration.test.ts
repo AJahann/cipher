@@ -408,6 +408,47 @@ function identityLifecycleTests() {
   });
 }
 
+function linkStatusTests() {
+  it('requires authentication to read link status', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/auth/github/status',
+    });
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('reports persisted link status for only the current user', async () => {
+    const user = await register();
+    const other = await register();
+    const before = await app.inject({
+      method: 'GET',
+      url: '/auth/github/status',
+      headers: { cookie: user.cookie.header },
+    });
+    expect(before.statusCode).toBe(200);
+    expect(before.json()).toEqual({ linked: false });
+    const flow = await start(user.cookie.header, true);
+    provider(910000006);
+    const response = await callback(flow);
+    expect(response.statusCode).toBe(302);
+    const fresh = cookieFrom(response);
+    const after = await app.inject({
+      method: 'GET',
+      url: '/auth/github/status',
+      headers: { cookie: fresh.header },
+    });
+    expect(after.statusCode).toBe(200);
+    expect(after.json()).toEqual({ linked: true });
+    expect(after.headers['cache-control']).toBe('no-store');
+    const unrelated = await app.inject({
+      method: 'GET',
+      url: '/auth/github/status',
+      headers: { cookie: other.cookie.header },
+    });
+    expect(unrelated.json()).toEqual({ linked: false });
+  });
+}
+
 describe.skipIf(!databaseUrl)(
   'GitHub OAuth (real PostgreSQL + session plugin; mocked provider)',
   () => {
@@ -415,5 +456,6 @@ describe.skipIf(!databaseUrl)(
     stateValidationTests();
     linkingTests();
     identityLifecycleTests();
+    linkStatusTests();
   },
 );
