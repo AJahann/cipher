@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { chatKeys, useMessages } from '@/lib/data-layer/chats';
+import {
+  chatKeys,
+  useMessages,
+  useMessageHistory,
+} from '@/lib/data-layer/chats';
 import { useUserPublicKey } from '@/lib/data-layer/user';
 import type { SendMessageInput } from '@chat-app/shared/contracts';
 import {
@@ -167,6 +171,7 @@ function useOutbox(decrypted: DecryptedMessage[]) {
       await sendMessage(item.payload);
       setStatus(item.id, 'sent');
       void qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
+      void qc.invalidateQueries({ queryKey: chatKeys.historyRoot() });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'FAILED_TO_SEND';
       setComposerError(message);
@@ -232,7 +237,10 @@ export function ChatPage({
     data: messages,
     isLoading: messagesIsLoading,
     isError,
-  } = useMessages(conversationId);
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useMessageHistory(conversationId, myId);
   useChatRealtimeMessages();
 
   const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
@@ -306,6 +314,20 @@ export function ChatPage({
   return (
     <main className='flex flex-1 min-w-0 flex-col'>
       <ChatHeader title={receiverName} isConnected={isConnected} />
+      {hasNextPage && (
+        <button
+          type='button'
+          disabled={isFetchingNextPage}
+          onClick={() => {
+            void fetchNextPage();
+          }}
+          className='p-2 text-sm underline'
+        >
+          {isFetchingNextPage
+            ? 'Loading older messages…'
+            : 'Load older messages'}
+        </button>
+      )}
       <MessageList
         isLoading={messagesIsLoading}
         isError={isError}

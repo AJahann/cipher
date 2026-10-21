@@ -8,7 +8,7 @@ vi.mock('@/lib/data-layer/user', () => ({
   useMe: () => ({ data: { id: 'me' } }),
   useAuthConfig: () => ({ data: { githubEnabled: false } }),
   useGitHubLinkStatus: () => ({}),
-  useUsersList: () => ({
+  useDirectory: () => ({
     data: [
       { id: 'alice', username: 'Alice' },
       { id: 'bob', username: 'Bob' },
@@ -17,8 +17,11 @@ vi.mock('@/lib/data-layer/user', () => ({
   useUserPublicKey: () => ({ data: { publicKey: 'key' }, isLoading: false }),
 }));
 vi.mock('@/lib/data-layer/chats', () => ({
-  chatKeys: { messagesRoot: () => ['chat', 'messages'] },
-  useMessages: () => ({ data: [], isLoading: false, isError: false }),
+  chatKeys: {
+    messagesRoot: () => ['chat', 'messages'],
+    historyRoot: () => ['chat', 'history'],
+  },
+  useMessageHistory: () => ({ data: [], isLoading: false, isError: false }),
   useChatSocket: () => ({ connected: true }),
   useChatSocketActions: () => ({ joinConversation: vi.fn() }),
   useChatRealtimeSync: vi.fn(),

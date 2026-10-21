@@ -148,6 +148,7 @@ function useMessageCacheWriters() {
 
   const upsertMessage = useCallback(
     (message: MessagePayload) => {
+      void qc.invalidateQueries({ queryKey: chatKeys.historyRoot() });
       const queries = qc.getQueriesData<Message[]>({
         queryKey: chatKeys.messagesRoot(),
       });
@@ -204,6 +205,7 @@ export function useChatRealtimeSync() {
   const refreshLists = useCallback(() => {
     qc.invalidateQueries({ queryKey: chatKeys.conversations() });
     qc.invalidateQueries({ queryKey: userKeys.listRoot() });
+    qc.invalidateQueries({ queryKey: userKeys.directoryRoot() });
   }, [qc]);
 
   const onConversationUpdated = useCallback(
@@ -221,12 +223,20 @@ export function useChatRealtimeSync() {
 
   useEffect(() => {
     const onConnect = () => {
-      qc.invalidateQueries({ queryKey: userKeys.listRoot() });
+      refreshLists();
+      void qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
+      void qc.invalidateQueries({ queryKey: chatKeys.historyRoot() });
     };
 
+    const onRevoked = (reason: string) => {
+      if (reason === 'io server disconnect')
+        void qc.invalidateQueries({ queryKey: userKeys.me() });
+    };
     socket.on('connect', onConnect);
+    socket.on('disconnect', onRevoked);
     return () => {
+      socket.off('disconnect', onRevoked);
       socket.off('connect', onConnect);
     };
-  }, [qc, socket]);
+  }, [qc, socket, refreshLists]);
 }
