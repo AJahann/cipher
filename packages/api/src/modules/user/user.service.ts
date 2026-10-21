@@ -1,12 +1,10 @@
-import bcrypt from 'bcrypt';
+import { hashPassword, verifyPassword } from '../auth/password';
 import { db } from '../../db';
 import { users, userKeys } from '../../db/schema';
 import { eq, ne, and, gt, asc } from 'drizzle-orm';
 import type { RegisterUserInput, UsersPage } from '@chat-app/shared/contracts';
 import { AppError, isUniqueViolation } from '../../http/errors';
 import { decodeCursor, encodeCursor } from '../../http/cursor';
-
-const SALT_ROUNDS = 12;
 
 const PUBLIC_COLUMNS = {
   id: true,
@@ -26,7 +24,7 @@ export const userService = {
     });
     if (existing) throw new AppError('USERNAME_TAKEN');
 
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const passwordHash = await hashPassword(password);
 
     // The pre-check above is only a fast path: two concurrent registrations
     // both pass it, and the UNIQUE(username) constraint decides the winner.
@@ -61,11 +59,19 @@ export const userService = {
       with: { key: true },
     });
 
-    const hashToCompare =
-      user?.passwordHash ??
-      '$2b$12$invalidhashpaddingtopreventimenumeration000000000000000';
-    const valid = await bcrypt.compare(password, hashToCompare);
+    const { valid, upgradedHash } = await verifyPassword(
+      password,
+      user?.passwordHash,
+    );
     if (!user || !valid) throw new AppError('INVALID_CREDENTIALS');
+    if (upgradedHash) {
+      await db
+        .update(users)
+        .set({ passwordHash: upgradedHash })
+        .where(
+          and(eq(users.id, user.id), eq(users.passwordHash, user.passwordHash)),
+        );
+    }
 
     const wrappedPrivateKey = user.key?.wrappedPrivateKey
       ? JSON.parse(user.key.wrappedPrivateKey)

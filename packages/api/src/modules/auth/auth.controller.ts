@@ -7,21 +7,36 @@ import {
 import { userService } from '../user/user.service';
 import { requireAuth } from './auth.middleware';
 import { AppError } from '../../http/errors';
-import { destroySession } from '../../db/session';
+import { revokeSession, sessionRoom } from './session-authority';
+import { createLimiter } from '../../security/rate-limit';
+import { env } from '../../config/env';
 
 export const authController = (app: FastifyInstance) => {
+  const limit = createLimiter(30, 60_000);
+  app.addHook('onRequest', (req, reply, done) => {
+    reply.header('Cache-Control', 'no-store');
+    if (
+      req.method === 'POST' &&
+      req.headers.origin &&
+      req.headers.origin !== env.CLIENT_ORIGIN
+    ) {
+      throw new AppError('BAD_REQUEST', 'Untrusted request origin');
+    }
+    done();
+  });
   app.get('/config', (_req, reply) => {
     reply.header('Cache-Control', 'no-store');
     return reply.send({ githubEnabled: isGitHubAuthEnabled() });
   });
 
   app.post('/register', async (req, reply) => {
+    limit(req.ip);
     const body = registerUserSchema.parse(req.body);
     const user = await userService.register(body);
     const previousSessionId = req.session.sessionId;
     await req.session.regenerate();
     // @fastify/session regenerates without deleting the old store row.
-    await destroySession(previousSessionId);
+    await revokeSession(app, previousSessionId);
     req.session.userId = user.id;
     await req.session.save();
 
@@ -34,19 +49,23 @@ export const authController = (app: FastifyInstance) => {
   });
 
   app.post('/login', async (req, reply) => {
+    limit(req.ip);
     const body = loginUserSchema.parse(req.body);
     const user = await userService.login(body);
     const previousSessionId = req.session.sessionId;
     await req.session.regenerate();
     // @fastify/session regenerates without deleting the old store row.
-    await destroySession(previousSessionId);
+    await revokeSession(app, previousSessionId);
     req.session.userId = user.id;
     await req.session.save();
     return reply.send(user);
   });
 
   app.post('/logout', { preHandler: requireAuth }, async (req, reply) => {
+    const id = req.session.sessionId;
     await req.session.destroy();
+    app.io?.in(sessionRoom(id)).disconnectSockets(true);
+    reply.clearCookie('sessionId', { path: '/' });
     return reply.send({ ok: true });
   });
 
@@ -59,7 +78,9 @@ export const authController = (app: FastifyInstance) => {
     const user = await userService.findById(req.session.userId!);
     if (!user) {
       // The account behind this session is gone: the session is dead too.
+      const id = req.session.sessionId;
       await req.session.destroy();
+      app.io?.in(sessionRoom(id)).disconnectSockets(true);
       reply.clearCookie('sessionId', { path: '/' });
       throw new AppError('UNAUTHENTICATED');
     }

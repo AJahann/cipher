@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyInstance } from 'fastify';
 import type { Pool } from 'pg';
 import type { Server } from 'socket.io';
-import bcrypt from 'bcrypt';
+import { verify } from '@node-rs/argon2';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -390,13 +390,11 @@ function lifecycleTests() {
     } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [
       user.id,
     ]);
-    expect(bcrypt.getRounds(row.password_hash)).toBe(12);
-    await expect(bcrypt.compare(password, row.password_hash)).resolves.toBe(
-      true,
+    expect(row.password_hash).toMatch(/^\$argon2id\$/);
+    await expect(verify(row.password_hash, password)).resolves.toBe(true);
+    await expect(verify(row.password_hash, 'wrong-password')).resolves.toBe(
+      false,
     );
-    await expect(
-      bcrypt.compare('wrong-password', row.password_hash),
-    ).resolves.toBe(false);
     const {
       rows: [key],
     } = await pool.query(
