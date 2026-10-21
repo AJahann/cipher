@@ -5,6 +5,10 @@ import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   test: {
+    env: {
+      NEXT_PUBLIC_API_URL:
+        process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
+    },
     reporters: ['verbose'],
     coverage: {
       provider: 'v8',

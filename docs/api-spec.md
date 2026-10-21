@@ -562,3 +562,12 @@ its sessions. Expired rows continue to use `connect-pg-simple` pruning.
 | `message:read` stores receipts but nothing emits them.                                                  | Read receipts are write-only.                                                       | Emit `message:read` to `conv:<id>`; add `GET` for receipts.                      |
 | No rate limiting on `/auth/*` or `message:send`.                                                        | Brute force / spam.                                                                 | `@fastify/rate-limit` + per-socket token bucket.                                 |
 | Presence is per socket: closing one of two tabs broadcasts `online: false`.                              | Wrong presence.                                                                     | Count sockets in `user:<id>` before emitting offline.                            |
+
+
+## Security/reliability remediation
+
+The web UI now follows `nextCursor` through explicit “Load more contacts” and “Load older messages” controls. Production history caches are account-scoped infinite queries; realtime delivery invalidates authoritative pages and transport reconnect reconciles loaded history. Legacy single-page hooks remain available for compatibility and do not append new messages into older cursor pages.
+
+Auth responses use `Cache-Control: no-store`. `RATE_LIMITED` is HTTP 429. `LEGACY_PASSWORD_AMBIGUOUS` is HTTP 409 and requires a reviewed migration rather than passphrase truncation. Socket handshakes require the configured browser Origin. Logout and authentication rotation revoke the old session's sockets, and sensitive socket events revalidate session authority. Idle receive authority is rechecked within five seconds.
+
+New encrypted messages use `cipher-v1-x25519-xsalsa20-poly1305`; the server stores the marker and ciphertext but does not validate plaintext context. Clients validate the authenticated envelope. Legacy ciphertext remains readable with explicitly weaker context guarantees. A failed notification after persistence can return a failed send acknowledgment; retries must reuse the exact command ID and encrypted payload. Replays may repeat notifications and must be deduplicated by persisted message ID. See `SECURITY-ARCHITECTURE.md` for the supported threat model.

@@ -133,7 +133,7 @@ export function registerChatSocket(
     // Close a revocation race between handshake and session-room join.
     try {
       await authorize();
-    } catch {
+    } catch (_error) {
       socket.disconnect(true);
       return;
     }

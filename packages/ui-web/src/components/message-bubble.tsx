@@ -18,6 +18,10 @@ export interface MessageBubbleProps {
   onRetry?: () => void;
 }
 
+function isFailedMessage(msg: DecryptedMessage) {
+  return msg.deliveryStatus === 'failed' || msg.decryptionFailed;
+}
+
 export function MessageBubble({ msg, peerName, onRetry }: MessageBubbleProps) {
   const { isMine, senderId, text, time, deliveryStatus } = msg;
   const senderLabel = isMine ? 'You' : (peerName ?? 'Contact');
@@ -45,9 +49,7 @@ export function MessageBubble({ msg, peerName, onRetry }: MessageBubbleProps) {
           isMine
             ? 'rounded-ee-sm bg-[var(--cipher-accent-strong)] text-white'
             : 'rounded-es-sm border border-[var(--cipher-border)] bg-[var(--cipher-surface-2)] text-[var(--cipher-text)]',
-          deliveryStatus === 'failed' || msg.decryptionFailed
-            ? 'ring-1 ring-red-400'
-            : '',
+          isFailedMessage(msg) ? 'ring-1 ring-red-400' : '',
           deliveryStatus === 'sending' ? 'opacity-70' : '',
         ].join(' ')}
       >

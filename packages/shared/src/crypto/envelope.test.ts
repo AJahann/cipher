@@ -1,4 +1,4 @@
-const randomUUID = () => crypto.randomUUID();
+/* oxlint-disable no-await-in-loop -- Mutation cases run sequentially to avoid parallel KDF memory use. */
 import { describe, expect, it } from 'vitest';
 import { E2EEncryption } from './e2e';
 import {
@@ -7,6 +7,9 @@ import {
   encryptChatMessage,
 } from './envelope';
 import { unwrapPrivateKey, wrapPrivateKey } from './keys';
+
+const randomUUID = () => crypto.randomUUID();
+
 const context = {
   senderId: randomUUID(),
   recipientId: randomUUID(),
@@ -15,8 +18,8 @@ const context = {
 };
 describe('authenticated application context', () => {
   it('decrypts on both participating devices and binds every routing field', async () => {
-    const a = await E2EEncryption.generateKeyPair(),
-      b = await E2EEncryption.generateKeyPair();
+    const a = await E2EEncryption.generateKeyPair();
+    const b = await E2EEncryption.generateKeyPair();
     const encrypted = await encryptChatMessage(
       'hello',
       b.publicKey,
@@ -45,8 +48,8 @@ describe('authenticated application context', () => {
     }
   });
   it('rejects reflection, unsupported algorithms and version downgrade', async () => {
-    const a = await E2EEncryption.generateKeyPair(),
-      b = await E2EEncryption.generateKeyPair();
+    const a = await E2EEncryption.generateKeyPair();
+    const b = await E2EEncryption.generateKeyPair();
     const encrypted = await encryptChatMessage(
       'hello',
       b.publicKey,
@@ -78,8 +81,8 @@ describe('authenticated application context', () => {
     ).rejects.toThrow('UNSUPPORTED_MESSAGE_ALGORITHM');
   });
   it('reads explicit legacy history without claiming context authentication', async () => {
-    const a = await E2EEncryption.generateKeyPair(),
-      b = await E2EEncryption.generateKeyPair();
+    const a = await E2EEncryption.generateKeyPair();
+    const b = await E2EEncryption.generateKeyPair();
     const encrypted = await E2EEncryption.encryptMessage(
       'legacy',
       b.publicKey,
@@ -120,7 +123,9 @@ describe('versioned and bounded key bundles', () => {
       { ...bundle, memlimit: 2 ** 32 },
       { ...bundle, kdf: undefined },
     ]) {
-      await expect(unwrapPrivateKey(bad as any, 'password')).rejects.toThrow();
+      await expect(unwrapPrivateKey(bad as any, 'password')).rejects.toThrow(
+        /Invalid|Incomplete/i,
+      );
     }
   });
 });

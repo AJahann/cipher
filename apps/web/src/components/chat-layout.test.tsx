@@ -1,5 +1,10 @@
+/* oxlint-disable vitest/prefer-import-in-mock -- Deliberately partial hook/component fakes do not implement the full production return types. */
+/* oxlint-disable require-await -- Async interface mocks intentionally resolve without real I/O. */
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import ChatLayout from './chat-layout';
+
 const mocks = vi.hoisted(() => ({
   send: vi.fn(),
   confirm: vi.fn(),
@@ -72,7 +77,9 @@ vi.mock('@chat-app/shared', () => ({
 vi.mock('@/app/_components/session-gate', () => ({
   SessionGate: ({ children }: any) => children,
 }));
-vi.mock('./github-link-button', () => ({ GitHubLinkButton: () => null }));
+vi.mock('./github-link-button', () => ({
+  GitHubLinkButton: () => null,
+}));
 vi.mock('./logout-button', () => ({ LogoutButton: () => null }));
 vi.mock('@chat-app/ui-web', () => ({
   AppShell: ({ sidebar, children }: any) => (
@@ -106,7 +113,7 @@ vi.mock('@chat-app/ui-web', () => ({
     <div data-testid='messages'>{JSON.stringify(messages)}</div>
   ),
 }));
-import ChatLayout from './chat-layout';
+
 beforeEach(() => {
   mocks.messages = [];
   mocks.decrypt.mockResolvedValue('decrypted');

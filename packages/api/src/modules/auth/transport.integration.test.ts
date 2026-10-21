@@ -1,3 +1,4 @@
+/* oxlint-disable max-lines-per-function, no-await-in-loop -- This bounded live fixture deliberately sequences setup and expiry checks. */
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -90,7 +91,7 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
     for (let i = 0; i < 100; i++) {
       if (io.sockets.sockets.get(client.id!)?.listenerCount('message:send'))
         return;
-      await new Promise((r) => setTimeout(r, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
     throw new Error('socket handlers were not installed');
   }

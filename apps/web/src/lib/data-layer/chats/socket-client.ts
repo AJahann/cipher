@@ -4,6 +4,7 @@ import type {
   ServerToClientEvents,
 } from '@chat-app/shared/contracts';
 import { env } from '../../../config/env';
+
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 let instance: AppSocket | null = null;
 export function getSocket() {

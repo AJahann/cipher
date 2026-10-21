@@ -45,6 +45,7 @@ export default function ChatLayout() {
     if (selectInFlight.current || receiverId === activeReceiverId) return;
     if (
       hasUnsent.current &&
+      // oxlint-disable-next-line no-alert -- Discarding unsent plaintext requires explicit confirmation.
       !window.confirm(
         'Switch conversation and discard this draft or unsent messages?',
       )
