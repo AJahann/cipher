@@ -1,6 +1,7 @@
 // vitest.config.mjs
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   test: {
@@ -13,6 +14,11 @@ export default defineConfig({
     projects: [
       {
         plugins: [react()],
+        resolve: {
+          alias: {
+            '@': fileURLToPath(new URL('./apps/web/src', import.meta.url)),
+          },
+        },
         test: {
           name: 'apps/web',
           root: './apps/web',

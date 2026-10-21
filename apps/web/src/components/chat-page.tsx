@@ -42,6 +42,7 @@ interface ChatPageProps {
   receiverName: string;
   myId: string;
   isConnected: boolean;
+  onUnsentChange?: (value: boolean) => void;
 }
 
 function getConfirmedIds(messages: DecryptedMessage[]) {
@@ -224,6 +225,7 @@ export function ChatPage({
   receiverName,
   myId,
   isConnected,
+  onUnsentChange,
 }: ChatPageProps) {
   const { typingStart, typingStop } = useChatSocketActions();
   const {
@@ -243,6 +245,17 @@ export function ChatPage({
   });
   const { visiblePending, composerError, setComposerError, enqueue, retry } =
     useOutbox(decrypted);
+
+  useEffect(() => {
+    const unsent = Boolean(input.trim()) || visiblePending.length > 0;
+    onUnsentChange?.(unsent);
+    if (!unsent) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [input, visiblePending.length, onUnsentChange]);
 
   async function handleSend() {
     const text = input.trim();
