@@ -149,6 +149,24 @@ function FormFeedback({
   );
 }
 
+function GitHubSignIn({ url }: { url?: string }) {
+  if (!url) return null;
+  return (
+    <div className='mt-5 text-center text-sm text-(--cipher-muted)'>
+      <a
+        href={url}
+        className='block rounded-lg border border-(--cipher-border) p-3 text-(--cipher-text) focus-visible:ring-2 focus-visible:ring-(--cipher-accent)'
+      >
+        Sign in with GitHub
+      </a>
+      <p className='mt-2'>
+        Link GitHub from your Cipher account first. Your passphrase is still
+        needed to unlock messages.
+      </p>
+    </div>
+  );
+}
+
 export function AuthForm({
   onLogin,
   onRegister,
@@ -296,20 +314,7 @@ export function AuthForm({
             {isRegister ? 'generate keys + register' : 'authenticate'}
           </Button>
         </form>
-        {githubSignInUrl && (
-          <div className='mt-5 text-center text-sm text-(--cipher-muted)'>
-            <a
-              href={githubSignInUrl}
-              className='block rounded-lg border border-(--cipher-border) p-3 text-(--cipher-text) focus-visible:ring-2 focus-visible:ring-(--cipher-accent)'
-            >
-              Sign in with GitHub
-            </a>
-            <p className='mt-2'>
-              Link GitHub from your Cipher account first. Your passphrase is
-              still needed to unlock messages.
-            </p>
-          </div>
-        )}
+        <GitHubSignIn url={githubSignInUrl} />
       </div>
     </main>
   );

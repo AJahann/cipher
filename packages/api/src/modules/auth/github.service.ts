@@ -137,6 +137,7 @@ export async function loadGitHubUserId(
     });
     if (!userResponse.ok) throw new Error('Identity lookup failed');
     return String(identitySchema.parse(await userResponse.json()).id);
+    // oxlint-disable-next-line preserve-caught-error -- Provider errors can carry secrets; intentionally omit their cause.
   } catch {
     // Do not log fetch/Zod exceptions: they can carry upstream credentials/data.
     throw new AppError(

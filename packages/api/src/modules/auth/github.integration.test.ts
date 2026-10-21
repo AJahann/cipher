@@ -307,7 +307,7 @@ function linkingTests() {
       JSON.stringify(session) +
         JSON.stringify(response.headers) +
         response.body,
-    ).not.toMatch(/github-test-token|test-secret-not-real|code_verifier/);
+    ).not.toMatch(/code_verifier|github-test-token|test-secret-not-real/);
     expect(
       (
         await pool.query(
@@ -391,7 +391,7 @@ function identityLifecycleTests() {
     );
     expect((await callback(flow)).statusCode).toBe(401);
     expect((await callback(flow)).statusCode).toBe(400);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledOnce();
     expect((await me(flow.cookie.header)).statusCode).toBe(401);
   });
 

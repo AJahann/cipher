@@ -6,6 +6,7 @@ import {
   cleanup,
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SessionGate } from './session-gate';
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -46,7 +47,6 @@ vi.mock('@chat-app/ui-web', () => ({
     </button>
   ),
 }));
-import { SessionGate } from './session-gate';
 
 const bundle = {
   publicKey: 'current-user-key',
@@ -68,9 +68,9 @@ describe('SessionGate after GitHub login', () => {
         <p>Private chat</p>
       </SessionGate>,
     );
-    expect(
-      await screen.findByRole('button', { name: 'Unlock messages' }),
-    ).toBeInTheDocument();
+    await expect(
+      screen.findByRole('button', { name: 'Unlock messages' }),
+    ).resolves.toBeInTheDocument();
     expect(screen.queryByText('Private chat')).not.toBeInTheDocument();
     expect(mocks.apiFetch).toHaveBeenCalledWith('/auth/key-bundle');
     expect(localStorage.getItem('test-wrapped-key')).toBe(
@@ -78,7 +78,9 @@ describe('SessionGate after GitHub login', () => {
     );
     expect(mocks.restoreSessionKeys).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Unlock messages' }));
-    expect(await screen.findByText('Private chat')).toBeInTheDocument();
+    await expect(
+      screen.findByText('Private chat'),
+    ).resolves.toBeInTheDocument();
     expect(mocks.restoreSessionKeys).toHaveBeenCalledWith('local-passphrase');
   });
 
@@ -90,9 +92,9 @@ describe('SessionGate after GitHub login', () => {
         <p>Private chat</p>
       </SessionGate>,
     );
-    expect(
-      await screen.findByRole('button', { name: 'Unlock messages' }),
-    ).toBeInTheDocument();
+    await expect(
+      screen.findByRole('button', { name: 'Unlock messages' }),
+    ).resolves.toBeInTheDocument();
     expect(mocks.clearSessionKeys).toHaveBeenCalledOnce();
     expect(mocks.savePublicKey).toHaveBeenCalledWith(bundle.publicKey);
     expect(screen.queryByText('Private chat')).not.toBeInTheDocument();
@@ -106,7 +108,9 @@ describe('SessionGate after GitHub login', () => {
         <p>Private chat</p>
       </SessionGate>,
     );
-    expect(await screen.findByText('Private chat')).toBeInTheDocument();
+    await expect(
+      screen.findByText('Private chat'),
+    ).resolves.toBeInTheDocument();
     expect(mocks.clearSessionKeys).not.toHaveBeenCalled();
   });
 

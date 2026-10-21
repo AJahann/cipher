@@ -10,7 +10,6 @@ const testEnv = vi.hoisted(() => ({
   GITHUB_REDIRECT_URI: 'http://localhost:3001/auth/github/callback',
 }));
 vi.mock(import('../../config/env'), () => ({ env: testEnv as typeof env }));
-vi.mock(import('../../db'), () => ({ db: {} as typeof import('../../db').db }));
 
 afterEach(() => {
   vi.unstubAllGlobals();
