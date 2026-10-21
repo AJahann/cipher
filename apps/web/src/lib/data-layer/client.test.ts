@@ -6,7 +6,7 @@ vi.mock(import('../../config/env'), () => ({
 }));
 afterEach(() => vi.unstubAllGlobals());
 
-function freshResponse() {
+function freshResponse(_input: string, _init: RequestInit) {
   // Response bodies are consumable, so every request needs a fresh instance.
   return Promise.resolve(Response.json({ ok: true }));
 }
