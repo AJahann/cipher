@@ -38,4 +38,6 @@ Only disposable local/CI data was used. No production systems, credentials, or d
 
 ## Hosted acceptance
 
-Verification PR #30: pending independent GitHub acceptance at the time of this record's initial commit. This section is updated before the final integration merge.
+Verification PR #30, commit `5153957de7f82af54dc382562149b1e4d526cacd`: **all six GitHub checks passed** — Format, Lint (including JavaScript plugins and denial of warnings), Typecheck, Unit Tests, Build, and PostgreSQL-backed Chromium E2E. This independently verifies the complete lint policy despite the sandbox-only plugin allocator failure.
+
+The final integration PR is merged into main only after its acceptance checks pass. This record describes the code acceptance baseline; subsequent documentation-only updates do not change runtime behavior.

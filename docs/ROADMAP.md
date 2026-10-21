@@ -36,6 +36,6 @@ A ratcheting/forward-secret protocol, zero-knowledge authentication, audited key
 - Phase 5: crypto compatibility/lifecycle and security architecture — PR #29.
 - Phase 6: secret-free CI, regression tests, style/type verification and final acceptance — PR #30.
 
-Local integrated acceptance so far: 175 tests passed against PostgreSQL; all workspace types and Biome formatting passed; zero production dependency advisories. Native lint policy passes with zero warnings; the sandbox's JS-plugin bridge crashes, so the complete lint policy is checked independently in GitHub CI. The final build/browser and hosted checks are recorded in `VALIDATION.md` before the integration branch is merged to main.
+Local integrated acceptance so far: 175 tests passed against PostgreSQL; all workspace types and Biome formatting passed; zero production dependency advisories. Native lint policy passes with zero warnings; the sandbox's JS-plugin bridge crashes, so the complete lint policy is checked independently in GitHub CI. The final build passed, all 14 Chromium tests passed, and all six hosted GitHub checks passed on verification commit `5153957`. See `VALIDATION.md` for the evidence and explicit limits.
 
 Remaining protocol/operational projects are explicit in `SECURITY-ARCHITECTURE.md`; they are not claimed as implemented or audited.

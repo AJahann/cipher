@@ -50,8 +50,8 @@ const login = (payload: LoginUserPayload) =>
 const logout = () => apiFetch<{ ok: true }>('/auth/logout', { method: 'POST' });
 
 /**
- * GET /users is cursor-paginated. The directory currently renders only the
- * first page (`limit` up to 100); see docs/api-spec.md for the follow-up.
+ * Legacy single-page directory helper retained for compatibility. The
+ * production directory uses useDirectory to expose nextCursor pagination.
  */
 const listUsers = async (
   limit?: number,
