@@ -17,13 +17,17 @@ export async function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
+  const headers = new Headers(init?.headers);
+  // Only serialized JSON bodies get a default JSON content type. A bodyless
+  // POST (GitHub linking/logout) must not trigger Fastify's empty-JSON parser.
+  // FormData/Blob/etc. retain their browser-generated or explicit content type.
+  if (typeof init?.body === 'string' && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
     ...init,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {
