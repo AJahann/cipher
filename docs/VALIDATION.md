@@ -41,3 +41,7 @@ Only disposable local/CI data was used. No production systems, credentials, or d
 Verification PR #30, commit `5153957de7f82af54dc382562149b1e4d526cacd`: **all six GitHub checks passed** — Format, Lint (including JavaScript plugins and denial of warnings), Typecheck, Unit Tests, Build, and PostgreSQL-backed Chromium E2E. This independently verifies the complete lint policy despite the sandbox-only plugin allocator failure.
 
 The final integration PR is merged into main only after its acceptance checks pass. This record describes the code acceptance baseline; subsequent documentation-only updates do not change runtime behavior.
+
+## Integration-check reliability
+
+The first final-integration runs intermittently failed in the PostgreSQL API step despite earlier green checks and a passing local CI-environment reproduction. Follow-up PR #32 enables GitHub failure annotations (rather than hiding details in runner logs) and serializes the API fixture files that migrate/inspect a shared disposable schema. It does not skip assertions, retry failed tests, or relax application security checks. The root cause of those initial runs was not established; subsequent acceptance results, rather than an assumed diagnosis, gate the final merge.

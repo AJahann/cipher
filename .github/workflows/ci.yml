@@ -243,7 +243,9 @@ jobs:
       - name: Verify session auth against PostgreSQL
         env:
           SESSION_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
-        run: pnpm test:unit:api
+        # These fixtures migrate and inspect the same disposable schema.
+        # Keep cross-file DB work serial; assertions and test coverage stay intact.
+        run: pnpm test:unit:api --no-file-parallelism
 
       - name: Build application
         run: pnpm --filter web build
