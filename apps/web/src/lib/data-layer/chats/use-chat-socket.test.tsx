@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 import { userKeys } from '../user/use-user';
+import { chatKeys } from './use-chat';
 
 const { fakeSocket, ioMock } = vi.hoisted(() => {
   type Listener = (...args: unknown[]) => void;
@@ -69,7 +70,7 @@ describe('chat socket hooks', () => {
     vi.clearAllMocks();
   });
 
-  it('invalidates only the contact list when the socket connects', () => {
+  it('reconciles contacts, conversations and histories on transport reconnect', () => {
     const client = makeClient();
     const invalidateQueries = vi.spyOn(client, 'invalidateQueries');
 
@@ -81,17 +82,26 @@ describe('chat socket hooks', () => {
       fakeSocket.trigger('connect');
     });
 
-    expect(invalidateQueries).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledTimes(5);
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: userKeys.listRoot(),
     });
 
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: chatKeys.historyRoot(),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: chatKeys.messagesRoot(),
+    });
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: chatKeys.conversations(),
+    });
     unmount();
     act(() => {
       fakeSocket.trigger('connect');
     });
 
-    expect(invalidateQueries).toHaveBeenCalledOnce();
+    expect(invalidateQueries).toHaveBeenCalledTimes(5);
   });
 
   it('rejects an unacknowledged send after the bounded timeout', async () => {

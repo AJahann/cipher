@@ -180,31 +180,26 @@ export function registerChatSocket(
           sender: { id: userId, username: socket.data.username },
         };
 
-        // A replay is a retry of a message every member already received, so
-        // only the sender hears about it again. Clients dedupe by `id`.
-        if (!replayed) {
-          io.to(conversationRoom(parsed.conversationId)).emit(
-            'message:new',
-            payload,
+        // A persisted command is not proof of peer delivery. Replays safely
+        // repeat notification; consumers deduplicate by the persisted message ID.
+        const memberIds = await chatService.getConversationMembers(
+          parsed.conversationId,
+        );
+        for (const memberId of memberIds) {
+          io.in(userRoom(memberId)).socketsJoin(
+            conversationRoom(parsed.conversationId),
           );
-
-          const memberIds = await chatService.getConversationMembers(
-            parsed.conversationId,
-          );
-
-          for (const memberId of memberIds) {
-            if (memberId === userId) continue;
-
-            io.in(userRoom(memberId)).socketsJoin(
-              conversationRoom(parsed.conversationId),
-            );
-
+          if (memberId !== userId) {
             io.to(userRoom(memberId)).emit('conversation:updated', {
               conversationId: parsed.conversationId,
               message: payload,
             });
           }
         }
+        io.to(conversationRoom(parsed.conversationId)).emit(
+          'message:new',
+          payload,
+        );
 
         socket.emit('message:ack', {
           clientMessageId: parsed.clientMessageId,

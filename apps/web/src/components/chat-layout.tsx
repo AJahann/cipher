@@ -9,7 +9,7 @@ import {
   useAuthConfig,
   useGitHubLinkStatus,
   useMe,
-  useUsersList,
+  useDirectory,
 } from '@/lib/data-layer/user';
 import { SessionGate } from '@/app/_components/session-gate';
 import {
@@ -24,7 +24,8 @@ export default function ChatLayout() {
   const { data: authConfig } = useAuthConfig();
   const githubEnabled = authConfig?.githubEnabled === true;
   const { data: githubLinkStatus } = useGitHubLinkStatus(me?.id, githubEnabled);
-  const { data: users = [] } = useUsersList(100);
+  const directory = useDirectory(me?.id);
+  const users = directory.data ?? [];
 
   const createConversation = useCreateConversation();
   const selectInFlight = useRef(false);
@@ -83,6 +84,11 @@ export default function ChatLayout() {
           pendingUserId={pendingUserId}
           errorMessage={selectionError}
           onSelect={handleSelectUser}
+          hasMore={directory.hasNextPage}
+          loadingMore={directory.isFetchingNextPage}
+          onLoadMore={() => {
+            void directory.fetchNextPage();
+          }}
           footer={
             <>
               {githubEnabled && (

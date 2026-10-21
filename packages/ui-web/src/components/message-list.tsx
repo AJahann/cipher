@@ -22,9 +22,10 @@ export function MessageList({
 }: MessageListProps) {
   const bottomRef = React.useRef<HTMLDivElement>(null);
 
+  const newestId = messages.at(-1)?.id;
   React.useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'auto' });
-  }, [messages]);
+  }, [newestId]);
 
   if (messages.length === 0) {
     return (

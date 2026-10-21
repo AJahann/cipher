@@ -8,6 +8,9 @@ export interface SidebarUser {
 
 export interface SidebarProps {
   footer?: React.ReactNode;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
   users: SidebarUser[];
   activeUserId?: string | null;
   pendingUserId?: string | null;
@@ -17,6 +20,9 @@ export interface SidebarProps {
 
 export function Sidebar({
   footer,
+  hasMore,
+  loadingMore,
+  onLoadMore,
   users,
   activeUserId,
   pendingUserId,
@@ -68,6 +74,16 @@ export function Sidebar({
           </ul>
         )}
       </div>
+      {hasMore && (
+        <button
+          type='button'
+          disabled={loadingMore}
+          onClick={onLoadMore}
+          className='p-3 text-sm underline'
+        >
+          {loadingMore ? 'Loading contacts…' : 'Load more contacts'}
+        </button>
+      )}
       {footer}
     </aside>
   );

@@ -161,6 +161,51 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
     await new Promise((resolve) => client.once('disconnect', resolve));
     expect(client.connected).toBe(false);
   }, 10_000);
+  it('re-notifies a newly connected recipient after a post-insert failure and replay', async () => {
+    const sender = await register();
+    const recipient = await register();
+    const recipientSocket = open(recipient.cookie);
+    await ready(recipientSocket);
+    const senderSocket = open(sender.cookie);
+    await ready(senderSocket);
+    const response = await app.inject({
+      method: 'POST',
+      url: '/chat/conversations',
+      headers: { cookie: sender.cookie },
+      payload: { memberId: recipient.id },
+    });
+    const conversationId = response.json().id;
+    const { chatService } = await import('../chat/chat.service');
+    const failure = vi
+      .spyOn(chatService, 'getConversationMembers')
+      .mockRejectedValueOnce(new Error('injected notification failure'));
+    const command = {
+      conversationId,
+      clientMessageId: randomUUID(),
+      ciphertext: 'synthetic',
+      nonce: 'synthetic',
+      algorithm: 'x25519-xsalsa20-poly1305',
+    };
+    const first = await senderSocket
+      .timeout(2_000)
+      .emitWithAck('message:send', command);
+    expect(first.ok).toBe(false);
+    const update = new Promise<any>((resolve) =>
+      recipientSocket.once('conversation:updated', resolve),
+    );
+    const retried = await senderSocket
+      .timeout(2_000)
+      .emitWithAck('message:send', command);
+    expect(retried.ok).toBe(true);
+    expect(retried.replayed).toBe(true);
+    expect((await update).message.id).toBe(retried.message.id);
+    const rows = await pool.query(
+      'SELECT id FROM messages WHERE sender_id=$1 AND client_message_id=$2',
+      [sender.id, command.clientMessageId],
+    );
+    expect(rows.rowCount).toBe(1);
+    failure.mockRestore();
+  });
   it('does not cache auth responses and refuses cross-origin mutation', async () => {
     const response = await app.inject({ url: '/auth/config' });
     expect(response.headers['cache-control']).toBe('no-store');

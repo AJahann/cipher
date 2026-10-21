@@ -1,4 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 import type {
   User,
   RegisterUserPayload,
@@ -20,6 +26,7 @@ export const userKeys = {
    * not match `{ limit: undefined }` against a cached `{ limit: 50 }`. Always
    * invalidate on this prefix so paginated variants are covered too.
    */
+  directoryRoot: () => [...userKeys.all, 'directory'] as const,
   listRoot: () => [...userKeys.all, 'list'] as const,
   list: (limit?: number, cursor?: string) =>
     [...userKeys.listRoot(), { limit, cursor }] as const,
@@ -138,4 +145,29 @@ export function useUserPublicKey(userId?: string) {
     queryFn: () => getPublicKey(userId!),
     enabled: Boolean(userId),
   });
+}
+
+export function useDirectory(accountId?: string) {
+  const query = useInfiniteQuery({
+    queryKey: [...userKeys.directoryRoot(), accountId],
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => {
+      const params = new URLSearchParams({ limit: '100' });
+      if (pageParam) params.set('cursor', pageParam);
+      return apiFetch<UsersPage>(`/users?${params}`, { signal });
+    },
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    enabled: Boolean(accountId),
+  });
+  const items = useMemo(() => {
+    const seen = new Set<string>();
+    return query.data?.pages
+      .flatMap((page) => page.items)
+      .filter((user) => {
+        if (seen.has(user.id)) return false;
+        seen.add(user.id);
+        return true;
+      });
+  }, [query.data]);
+  return { ...query, data: items };
 }
