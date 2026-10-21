@@ -8,17 +8,21 @@ import {
 } from '@chat-app/shared/crypto';
 import { useAuthConfig, useLogin, useRegister } from '@/lib/data-layer/user';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import { clearClientSession } from '@/lib/client-session';
 import { KeyStorage } from '@/lib/keyStorage';
 import { AuthForm } from '@chat-app/ui-web';
 import { env } from '@/config/env';
 
 export default function AuthPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: authConfig } = useAuthConfig();
   const loginMutation = useLogin();
   const registerMutation = useRegister();
 
   async function handleLogin(username: string, password: string) {
+    await clearClientSession(queryClient);
     const res = await loginMutation.mutateAsync({ username, password });
     KeyStorage.savePublicKey(res.publicKey);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(res.wrappedPrivateKey));
@@ -28,6 +32,7 @@ export default function AuthPage() {
 
   async function handleRegister(username: string, password: string) {
     try {
+      await clearClientSession(queryClient);
       const pair = await createSessionKeys(password);
       await registerMutation.mutateAsync({
         username,

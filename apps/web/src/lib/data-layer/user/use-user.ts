@@ -6,6 +6,7 @@ import type {
 } from '@chat-app/shared/types';
 import type { UserSummary, UsersPage } from '@chat-app/shared/contracts';
 import { apiFetch } from '../client';
+import { clearClientSession } from '../../client-session';
 
 export const userKeys = {
   all: ['user'] as const,
@@ -118,8 +119,8 @@ export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: logout,
-    onSuccess: () => {
-      qc.removeQueries({ queryKey: userKeys.me() });
+    onSuccess: async () => {
+      await clearClientSession(qc);
     },
   });
 }
