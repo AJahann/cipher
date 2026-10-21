@@ -2,7 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { ME_PATH, stubUser } from '../../../test/msw/handlers';
 import { server } from '../../../test/msw/server';
-import { useMe } from './use-user';
+import { useGitHubLinkStatus, useMe } from './use-user';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 
 describe(useMe, () => {
@@ -59,5 +59,34 @@ describe(useMe, () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(hits).toBe(1);
+  });
+});
+
+describe(useGitHubLinkStatus, () => {
+  it('does not request status before a user is known', () => {
+    const { result } = renderHook(() => useGitHubLinkStatus(), {
+      wrapper: makeWrapper(makeClient()),
+    });
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it('loads persisted status and keeps separate account caches', async () => {
+    let linked = true;
+    server.use(
+      http.get(/\/auth\/github\/status$/, () => HttpResponse.json({ linked })),
+    );
+    const { result, rerender } = renderHook(
+      ({ userId }) => useGitHubLinkStatus(userId),
+      {
+        initialProps: { userId: 'user-a' },
+        wrapper: makeWrapper(makeClient()),
+      },
+    );
+    await waitFor(() => expect(result.current.data).toEqual({ linked: true }));
+    linked = false;
+    rerender({ userId: 'user-b' });
+    expect(result.current.data).toBeUndefined();
+    await waitFor(() => expect(result.current.data).toEqual({ linked: false }));
   });
 });

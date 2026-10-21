@@ -10,6 +10,8 @@ import { apiFetch } from '../client';
 export const userKeys = {
   all: ['user'] as const,
   me: () => [...userKeys.all, 'me'] as const,
+  githubLinkStatus: (id?: string) =>
+    [...userKeys.all, 'githubLinkStatus', id] as const,
   /**
    * Prefix for cache lookups and invalidation.
    *
@@ -57,6 +59,16 @@ const listUsers = async (
 
 const getPublicKey = (userId: string) =>
   apiFetch<{ publicKey: string }>(`/users/${userId}/public-key`);
+
+export function useGitHubLinkStatus(userId?: string) {
+  return useQuery({
+    queryKey: userKeys.githubLinkStatus(userId),
+    queryFn: () => apiFetch<{ linked: boolean }>('/auth/github/status'),
+    enabled: Boolean(userId),
+    retry: false,
+    staleTime: 0,
+  });
+}
 
 export function useMe(enabled = true) {
   return useQuery({

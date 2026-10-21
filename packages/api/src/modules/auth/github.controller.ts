@@ -20,6 +20,11 @@ export const githubController = (app: FastifyInstance) => {
     done();
   });
 
+  app.get('/status', { preHandler: requireAuth }, async (req, reply) => {
+    const linked = await githubIdentityStore.isLinked(req.session.userId!);
+    return reply.send({ linked });
+  });
+
   app.get('/', async (req, reply) => {
     const flow = createGitHubFlow();
     await req.session.save();

@@ -4,7 +4,11 @@ import { useRef, useState } from 'react';
 import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { GitHubLinkButton } from './github-link-button';
 import { ChatPage } from './chat-page';
-import { useMe, useUsersList } from '@/lib/data-layer/user';
+import {
+  useGitHubLinkStatus,
+  useMe,
+  useUsersList,
+} from '@/lib/data-layer/user';
 import { SessionGate } from '@/app/_components/session-gate';
 import {
   useChatSocket,
@@ -15,6 +19,7 @@ import {
 
 export default function ChatLayout() {
   const { data: me } = useMe();
+  const { data: githubLinkStatus } = useGitHubLinkStatus(me?.id);
   const { data: users = [] } = useUsersList(100);
 
   const createConversation = useCreateConversation();
@@ -65,7 +70,7 @@ export default function ChatLayout() {
           pendingUserId={pendingUserId}
           errorMessage={selectionError}
           onSelect={handleSelectUser}
-          footer={<GitHubLinkButton />}
+          footer={<GitHubLinkButton linked={githubLinkStatus?.linked} />}
         />
       }
     >

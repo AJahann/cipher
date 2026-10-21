@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { apiFetch } from '@/lib/data-layer/client';
+import { apiFetch } from '../lib/data-layer/client';
 
-export function GitHubLinkButton() {
+export function GitHubLinkButton({ linked }: { linked?: boolean }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,6 +24,9 @@ export function GitHubLinkButton() {
       setPending(false);
     }
   }
+
+  // Only confirmed unlinked accounts see the action; loading/errors stay hidden.
+  if (linked !== false) return null;
 
   return (
     <div className='border-t border-(--cipher-border) p-3 text-sm text-(--cipher-text)'>

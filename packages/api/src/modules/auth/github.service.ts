@@ -148,6 +148,13 @@ export async function loadGitHubUserId(
 }
 
 export const githubIdentityStore = {
+  async isLinked(userId: string) {
+    const [identity] = await db
+      .select({ userId: githubIdentities.userId })
+      .from(githubIdentities)
+      .where(eq(githubIdentities.userId, userId));
+    return Boolean(identity);
+  },
   async find(githubUserId: string) {
     const [identity] = await db
       .select()
