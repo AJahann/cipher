@@ -10,6 +10,7 @@ import { useLogin, useRegister } from '@/lib/data-layer/user';
 import { useRouter } from 'next/navigation';
 import { KeyStorage } from '@/lib/keyStorage';
 import { AuthForm } from '@chat-app/ui-web';
+import { env } from '@/config/env';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -41,5 +42,11 @@ export default function AuthPage() {
     }
   }
 
-  return <AuthForm onLogin={handleLogin} onRegister={handleRegister} />;
+  return (
+    <AuthForm
+      onLogin={handleLogin}
+      onRegister={handleRegister}
+      githubSignInUrl={`${env.NEXT_PUBLIC_API_URL}/auth/github`}
+    />
+  );
 }

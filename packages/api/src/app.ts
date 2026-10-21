@@ -4,6 +4,7 @@ import cookie from '@fastify/cookie';
 import session from '@fastify/session';
 import { Server as SocketIOServer } from 'socket.io';
 import { env } from './config/env';
+import { githubController } from './modules/auth/github.controller';
 import { authController } from './modules/auth/auth.controller';
 import { userController } from './modules/user/user.controller';
 import { chatController } from './modules/chat/chat.controller';
@@ -12,7 +13,21 @@ import { sessionStore } from './db/session';
 import { registerErrorHandling } from './http/errors';
 
 export const buildApp = async () => {
-  const app = Fastify({ logger: true });
+  const app = Fastify({
+    logger: {
+      // Authorization codes/state must not enter application access logs.
+      serializers: {
+        req(req) {
+          return {
+            method: req.method,
+            url: req.url?.split('?')[0],
+            hostname: req.hostname,
+            remoteAddress: req.ip,
+          };
+        },
+      },
+    },
+  });
 
   // Socket.IO can only attach once the HTTP server is ready, but the REST
   // handlers registered below need to emit on it at request time (e.g. telling
@@ -49,6 +64,7 @@ export const buildApp = async () => {
   app.get('/health', () => ({ status: 'ok' }));
 
   app.register(authController, { prefix: '/auth' });
+  app.register(githubController, { prefix: '/auth/github' });
   app.register(userController, { prefix: '/users' });
   app.register(chatController, { prefix: '/chat' });
 

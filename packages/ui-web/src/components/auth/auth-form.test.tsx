@@ -22,6 +22,20 @@ function deferred() {
 }
 
 describe(AuthForm, () => {
+  it('offers GitHub as a full navigation without passing any password or key', () => {
+    render(
+      <AuthForm
+        onLogin={resolved}
+        onRegister={resolved}
+        githubSignInUrl='https://api.example.com/auth/github'
+      />,
+    );
+    expect(
+      screen.getByRole('link', { name: 'Sign in with GitHub' }),
+    ).toHaveAttribute('href', 'https://api.example.com/auth/github');
+    expect(screen.getByText(/passphrase is still needed/)).toBeInTheDocument();
+  });
+
   it('renders the whole form inside the main landmark', () => {
     render(<AuthForm onLogin={resolved} onRegister={resolved} />);
     const main = screen.getByRole('main');

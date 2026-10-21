@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
+import { GitHubLinkButton } from './github-link-button';
 import { ChatPage } from './chat-page';
 import { useMe, useUsersList } from '@/lib/data-layer/user';
 import { SessionGate } from '@/app/_components/session-gate';
@@ -64,6 +65,7 @@ export default function ChatLayout() {
           pendingUserId={pendingUserId}
           errorMessage={selectionError}
           onSelect={handleSelectUser}
+          footer={<GitHubLinkButton />}
         />
       }
     >

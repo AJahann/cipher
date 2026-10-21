@@ -44,6 +44,11 @@ export const authController = (app: FastifyInstance) => {
     return reply.send({ ok: true });
   });
 
+  app.get('/key-bundle', { preHandler: requireAuth }, async (req, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    return reply.send(await userService.getKeyBundle(req.session.userId!));
+  });
+
   app.get('/me', { preHandler: requireAuth }, async (req, reply) => {
     const user = await userService.findById(req.session.userId!);
     if (!user) {

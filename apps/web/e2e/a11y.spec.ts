@@ -80,23 +80,30 @@ test.describe('axe: route × SessionGate state', () => {
     await expectNoBlockingViolations(page, '/ register', testInfo);
   });
 
-  test('/chat — need-login redirects to an accessible sign-in', async ({
+  test('/chat — authenticated fresh browser still needs passphrase unlock', async ({
     browser,
   }, testInfo) => {
     const { cookies } = JSON.parse(
       fs.readFileSync(storageStateFor('alice'), 'utf8'),
     );
-    // Session cookie present, wrapped key absent → SessionGate "need-login".
+    // A valid session (including GitHub login) can load its own encrypted
+    // bundle, but a fresh browser must still ask for the local passphrase.
     const context = await browser.newContext({
       storageState: { cookies, origins: [] },
     });
     const page = await context.newPage();
     await page.goto('/chat');
-    await page.waitForURL((url) => url.pathname === '/');
     await expect(
-      page.getByRole('button', { name: 'authenticate' }),
+      page.getByRole('heading', { name: 'Unlock session' }),
     ).toBeVisible();
-    await expectNoBlockingViolations(page, '/chat need-login', testInfo);
+    await expect(
+      page.getByRole('button', { name: 'unlock', exact: true }),
+    ).toBeVisible();
+    await expectNoBlockingViolations(
+      page,
+      '/chat fresh browser need-unlock',
+      testInfo,
+    );
     await context.close();
   });
 
