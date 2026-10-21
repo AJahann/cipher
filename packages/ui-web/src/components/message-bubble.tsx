@@ -3,6 +3,7 @@ import * as React from 'react';
 export interface DecryptedMessage {
   id: string;
   clientMessageId?: string;
+  decryptionFailed?: boolean;
   senderId: string;
   text: string;
   time: string;
@@ -15,6 +16,10 @@ export interface MessageBubbleProps {
   /** Display name of the other participant; used for the avatar and sender label. */
   peerName?: string;
   onRetry?: () => void;
+}
+
+function isFailedMessage(msg: DecryptedMessage) {
+  return msg.deliveryStatus === 'failed' || msg.decryptionFailed;
 }
 
 export function MessageBubble({ msg, peerName, onRetry }: MessageBubbleProps) {
@@ -44,7 +49,7 @@ export function MessageBubble({ msg, peerName, onRetry }: MessageBubbleProps) {
           isMine
             ? 'rounded-ee-sm bg-[var(--cipher-accent-strong)] text-white'
             : 'rounded-es-sm border border-[var(--cipher-border)] bg-[var(--cipher-surface-2)] text-[var(--cipher-text)]',
-          deliveryStatus === 'failed' ? 'ring-1 ring-red-400' : '',
+          isFailedMessage(msg) ? 'ring-1 ring-red-400' : '',
           deliveryStatus === 'sending' ? 'opacity-70' : '',
         ].join(' ')}
       >

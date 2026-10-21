@@ -2,8 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main, fix/day-16-session-auth]
+    branches: [main, remediation/security-reliability, fix/day-16-session-auth]
   pull_request:
+
+# Disposable, non-production values: fork PRs need no repository secrets.
+env:
+  NEXT_PUBLIC_API_URL: http://localhost:3001
+  CLIENT_ORIGIN: http://localhost:3000
+  BACKEND_PORT: '3001'
+  PLAYWRIGHT_BASE_URL: http://localhost:3000
+  SESSION_SECRET: cipher-ci-only-not-for-production-32-characters
+  GITHUB_AUTH_ENABLED: 'false'
 
 permissions:
   contents: read
@@ -144,19 +153,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create root .env
-        shell: bash
-        env:
-          CI_ENV_FILE: ${{ secrets.CI_ENV_FILE }}
-        run: |
-          if [ -z "$CI_ENV_FILE" ]; then
-            echo "::error::CI_ENV_FILE repository secret is unavailable"
-            exit 1
-          fi
-
-          umask 077
-          printf '%s' "$CI_ENV_FILE" > "$GITHUB_WORKSPACE/.env"
-
       - name: Run Vitest with coverage
         run: |
           pnpm exec vitest run \
@@ -241,26 +237,15 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Create root .env
-        shell: bash
-        env:
-          CI_ENV_FILE: ${{ secrets.CI_ENV_FILE }}
-        run: |
-          if [ -z "$CI_ENV_FILE" ]; then
-            echo "::error::CI_ENV_FILE repository secret is unavailable"
-            exit 1
-          fi
-
-          umask 077
-          printf '%s' "$CI_ENV_FILE" > "$GITHUB_WORKSPACE/.env"
-
       - name: Apply database migrations
         run: pnpm --filter @chat-app/api exec drizzle-kit migrate
 
       - name: Verify session auth against PostgreSQL
         env:
           SESSION_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
-        run: pnpm test:unit:api
+        # These fixtures migrate and inspect the same disposable schema.
+        # Keep cross-file DB work serial; assertions and test coverage stay intact.
+        run: pnpm test:unit:api --no-file-parallelism
 
       - name: Build application
         run: pnpm --filter web build

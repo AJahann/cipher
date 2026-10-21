@@ -40,7 +40,6 @@ export class E2EEncryption {
       publicKey: keypair.publicKey,
       privateKey: keypair.privateKey,
       publicKeyB64: sodium.to_base64(keypair.publicKey),
-      privateKeyB64: sodium.to_base64(keypair.privateKey),
     };
   }
 
@@ -61,6 +60,7 @@ export class E2EEncryption {
       senderPrivateKey,
     );
 
+    plaintext.fill(0);
     return {
       ciphertext: sodium.to_base64(ciphertext),
       nonce: sodium.to_base64(nonce),
@@ -86,7 +86,11 @@ export class E2EEncryption {
       recipientPrivateKey,
     );
 
-    return new TextDecoder().decode(decrypted);
+    try {
+      return new TextDecoder().decode(decrypted);
+    } finally {
+      sodium.memzero(decrypted);
+    }
   }
 }
 
@@ -95,6 +99,7 @@ export async function createSessionKeys(password: string) {
   const wrapped = await wrapPrivateKey(pairKeys.privateKey, password);
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(wrapped));
+  _sessionPrivateKey?.fill(0);
   _sessionPrivateKey = pairKeys.privateKey;
 
   return {
@@ -110,10 +115,12 @@ export async function restoreSessionKeys(password: string): Promise<void> {
   const wrapped: WrappedPrivateKey = JSON.parse(raw);
   const privateKey = await unwrapPrivateKey(wrapped, password);
 
+  _sessionPrivateKey?.fill(0);
   _sessionPrivateKey = privateKey;
 }
 
 export function clearSessionKeys(): void {
+  _sessionPrivateKey?.fill(0);
   _sessionPrivateKey = null;
   localStorage.removeItem(STORAGE_KEY);
 }

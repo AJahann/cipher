@@ -69,15 +69,13 @@ describe('private-key wrapping', () => {
 });
 
 describe(E2EEncryption, () => {
-  it('returns base64 representations of the generated key pair', async () => {
+  it('returns the public key encoding without creating a private key string', async () => {
     const pair = await E2EEncryption.generateKeyPair();
 
     await expect(KeyManager.fromBase64(pair.publicKeyB64)).resolves.toEqual(
       pair.publicKey,
     );
-    await expect(KeyManager.fromBase64(pair.privateKeyB64)).resolves.toEqual(
-      pair.privateKey,
-    );
+    expect(pair).not.toHaveProperty('privateKeyB64');
   });
 
   it('encrypts and decrypts a message between two key pairs', async () => {

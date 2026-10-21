@@ -49,7 +49,7 @@
     "jsdom": "^30.0.1",
     "lighthouse": "13.5.0",
     "msw": "^2.15.0",
-    "oxlint": "1.85.0",
+    "oxlint": "1.89.0",
     "puppeteer-core": "25.12.0",
     "vitest": "^4.1.11",
     "zod": "^4.4.3"

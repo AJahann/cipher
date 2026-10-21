@@ -4,11 +4,12 @@ import { useRef, useState } from 'react';
 import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { GitHubLinkButton } from './github-link-button';
 import { ChatPage } from './chat-page';
+import { LogoutButton } from './logout-button';
 import {
   useAuthConfig,
   useGitHubLinkStatus,
   useMe,
-  useUsersList,
+  useDirectory,
 } from '@/lib/data-layer/user';
 import { SessionGate } from '@/app/_components/session-gate';
 import {
@@ -23,10 +24,12 @@ export default function ChatLayout() {
   const { data: authConfig } = useAuthConfig();
   const githubEnabled = authConfig?.githubEnabled === true;
   const { data: githubLinkStatus } = useGitHubLinkStatus(me?.id, githubEnabled);
-  const { data: users = [] } = useUsersList(100);
+  const directory = useDirectory(me?.id);
+  const users = directory.data ?? [];
 
   const createConversation = useCreateConversation();
   const selectInFlight = useRef(false);
+  const hasUnsent = useRef(false);
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null);
@@ -39,7 +42,15 @@ export default function ChatLayout() {
   useChatRealtimeSync();
 
   async function handleSelectUser(receiverId: string) {
-    if (selectInFlight.current) return;
+    if (selectInFlight.current || receiverId === activeReceiverId) return;
+    if (
+      hasUnsent.current &&
+      // oxlint-disable-next-line no-alert -- Discarding unsent plaintext requires explicit confirmation.
+      !window.confirm(
+        'Switch conversation and discard this draft or unsent messages?',
+      )
+    )
+      return;
     selectInFlight.current = true;
     setPendingUserId(receiverId);
     setSelectionError(null);
@@ -48,6 +59,7 @@ export default function ChatLayout() {
       const created = await createConversation.mutateAsync({
         memberId: receiverId,
       });
+      hasUnsent.current = false;
       setActiveConversationId(created.id);
       setActiveReceiverId(receiverId);
       joinConversation(created.id);
@@ -73,10 +85,18 @@ export default function ChatLayout() {
           pendingUserId={pendingUserId}
           errorMessage={selectionError}
           onSelect={handleSelectUser}
+          hasMore={directory.hasNextPage}
+          loadingMore={directory.isFetchingNextPage}
+          onLoadMore={() => {
+            void directory.fetchNextPage();
+          }}
           footer={
-            githubEnabled ? (
-              <GitHubLinkButton linked={githubLinkStatus?.linked} />
-            ) : undefined
+            <>
+              {githubEnabled && (
+                <GitHubLinkButton linked={githubLinkStatus?.linked} />
+              )}
+              <LogoutButton />
+            </>
           }
         />
       }
@@ -84,6 +104,10 @@ export default function ChatLayout() {
       <SessionGate>
         {activeConversationId && activeReceiverId && me?.id ? (
           <ChatPage
+            key={`${me.id}:${activeConversationId}`}
+            onUnsentChange={(value) => {
+              hasUnsent.current = value;
+            }}
             conversationId={activeConversationId}
             receiverId={activeReceiverId}
             receiverName={activeReceiverName}

@@ -1,10 +1,17 @@
 // vitest.config.mjs
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   test: {
-    reporters: ['verbose'],
+    env: {
+      NEXT_PUBLIC_API_URL:
+        process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
+    },
+    reporters: process.env.GITHUB_ACTIONS
+      ? ['verbose', 'github-actions']
+      : ['verbose'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
@@ -13,6 +20,11 @@ export default defineConfig({
     projects: [
       {
         plugins: [react()],
+        resolve: {
+          alias: {
+            '@': fileURLToPath(new URL('./apps/web/src', import.meta.url)),
+          },
+        },
         test: {
           name: 'apps/web',
           root: './apps/web',

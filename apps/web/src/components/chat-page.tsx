@@ -1,15 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { chatKeys, useMessages } from '@/lib/data-layer/chats';
+import {
+  chatKeys,
+  type useMessages,
+  useMessageHistory,
+} from '@/lib/data-layer/chats';
 import { useUserPublicKey } from '@/lib/data-layer/user';
 import type { SendMessageInput } from '@chat-app/shared/contracts';
 import {
   useChatSocketActions,
   useChatRealtimeMessages,
 } from '@/lib/data-layer/chats/use-chat-socket';
-import { E2EEncryption, getSessionPrivateKey } from '@chat-app/shared/crypto';
+import {
+  encryptChatMessage,
+  decryptChatMessage,
+  getSessionPrivateKey,
+} from '@chat-app/shared/crypto';
 import { KeyStorage } from '@/lib/keyStorage';
 import { KeyManager } from '@chat-app/shared';
 import {
@@ -42,6 +50,7 @@ interface ChatPageProps {
   receiverName: string;
   myId: string;
   isConnected: boolean;
+  onUnsentChange?: (value: boolean) => void;
 }
 
 function getConfirmedIds(messages: DecryptedMessage[]) {
@@ -56,14 +65,25 @@ async function decryptOne(
   message: EncryptedMessage,
   receiverKeyRaw: Uint8Array,
   sessionPrivateKey: ReturnType<typeof getSessionPrivateKey>,
-  myId: string,
-): Promise<DecryptedMessage | null> {
+  {
+    myId,
+    receiverId,
+    conversationId,
+  }: { myId: string; receiverId: string; conversationId: string },
+): Promise<DecryptedMessage> {
   try {
-    const plain = await E2EEncryption.decryptMessage(
-      message.ciphertext,
-      message.nonce,
+    if (![myId, receiverId].includes(message.senderId))
+      throw new Error('UNEXPECTED_SENDER');
+    const plain = await decryptChatMessage(
+      message,
       receiverKeyRaw,
       sessionPrivateKey,
+      {
+        senderId: message.senderId,
+        recipientId: message.senderId === myId ? receiverId : myId,
+        conversationId,
+        clientMessageId: message.clientMessageId,
+      },
     );
     return {
       id: message.id,
@@ -75,8 +95,14 @@ async function decryptOne(
       deliveryStatus: 'sent',
     };
   } catch (_error) {
-    // Messages that cannot be decrypted are hidden instead of breaking the list.
-    return null;
+    return {
+      id: message.id,
+      senderId: message.senderId,
+      text: 'Unable to decrypt or verify this message. Its key, format, or authenticated context may not match.',
+      time: formatTime(message.createdAt),
+      isMine: message.senderId === myId,
+      decryptionFailed: true,
+    };
   }
 }
 
@@ -85,13 +111,18 @@ function useDecryptedMessages({
   receiverPublicKey,
   isKeyLoading,
   myId,
+  receiverId,
+  conversationId,
 }: {
   messages: MessagesData;
   receiverPublicKey: string | undefined;
   isKeyLoading: boolean;
   myId: string;
+  receiverId: string;
+  conversationId: string;
 }) {
   const [decrypted, setDecrypted] = useState<DecryptedMessage[]>([]);
+  const [keyError, setKeyError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isKeyLoading) return;
@@ -106,22 +137,36 @@ function useDecryptedMessages({
           : null;
 
         if (!myPublicKeyRaw || !receiverKeyRaw) {
-          if (!cancelled) setDecrypted([]);
+          if (!cancelled) {
+            setDecrypted([]);
+            setKeyError(
+              'The contact encryption key is unavailable. Messages cannot be verified.',
+            );
+          }
           return;
         }
 
         const out = await Promise.all(
           (messages ?? []).map((message) =>
-            decryptOne(message, receiverKeyRaw, sessionPrivateKey, myId),
+            decryptOne(message, receiverKeyRaw, sessionPrivateKey, {
+              myId,
+              receiverId,
+              conversationId,
+            }),
           ),
         );
 
         if (!cancelled) {
-          setDecrypted(out.filter((x): x is DecryptedMessage => x !== null));
+          setDecrypted(out);
+          setKeyError(null);
         }
       } catch (_error) {
-        // Without usable keys nothing can be shown, so fall back to an empty list.
-        if (!cancelled) setDecrypted([]);
+        if (!cancelled) {
+          setDecrypted([]);
+          setKeyError(
+            'Encryption keys could not be loaded. Unlock again before sending.',
+          );
+        }
       }
     }
 
@@ -129,9 +174,16 @@ function useDecryptedMessages({
     return () => {
       cancelled = true;
     };
-  }, [isKeyLoading, messages, myId, receiverPublicKey]);
+  }, [
+    isKeyLoading,
+    messages,
+    myId,
+    receiverPublicKey,
+    receiverId,
+    conversationId,
+  ]);
 
-  return decrypted;
+  return { decrypted, keyError };
 }
 
 function useOutbox(decrypted: DecryptedMessage[]) {
@@ -166,6 +218,7 @@ function useOutbox(decrypted: DecryptedMessage[]) {
       await sendMessage(item.payload);
       setStatus(item.id, 'sent');
       void qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
+      void qc.invalidateQueries({ queryKey: chatKeys.historyRoot() });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'FAILED_TO_SEND';
       setComposerError(message);
@@ -218,47 +271,99 @@ function ChatNotices({
   );
 }
 
+function useMounted() {
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  return mounted;
+}
+
+function useUnsentWarning(
+  input: string,
+  pendingCount: number,
+  onUnsentChange?: (value: boolean) => void,
+) {
+  useEffect(() => {
+    const unsent = Boolean(input.trim()) || pendingCount > 0;
+    onUnsentChange?.(unsent);
+    if (!unsent) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [input, pendingCount, onUnsentChange]);
+}
+
 export function ChatPage({
   conversationId,
   receiverId,
   receiverName,
   myId,
   isConnected,
+  onUnsentChange,
 }: ChatPageProps) {
   const { typingStart, typingStop } = useChatSocketActions();
   const {
     data: messages,
     isLoading: messagesIsLoading,
     isError,
-  } = useMessages(conversationId);
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useMessageHistory(conversationId, myId);
   useChatRealtimeMessages();
 
   const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
   const [input, setInput] = useState('');
-  const decrypted = useDecryptedMessages({
+  const encrypting = useRef(false);
+  const mounted = useMounted();
+  const { decrypted, keyError } = useDecryptedMessages({
     messages,
     receiverPublicKey: receiverKey?.publicKey,
     isKeyLoading: isLoading,
     myId,
+    receiverId,
+    conversationId,
   });
   const { visiblePending, composerError, setComposerError, enqueue, retry } =
     useOutbox(decrypted);
 
+  useUnsentWarning(input, visiblePending.length, onUnsentChange);
+
   async function handleSend() {
     const text = input.trim();
-    if (!text || !receiverKey?.publicKey || !isConnected) return;
-
+    if (
+      !text ||
+      !receiverKey?.publicKey ||
+      !isConnected ||
+      encrypting.current ||
+      keyError
+    )
+      return;
+    encrypting.current = true;
     try {
       const senderPrivateKeyRaw = getSessionPrivateKey();
       const receiverKeyRaw = await KeyManager.fromBase64(receiverKey.publicKey);
-      const ciphertext = await E2EEncryption.encryptMessage(
+      const clientMessageId = crypto.randomUUID();
+      const ciphertext = await encryptChatMessage(
         text,
         receiverKeyRaw,
         senderPrivateKeyRaw,
+        {
+          senderId: myId,
+          recipientId: receiverId,
+          conversationId,
+          clientMessageId,
+        },
       );
-      const clientMessageId = crypto.randomUUID();
 
-      setInput('');
+      if (!mounted.current) return;
+      setInput((current) => (current.trim() === text ? '' : current));
       enqueue({
         id: clientMessageId,
         text,
@@ -266,8 +371,15 @@ export function ChatPage({
         status: 'sending',
         payload: { clientMessageId, conversationId, ...ciphertext },
       });
-    } catch (_error) {
-      setComposerError('ENCRYPTION_FAILED');
+    } catch (error) {
+      if (mounted.current)
+        setComposerError(
+          error instanceof Error && error.message === 'MESSAGE_TOO_LARGE'
+            ? 'MESSAGE_TOO_LARGE'
+            : 'ENCRYPTION_FAILED',
+        );
+    } finally {
+      encrypting.current = false;
     }
   }
 
@@ -293,6 +405,25 @@ export function ChatPage({
   return (
     <main className='flex flex-1 min-w-0 flex-col'>
       <ChatHeader title={receiverName} isConnected={isConnected} />
+      {keyError && (
+        <p role='alert' className='p-3 text-sm text-red-400'>
+          {keyError}
+        </p>
+      )}
+      {hasNextPage && (
+        <button
+          type='button'
+          disabled={isFetchingNextPage}
+          onClick={() => {
+            void fetchNextPage();
+          }}
+          className='p-2 text-sm underline'
+        >
+          {isFetchingNextPage
+            ? 'Loading older messages…'
+            : 'Load older messages'}
+        </button>
+      )}
       <MessageList
         isLoading={messagesIsLoading}
         isError={isError}
@@ -306,7 +437,12 @@ export function ChatPage({
         value={input}
         onChange={handleTyping}
         onSend={handleSend}
-        disabled={!isConnected}
+        disabled={
+          !isConnected ||
+          isLoading ||
+          !receiverKey?.publicKey ||
+          Boolean(keyError)
+        }
         placeholder={isConnected ? 'Write a message...' : 'Reconnecting...'}
       />
     </main>

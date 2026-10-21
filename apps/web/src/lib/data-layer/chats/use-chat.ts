@@ -1,4 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from '@tanstack/react-query';
 import type { Conversation } from '@chat-app/shared/types';
 import type { MessagesPage } from '@chat-app/shared/contracts';
 import { apiFetch } from '../client';
@@ -12,6 +18,9 @@ export interface MessagesQueryParams {
 
 export const chatKeys = {
   all: ['chat'] as const,
+  historyRoot: () => [...chatKeys.all, 'history'] as const,
+  history: (conversationId: string, accountId: string) =>
+    [...chatKeys.historyRoot(), { conversationId, accountId }] as const,
   conversations: () => [...chatKeys.all, 'conversations'] as const,
   /**
    * Prefix for cache lookups and invalidation.
@@ -39,9 +48,9 @@ const createConversation = (payload: CreateConversationPayload) =>
 const listConversations = () => apiFetch<Conversation[]>('/chat/conversations');
 
 /**
- * The cache holds the page's `items` (oldest → newest) so realtime writers can
- * append to a plain array. `nextCursor` is not surfaced yet: the UI has no
- * "load older" control (tracked in docs/api-spec.md).
+ * Legacy single-page helper retained for compatibility. Its cache holds
+ * items oldest → newest; the production UI uses useMessageHistory to retain
+ * cursor metadata and load older pages without corrupting their boundaries.
  */
 const getMessages = async (
   conversationId: string,
@@ -83,4 +92,33 @@ export function useMessages(
     queryFn: () => getMessages(conversationId!, limit, cursor),
     enabled: Boolean(conversationId),
   });
+}
+
+/** HTTP pages remain authoritative. Realtime invalidates; it never inserts new
+ * messages into historical cursor pages or makes page arrays grow unbounded. */
+export function useMessageHistory(conversationId: string, accountId: string) {
+  const query = useInfiniteQuery({
+    queryKey: chatKeys.history(conversationId, accountId),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam, signal }) => {
+      const params = new URLSearchParams({ conversationId, limit: '50' });
+      if (pageParam) params.set('cursor', pageParam);
+      return apiFetch<MessagesPage>(`/chat/messages?${params}`, { signal });
+    },
+    getNextPageParam: (page) => page.nextCursor ?? undefined,
+    enabled: Boolean(conversationId && accountId),
+  });
+  const items = useMemo(() => {
+    const seen = new Set<string>();
+    return query.data?.pages
+      .slice()
+      .reverse()
+      .flatMap((page) => page.items)
+      .filter((message) => {
+        if (seen.has(message.id)) return false;
+        seen.add(message.id);
+        return true;
+      });
+  }, [query.data]);
+  return { ...query, data: items };
 }

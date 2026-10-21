@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { io, type Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@chat-app/shared/types';
 import type {
-  ClientToServerEvents,
   MessageDto,
   SendMessageAck,
   SendMessageInput,
@@ -11,27 +9,11 @@ import type {
 } from '@chat-app/shared/contracts';
 import { chatKeys, type MessagesQueryParams } from './use-chat';
 import { userKeys } from '../user/use-user';
-import { env } from '../../../config/env';
+import { getSocket } from './socket-client';
 
-const SOCKET_URL = env.NEXT_PUBLIC_API_URL;
 const SEND_ACK_TIMEOUT_MS = 8_000;
-
-type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
-
 type MessagePayload = MessageDto;
-
-let socketInstance: AppSocket | null = null;
 let refCount = 0;
-
-function getSocket() {
-  if (!socketInstance) {
-    socketInstance = io(SOCKET_URL, {
-      withCredentials: true,
-      autoConnect: false,
-    });
-  }
-  return socketInstance;
-}
 
 export function useChatSocket(autoConnect = true) {
   const [connected, setConnected] = useState(false);
@@ -166,6 +148,7 @@ function useMessageCacheWriters() {
 
   const upsertMessage = useCallback(
     (message: MessagePayload) => {
+      void qc.invalidateQueries({ queryKey: chatKeys.historyRoot() });
       const queries = qc.getQueriesData<Message[]>({
         queryKey: chatKeys.messagesRoot(),
       });
@@ -173,9 +156,10 @@ function useMessageCacheWriters() {
       queries.forEach(([key, data]) => {
         if (!data) return;
         const params = key[2] as MessagesQueryParams | undefined;
-        if (params?.conversationId !== message.conversationId) return;
+        if (params?.conversationId !== message.conversationId || params.cursor)
+          return;
         if (data.some((m) => m.id === message.id)) return;
-        qc.setQueryData(key, [...data, message]);
+        qc.setQueryData(key, [...data, message].slice(-(params.limit ?? 50)));
       });
     },
     [qc],
@@ -222,6 +206,7 @@ export function useChatRealtimeSync() {
   const refreshLists = useCallback(() => {
     qc.invalidateQueries({ queryKey: chatKeys.conversations() });
     qc.invalidateQueries({ queryKey: userKeys.listRoot() });
+    qc.invalidateQueries({ queryKey: userKeys.directoryRoot() });
   }, [qc]);
 
   const onConversationUpdated = useCallback(
@@ -239,12 +224,20 @@ export function useChatRealtimeSync() {
 
   useEffect(() => {
     const onConnect = () => {
-      qc.invalidateQueries({ queryKey: userKeys.listRoot() });
+      refreshLists();
+      void qc.invalidateQueries({ queryKey: chatKeys.messagesRoot() });
+      void qc.invalidateQueries({ queryKey: chatKeys.historyRoot() });
     };
 
+    const onRevoked = (reason: string) => {
+      if (reason === 'io server disconnect')
+        void qc.invalidateQueries({ queryKey: userKeys.me() });
+    };
     socket.on('connect', onConnect);
+    socket.on('disconnect', onRevoked);
     return () => {
+      socket.off('disconnect', onRevoked);
       socket.off('connect', onConnect);
     };
-  }, [qc, socket]);
+  }, [qc, socket, refreshLists]);
 }

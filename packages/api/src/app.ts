@@ -71,6 +71,8 @@ export const buildApp = async () => {
   await app.ready();
 
   const socketServer = new SocketIOServer(app.server, {
+    allowRequest: (req, accept) =>
+      accept(null, req.headers.origin === env.CLIENT_ORIGIN),
     cors: {
       origin: env.CLIENT_ORIGIN,
       credentials: true,
