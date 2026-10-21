@@ -1,5 +1,7 @@
 # Day 16 — session authentication
 
+> Historical milestone. Password hashing, live socket revocation, and client teardown are superseded by the security remediation in [SECURITY-ARCHITECTURE.md](SECURITY-ARCHITECTURE.md).
+
 ## Changes
 
 - Login and registration validate credentials/create the account, then await

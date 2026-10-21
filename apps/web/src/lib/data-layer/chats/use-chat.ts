@@ -48,9 +48,9 @@ const createConversation = (payload: CreateConversationPayload) =>
 const listConversations = () => apiFetch<Conversation[]>('/chat/conversations');
 
 /**
- * The cache holds the page's `items` (oldest → newest) so realtime writers can
- * append to a plain array. `nextCursor` is not surfaced yet: the UI has no
- * "load older" control (tracked in docs/api-spec.md).
+ * Legacy single-page helper retained for compatibility. Its cache holds
+ * items oldest → newest; the production UI uses useMessageHistory to retain
+ * cursor metadata and load older pages without corrupting their boundaries.
  */
 const getMessages = async (
   conversationId: string,

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   chatKeys,
-  useMessages,
+  type useMessages,
   useMessageHistory,
 } from '@/lib/data-layer/chats';
 import { useUserPublicKey } from '@/lib/data-layer/user';
@@ -65,9 +65,11 @@ async function decryptOne(
   message: EncryptedMessage,
   receiverKeyRaw: Uint8Array,
   sessionPrivateKey: ReturnType<typeof getSessionPrivateKey>,
-  myId: string,
-  receiverId: string,
-  conversationId: string,
+  {
+    myId,
+    receiverId,
+    conversationId,
+  }: { myId: string; receiverId: string; conversationId: string },
 ): Promise<DecryptedMessage> {
   try {
     if (![myId, receiverId].includes(message.senderId))
@@ -146,14 +148,11 @@ function useDecryptedMessages({
 
         const out = await Promise.all(
           (messages ?? []).map((message) =>
-            decryptOne(
-              message,
-              receiverKeyRaw,
-              sessionPrivateKey,
+            decryptOne(message, receiverKeyRaw, sessionPrivateKey, {
               myId,
               receiverId,
               conversationId,
-            ),
+            }),
           ),
         );
 
@@ -272,6 +271,34 @@ function ChatNotices({
   );
 }
 
+function useMounted() {
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  return mounted;
+}
+
+function useUnsentWarning(
+  input: string,
+  pendingCount: number,
+  onUnsentChange?: (value: boolean) => void,
+) {
+  useEffect(() => {
+    const unsent = Boolean(input.trim()) || pendingCount > 0;
+    onUnsentChange?.(unsent);
+    if (!unsent) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [input, pendingCount, onUnsentChange]);
+}
+
 export function ChatPage({
   conversationId,
   receiverId,
@@ -294,13 +321,7 @@ export function ChatPage({
   const { data: receiverKey, isLoading } = useUserPublicKey(receiverId);
   const [input, setInput] = useState('');
   const encrypting = useRef(false);
-  const mounted = useRef(true);
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
+  const mounted = useMounted();
   const { decrypted, keyError } = useDecryptedMessages({
     messages,
     receiverPublicKey: receiverKey?.publicKey,
@@ -312,16 +333,7 @@ export function ChatPage({
   const { visiblePending, composerError, setComposerError, enqueue, retry } =
     useOutbox(decrypted);
 
-  useEffect(() => {
-    const unsent = Boolean(input.trim()) || visiblePending.length > 0;
-    onUnsentChange?.(unsent);
-    if (!unsent) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [input, visiblePending.length, onUnsentChange]);
+  useUnsentWarning(input, visiblePending.length, onUnsentChange);
 
   async function handleSend() {
     const text = input.trim();

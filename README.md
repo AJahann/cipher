@@ -37,7 +37,7 @@ The unlocked private key is kept in browser memory for the active session. Use H
 | Client state | TanStack Query |
 | API | Fastify 5, Socket.IO |
 | Database | PostgreSQL, Drizzle ORM |
-| Authentication | Server-side sessions, bcrypt |
+| Authentication | Server-side sessions, Argon2id (legacy bcrypt migration) |
 | Cryptography | libsodium, Argon2id, X25519-XSalsa20-Poly1305 |
 | Testing | Vitest, Testing Library, MSW, Playwright |
 | Workspace | pnpm workspaces |
@@ -61,7 +61,7 @@ Cipher/
 ## Requirements
 
 - Node.js 20 or newer
-- pnpm 9 or newer
+- pnpm 12.6.0 or newer
 - PostgreSQL 16 recommended
 
 ## Getting started
@@ -159,6 +159,17 @@ Unknown identities are refused: sign in with your passphrase and link GitHub
 from the conversation sidebar first. OAuth does not unlock encryption keys.
 See [Day 17 setup, security boundaries, and verification](docs/day-17-github-oauth.md)
 for the API-only OAuth App configuration and required migration.
+
+## Architecture and implementation roadmap
+
+- [Phased security/reliability roadmap](docs/ROADMAP.md)
+- [Security architecture and residual limitations](docs/SECURITY-ARCHITECTURE.md)
+- [Architectural decision: lifecycle boundaries and compatibility](docs/decisions/0001-security-boundaries.md)
+- [Historical code review](docs/security-review-2026-10-21.md)
+
+The directory and message history support cursor-based load-more controls. Drafts and pending messages are in-memory; switching conversations asks before discarding them. Sign out clears local keys/caches and revokes that session's connected sockets.
+
+**Compatibility:** old ciphertext and versionless wrapped keys remain readable. New messages bind sender, recipient, conversation and command context. This is not a forward-secret or zero-knowledge protocol: the API receives the wrapping password during normal authentication, and peer keys are server-supplied. Legacy bcrypt credentials reaching 72 UTF-8 bytes cannot be automatically migrated safely; see the security architecture before changing such accounts.
 
 ## Security notes
 

@@ -383,7 +383,7 @@ function lifecycleTests() {
     ).toBe(401);
   });
 
-  it('keeps password verification on bcrypt cost 12 and stores only the wrapped key bundle', async () => {
+  it('uses Argon2id password verification and stores only the wrapped key bundle', async () => {
     const user = await register();
     const {
       rows: [row],

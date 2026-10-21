@@ -156,9 +156,10 @@ function useMessageCacheWriters() {
       queries.forEach(([key, data]) => {
         if (!data) return;
         const params = key[2] as MessagesQueryParams | undefined;
-        if (params?.conversationId !== message.conversationId) return;
+        if (params?.conversationId !== message.conversationId || params.cursor)
+          return;
         if (data.some((m) => m.id === message.id)) return;
-        qc.setQueryData(key, [...data, message]);
+        qc.setQueryData(key, [...data, message].slice(-(params.limit ?? 50)));
       });
     },
     [qc],

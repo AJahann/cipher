@@ -1,3 +1,4 @@
+/* oxlint-disable max-nested-callbacks, vitest/no-conditional-in-test -- MSW handlers intentionally select fixture pages by cursor. */
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
@@ -5,6 +6,7 @@ import { server } from '../../test/msw/server';
 import { makeClient, makeWrapper } from '../../test/helpers';
 import { useMessageHistory } from './chats/use-chat';
 import { useDirectory } from './user/use-user';
+
 describe('cursor pagination exposed to the UI', () => {
   it('loads older messages, renders chronological order and deduplicates page boundaries', async () => {
     const message = (id: string) => ({

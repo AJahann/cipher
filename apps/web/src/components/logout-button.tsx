@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useLogout } from '@/lib/data-layer/user';
+
 export function LogoutButton() {
   const logout = useLogout();
   const [error, setError] = useState<string | null>(null);
@@ -9,7 +10,7 @@ export function LogoutButton() {
     try {
       await logout.mutateAsync();
       window.location.replace('/');
-    } catch {
+    } catch (_error) {
       setError(
         'Sign out failed. Your server session may still be active; try again.',
       );
