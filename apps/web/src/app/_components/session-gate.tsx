@@ -12,7 +12,11 @@ import { LoadingScreen, UnlockForm } from '@chat-app/ui-web';
 import { apiFetch } from '../../lib/data-layer/client';
 import { KeyStorage } from '../../lib/keyStorage';
 
-type WrappedPrivateKey = { ciphertext: string; salt: string; nonce: string };
+interface WrappedPrivateKey {
+  ciphertext: string;
+  salt: string;
+  nonce: string;
+}
 
 type State = 'checking' | 'need-unlock' | 'ready' | 'error';
 

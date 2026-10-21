@@ -18,24 +18,27 @@ const mocks = vi.hoisted(() => ({
   clearStorage: vi.fn(),
   replace: vi.fn(),
 }));
-vi.mock('../../lib/data-layer/client', () => ({ apiFetch: mocks.apiFetch }));
-vi.mock('../../lib/keyStorage', () => ({
+vi.mock(import('../../lib/data-layer/client'), () => ({
+  apiFetch: mocks.apiFetch,
+}));
+vi.mock(import('../../lib/keyStorage'), () => ({
   KeyStorage: {
     loadPublicKey: mocks.loadPublicKey,
     savePublicKey: mocks.savePublicKey,
     clear: mocks.clearStorage,
+    loadPublicKeyRaw: vi.fn().mockResolvedValue(null),
   },
 }));
-vi.mock('@chat-app/shared/crypto', () => ({
-  STORAGE_KEY: 'test-wrapped-key',
+vi.mock(import('@chat-app/shared/crypto'), () => ({
+  STORAGE_KEY: 'e2ee:wrappedPrivateKey' as const,
   clearSessionKeys: mocks.clearSessionKeys,
   hasSessionPrivateKey: mocks.hasSessionPrivateKey,
   restoreSessionKeys: mocks.restoreSessionKeys,
 }));
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: mocks.replace }),
+vi.mock(import('next/navigation'), () => ({
+  useRouter: vi.fn().mockReturnValue({ replace: mocks.replace }),
 }));
-vi.mock('@chat-app/ui-web', () => ({
+vi.mock(import('@chat-app/ui-web'), () => ({
   LoadingScreen: () => <p>Checking keys</p>,
   UnlockForm: ({
     onUnlock,
@@ -73,7 +76,7 @@ describe('SessionGate after GitHub login', () => {
     ).resolves.toBeInTheDocument();
     expect(screen.queryByText('Private chat')).not.toBeInTheDocument();
     expect(mocks.apiFetch).toHaveBeenCalledWith('/auth/key-bundle');
-    expect(localStorage.getItem('test-wrapped-key')).toBe(
+    expect(localStorage.getItem('e2ee:wrappedPrivateKey')).toBe(
       JSON.stringify(bundle.wrappedPrivateKey),
     );
     expect(mocks.restoreSessionKeys).not.toHaveBeenCalled();
@@ -121,7 +124,7 @@ describe('SessionGate after GitHub login', () => {
         <p>Private chat</p>
       </SessionGate>,
     );
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    await expect(screen.findByRole('alert')).resolves.toHaveTextContent(
       'Not authenticated',
     );
     expect(screen.queryByText('Private chat')).not.toBeInTheDocument();

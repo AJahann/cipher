@@ -167,11 +167,8 @@ function GitHubSignIn({ url }: { url?: string }) {
   );
 }
 
-export function AuthForm({
-  onLogin,
-  onRegister,
-  githubSignInUrl,
-}: AuthFormProps) {
+export function AuthForm(props: AuthFormProps) {
+  const { onLogin, onRegister, githubSignInUrl } = props;
   const [mode, setMode] = React.useState<AuthMode>('login');
   const [state, setState] = React.useState<FormState>(INITIAL);
   const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
