@@ -18,6 +18,8 @@ export const STATUS_BY_CODE: Record<ErrorCode, number> = {
   IDEMPOTENCY_CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
+  RATE_LIMITED: 429,
+  LEGACY_PASSWORD_AMBIGUOUS: 409,
   INTERNAL: 500,
 };
 
@@ -37,6 +39,9 @@ const DEFAULT_MESSAGE: Record<ErrorCode, string> = {
     'clientMessageId was already used for a different message',
   PAYLOAD_TOO_LARGE: 'Payload too large',
   UNSUPPORTED_MEDIA_TYPE: 'Unsupported media type',
+  RATE_LIMITED: 'Too many requests; please try again shortly',
+  LEGACY_PASSWORD_AMBIGUOUS:
+    'This legacy passphrase reaches the bcrypt 72-byte limit. Automatic migration is unsafe; use an existing unlocked session to preserve history and contact the administrator for a reviewed migration. Do not truncate your passphrase.',
   INTERNAL: 'Internal server error',
 };
 

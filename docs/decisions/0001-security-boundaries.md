@@ -10,7 +10,7 @@ Cipher is an educational one-to-one encrypted messenger. Review found lifecycle 
 
 - Keep Fastify, Socket.IO, Drizzle, Next.js and TanStack Query.
 - Treat session revocation as authority revocation across transports; a socket connection is not permanent authorization. Revalidate sensitive events and bound idle validity.
-- Use Argon2id for new account hashes. Upgrade safe legacy bcrypt credentials after login. Refuse automatic migration of >72-byte legacy credentials: bcrypt cannot tell which suffix was originally chosen. Do not silently reset a passphrase or claim an admin can recover encrypted history.
+- Use Argon2id for new account hashes. Upgrade safe legacy bcrypt credentials after login. Refuse automatic migration of >=72-byte legacy credentials: bcrypt cannot tell which suffix was originally chosen. Do not silently reset a passphrase or claim an admin can recover encrypted history.
 - Isolate plaintext/composer/outbox state by identity and conversation. Pending messages are in memory and can be lost on navigation/reload; communicate this rather than leaking them into another conversation. Durable encrypted outboxes are separate work.
 - Persistence ACK means stored, not peer-delivered. Retries may notify again; clients deduplicate by persisted message ID. HTTP catch-up is the durable recovery path.
 - Bind new encrypted plaintext to sender, recipient, conversation and command IDs. Continue reading legacy payloads explicitly; do not claim this gives old messages new guarantees.
