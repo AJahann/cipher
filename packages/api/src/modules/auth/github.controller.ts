@@ -14,9 +14,10 @@ import {
 
 export const githubController = (app: FastifyInstance) => {
   // Auth redirects and errors must not be cached or leak callback queries via Referer.
-  app.addHook('onRequest', async (_req, reply) => {
+  app.addHook('onRequest', (_req, reply, done) => {
     reply.header('Cache-Control', 'no-store');
     reply.header('Referrer-Policy', 'no-referrer');
+    done();
   });
 
   app.get('/', async (req, reply) => {

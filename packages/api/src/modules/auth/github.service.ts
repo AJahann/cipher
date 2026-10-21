@@ -75,7 +75,7 @@ export const githubFlowStore = {
     if (
       !flow ||
       flow.expiresAt.getTime() <= Date.now() ||
-      !/^[A-Za-z0-9_-]{43}$/.test(state) ||
+      !/^[\w-]{43}$/.test(state) ||
       state.length !== flow.state.length ||
       !timingSafeEqual(Buffer.from(state), Buffer.from(flow.state))
     ) {

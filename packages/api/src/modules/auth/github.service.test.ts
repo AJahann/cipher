@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { env } from '../../config/env';
+import { createGitHubFlow, loadGitHubUserId } from './github.service';
 
 const testEnv = vi.hoisted(() => ({
   NODE_ENV: 'test',
@@ -7,10 +9,8 @@ const testEnv = vi.hoisted(() => ({
   GITHUB_CLIENT_SECRET: 'test-secret-not-real' as string | undefined,
   GITHUB_REDIRECT_URI: 'http://localhost:3001/auth/github/callback',
 }));
-vi.mock('../../config/env', () => ({ env: testEnv }));
-vi.mock('../../db', () => ({ db: {} }));
-import { env } from '../../config/env';
-import { createGitHubFlow, loadGitHubUserId } from './github.service';
+vi.mock(import('../../config/env'), () => ({ env: testEnv as typeof env }));
+vi.mock(import('../../db'), () => ({ db: {} as typeof import('../../db').db }));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -21,8 +21,8 @@ describe('GitHub OAuth protocol', () => {
   it('uses independent random state/verifier and S256, never implicit or a token in the URL', () => {
     const flow = createGitHubFlow();
     const params = new URL(flow.url).searchParams;
-    expect(flow.state).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(flow.verifier).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(flow.state).toMatch(/^[\w-]{43}$/);
+    expect(flow.verifier).toMatch(/^[\w-]{43}$/);
     expect(flow.state).not.toBe(flow.verifier);
     expect(createGitHubFlow().state).not.toBe(flow.state);
     expect(params.get('client_id')).toBe('test-client');
@@ -53,9 +53,9 @@ describe('GitHub OAuth protocol', () => {
         }),
       );
     vi.stubGlobal('fetch', fetchMock);
-    expect(
-      await loadGitHubUserId('one-time-code', 'server-only-verifier'),
-    ).toBe('123456');
+    await expect(
+      loadGitHubUserId('one-time-code', 'server-only-verifier'),
+    ).resolves.toBe('123456');
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://github.com/login/oauth/access_token');
     expect(init.method).toBe('POST');
