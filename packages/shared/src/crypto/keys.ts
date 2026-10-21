@@ -1,5 +1,6 @@
 // oxlint-disable typescript/no-extraneous-class
 import _sodium from 'libsodium-wrappers-sumo';
+import { wrappedPrivateKeySchema } from '../contracts/user';
 
 async function getSodium() {
   // oxlint-disable-next-line import/no-named-as-default-member
@@ -23,6 +24,10 @@ export interface WrappedPrivateKey {
   ciphertext: string;
   salt: string;
   nonce: string;
+  version?: 1;
+  kdf?: 'argon2id13';
+  opslimit?: 2;
+  memlimit?: 67108864;
 }
 
 async function deriveWrappingKey(
@@ -35,8 +40,8 @@ async function deriveWrappingKey(
     sodium.crypto_secretbox_KEYBYTES,
     password,
     salt,
-    sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
-    sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
+    2,
+    67_108_864,
     sodium.crypto_pwhash_ALG_ARGON2ID13,
   );
 }
@@ -51,17 +56,24 @@ export async function wrapPrivateKey(
   const nonce = sodium.randombytes_buf(sodium.crypto_secretbox_NONCEBYTES);
   const wrappingKey = await deriveWrappingKey(password, salt);
 
-  const ciphertext = sodium.crypto_secretbox_easy(
-    privateKey,
-    nonce,
-    wrappingKey,
-  );
-
-  return {
-    ciphertext: sodium.to_base64(ciphertext),
-    salt: sodium.to_base64(salt),
-    nonce: sodium.to_base64(nonce),
-  };
+  try {
+    const ciphertext = sodium.crypto_secretbox_easy(
+      privateKey,
+      nonce,
+      wrappingKey,
+    );
+    return {
+      version: 1,
+      kdf: 'argon2id13',
+      opslimit: 2,
+      memlimit: 67_108_864,
+      ciphertext: sodium.to_base64(ciphertext),
+      salt: sodium.to_base64(salt),
+      nonce: sodium.to_base64(nonce),
+    };
+  } finally {
+    sodium.memzero(wrappingKey);
+  }
 }
 
 export async function unwrapPrivateKey(
@@ -70,11 +82,16 @@ export async function unwrapPrivateKey(
 ): Promise<Uint8Array> {
   const sodium = await getSodium();
 
+  wrappedPrivateKeySchema.parse(wrapped);
   const salt = sodium.from_base64(wrapped.salt);
   const nonce = sodium.from_base64(wrapped.nonce);
   const ciphertext = sodium.from_base64(wrapped.ciphertext);
 
   const wrappingKey = await deriveWrappingKey(password, salt);
 
-  return sodium.crypto_secretbox_open_easy(ciphertext, nonce, wrappingKey);
+  try {
+    return sodium.crypto_secretbox_open_easy(ciphertext, nonce, wrappingKey);
+  } finally {
+    sodium.memzero(wrappingKey);
+  }
 }
