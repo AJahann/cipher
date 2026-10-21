@@ -34,7 +34,7 @@ A ratcheting/forward-secret protocol, zero-knowledge authentication, audited key
 - Phase 3: client identity and conversation isolation — PR #27.
 - Phase 4: delivery recovery and paginated history — PR #28.
 - Phase 5: crypto compatibility/lifecycle and security architecture — PR #29.
-- Phase 6: secret-free CI, regression tests, style/type verification and final acceptance — verification branch.
+- Phase 6: secret-free CI, regression tests, style/type verification and final acceptance — PR #30.
 
 Local integrated acceptance so far: 175 tests passed against PostgreSQL; all workspace types and Biome formatting passed; zero production dependency advisories. Native lint policy passes with zero warnings; the sandbox's JS-plugin bridge crashes, so the complete lint policy is checked independently in GitHub CI. The final build/browser and hosted checks are recorded in `VALIDATION.md` before the integration branch is merged to main.
 

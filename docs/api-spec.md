@@ -132,14 +132,13 @@ Create an account with its E2EE key material and start a session.
 
 - **Auth:** none.
 - **Request** (`loginUserSchema`): `{ username: string, password: string }`,
-  both non-empty.
+  both non-empty; username is at most 32 characters and password at most 128 characters.
 - **Response 200:**
   `{ id, username, createdAt, publicKey, wrappedPrivateKey: { ciphertext, salt, nonce } }`.
   Sets `sessionId`. The private key stays wrapped; the client unwraps it with
   the password.
 - **Errors:** `400 VALIDATION_FAILED`; `401 INVALID_CREDENTIALS` for an
-  unknown user *or* a wrong password (same response, and a dummy bcrypt
-  compare keeps timing similar).
+  unknown user *or* a wrong password (same response; unknown users verify a real Argon2id sentinel). `409 LEGACY_PASSWORD_AMBIGUOUS` refuses unsafe legacy migration, and `429 RATE_LIMITED` bounds authentication work.
 - **Idempotent:** yes in effect — repeating it re-authenticates the same
   session.
 
@@ -439,7 +438,7 @@ foreign keys are `ON DELETE CASCADE`.
 | --------------- | --------- | ------------------------ |
 | `id`            | uuid      | **PK**                   |
 | `username`      | text      | NOT NULL, **UNIQUE**     |
-| `password_hash` | text      | NOT NULL (bcrypt, 12)    |
+| `password_hash` | text      | NOT NULL (Argon2id; legacy bcrypt until safe migration)    |
 | `created_at`    | timestamp | NOT NULL DEFAULT now()   |
 
 ### `user_keys`
@@ -557,11 +556,8 @@ its sessions. Expired rows continue to use `connect-pg-simple` pruning.
 | Usernames are case-sensitive (`Alice` ≠ `alice`).                                                       | Impersonation-looking duplicates.                                                   | `citext` or a `lower(username)` unique index, after checking existing data.      |
 | Group conversations: `direct_key` is NULL, so nothing prevents duplicate groups; the API only creates DMs. | None today.                                                                         | Decide group semantics before exposing them.                                     |
 | `GET /chat/conversations` is unpaginated, unordered, and exposes `directKey` and member row ids.        | Grows with the user; leaks internals.                                               | Page by last activity; slim DTO in `contracts`.                                  |
-| Web renders only the first page of `/users` (100) and of history (50); no "load older".                 | Users beyond #100 never appear in the sidebar; older messages are unreachable.      | `useInfiniteQuery` on `nextCursor`. **Due by end of Week 3.**                    |
 | `User`, `Conversation`, `ConversationMember` in `shared/src/types` are still hand-written interfaces.   | They can drift from what the API returns, unchecked.                                | Replace with `z.infer` of contract schemas (next after the message contract).    |
 | `message:read` stores receipts but nothing emits them.                                                  | Read receipts are write-only.                                                       | Emit `message:read` to `conv:<id>`; add `GET` for receipts.                      |
-| No rate limiting on `/auth/*` or `message:send`.                                                        | Brute force / spam.                                                                 | `@fastify/rate-limit` + per-socket token bucket.                                 |
-| Presence is per socket: closing one of two tabs broadcasts `online: false`.                              | Wrong presence.                                                                     | Count sockets in `user:<id>` before emitting offline.                            |
 
 
 ## Security/reliability remediation

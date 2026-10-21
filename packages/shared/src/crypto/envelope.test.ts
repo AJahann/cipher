@@ -124,7 +124,7 @@ describe('versioned and bounded key bundles', () => {
       { ...bundle, kdf: undefined },
     ]) {
       await expect(unwrapPrivateKey(bad as any, 'password')).rejects.toThrow(
-        /Invalid|Incomplete/i,
+        /incomplete|invalid/i,
       );
     }
   });
