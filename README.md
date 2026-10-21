@@ -149,6 +149,14 @@ pnpm test:e2e --project=chromium
 
 End-to-end tests require a configured test database and a valid root `.env` file. CI creates an isolated PostgreSQL service and applies migrations automatically.
 
+## GitHub sign-in
+
+GitHub authorization code + PKCE sign-in uses the existing Cipher session.
+Unknown identities are refused: sign in with your passphrase and link GitHub
+from the conversation sidebar first. OAuth does not unlock encryption keys.
+See [Day 17 setup, security boundaries, and verification](docs/day-17-github-oauth.md)
+for the API-only OAuth App configuration and required migration.
+
 ## Security notes
 
 - The server stores password hashes, public keys, encrypted private-key bundles, and encrypted messages.

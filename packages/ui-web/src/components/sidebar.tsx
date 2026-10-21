@@ -7,6 +7,7 @@ export interface SidebarUser {
 }
 
 export interface SidebarProps {
+  footer?: React.ReactNode;
   users: SidebarUser[];
   activeUserId?: string | null;
   pendingUserId?: string | null;
@@ -15,6 +16,7 @@ export interface SidebarProps {
 }
 
 export function Sidebar({
+  footer,
   users,
   activeUserId,
   pendingUserId,
@@ -66,6 +68,7 @@ export function Sidebar({
           </ul>
         )}
       </div>
+      {footer}
     </aside>
   );
 }

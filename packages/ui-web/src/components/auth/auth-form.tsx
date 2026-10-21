@@ -8,6 +8,7 @@ import { Button } from '../primitives/button';
 export type AuthMode = 'login' | 'register';
 
 export interface AuthFormProps {
+  githubSignInUrl?: string;
   onLogin: (username: string, password: string) => Promise<void>;
   onRegister: (username: string, password: string) => Promise<void>;
 }
@@ -148,7 +149,11 @@ function FormFeedback({
   );
 }
 
-export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
+export function AuthForm({
+  onLogin,
+  onRegister,
+  githubSignInUrl,
+}: AuthFormProps) {
   const [mode, setMode] = React.useState<AuthMode>('login');
   const [state, setState] = React.useState<FormState>(INITIAL);
   const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
@@ -291,6 +296,20 @@ export function AuthForm({ onLogin, onRegister }: AuthFormProps) {
             {isRegister ? 'generate keys + register' : 'authenticate'}
           </Button>
         </form>
+        {githubSignInUrl && (
+          <div className='mt-5 text-center text-sm text-(--cipher-muted)'>
+            <a
+              href={githubSignInUrl}
+              className='block rounded-lg border border-(--cipher-border) p-3 text-(--cipher-text) focus-visible:ring-2 focus-visible:ring-(--cipher-accent)'
+            >
+              Sign in with GitHub
+            </a>
+            <p className='mt-2'>
+              Link GitHub from your Cipher account first. Your passphrase is
+              still needed to unlock messages.
+            </p>
+          </div>
+        )}
       </div>
     </main>
   );

@@ -80,6 +80,21 @@ export const userService = {
     };
   },
 
+  async getKeyBundle(userId: string) {
+    const key = await db.query.userKeys.findFirst({
+      where: eq(userKeys.userId, userId),
+    });
+    if (!key)
+      throw new AppError(
+        'USER_NOT_FOUND',
+        'Encryption keys are not available for this account',
+      );
+    return {
+      publicKey: key.publicKey,
+      wrappedPrivateKey: JSON.parse(key.wrappedPrivateKey),
+    };
+  },
+
   findById(id: string) {
     return db.query.users.findFirst({
       where: eq(users.id, id),
