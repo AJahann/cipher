@@ -6,10 +6,13 @@ vi.mock(import('../../config/env'), () => ({
 }));
 afterEach(() => vi.unstubAllGlobals());
 
+function freshResponse() {
+  // Response bodies are consumable, so every request needs a fresh instance.
+  return Promise.resolve(Response.json({ ok: true }));
+}
+
 function stubFetch() {
-  const fetchMock = vi
-    .fn()
-    .mockImplementation(() => Promise.resolve(Response.json({ ok: true })));
+  const fetchMock = vi.fn(freshResponse);
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 }
