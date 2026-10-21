@@ -105,6 +105,7 @@ function registerGitHubHooks() {
     vi.stubEnv('SESSION_SECRET', 'day17-test-secret-at-least-32-characters');
     vi.stubEnv('CLIENT_ORIGIN', 'http://localhost:3000');
     vi.stubEnv('BACKEND_PORT', '3001');
+    vi.stubEnv('GITHUB_AUTH_ENABLED', 'true');
     vi.stubEnv('GITHUB_CLIENT_ID', 'test-client');
     vi.stubEnv('GITHUB_CLIENT_SECRET', 'test-secret-not-real');
     vi.stubEnv(
@@ -449,6 +450,48 @@ function linkStatusTests() {
   });
 }
 
+function featureAvailabilityTests() {
+  it('advertises enabled OAuth without exposing credentials', async () => {
+    const response = await app.inject({ method: 'GET', url: '/auth/config' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ githubEnabled: true });
+    expect(response.headers['cache-control']).toBe('no-store');
+  });
+
+  it('hides disabled OAuth and rejects every direct entry point before provider or session work', async () => {
+    const settings = await import('../../config/auth');
+    const disabled = vi
+      .spyOn(settings, 'isGitHubAuthEnabled')
+      .mockReturnValue(false);
+    try {
+      const config = await app.inject({ method: 'GET', url: '/auth/config' });
+      expect(config.json()).toEqual({ githubEnabled: false });
+      const responses = await Promise.all([
+        app.inject({ method: 'GET', url: '/auth/github' }),
+        app.inject({ method: 'POST', url: '/auth/github/link' }),
+        app.inject({ method: 'GET', url: '/auth/github/status' }),
+        app.inject({
+          method: 'GET',
+          url: '/auth/github/callback?code=unused&state=unused',
+        }),
+      ]);
+      expect(responses.map((response) => response.statusCode)).toEqual([
+        404, 404, 404, 404,
+      ]);
+      expect(responses.map((response) => response.json())).toEqual(
+        Array.from({ length: 4 }, () => ({
+          code: 'ROUTE_NOT_FOUND',
+          message: 'Route not found',
+        })),
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+      expect(responses.flatMap((response) => response.cookies)).toEqual([]);
+    } finally {
+      disabled.mockRestore();
+    }
+  });
+}
+
 describe.skipIf(!databaseUrl)(
   'GitHub OAuth (real PostgreSQL + session plugin; mocked provider)',
   () => {
@@ -457,5 +500,6 @@ describe.skipIf(!databaseUrl)(
     linkingTests();
     identityLifecycleTests();
     linkStatusTests();
+    featureAvailabilityTests();
   },
 );

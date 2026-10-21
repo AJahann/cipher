@@ -151,6 +151,9 @@ End-to-end tests require a configured test database and a valid root `.env` file
 
 ## GitHub sign-in
 
+GitHub sign-in is off by default. Set `GITHUB_AUTH_ENABLED=true` plus the three
+OAuth settings on the API and restart it to enable; no frontend flag is needed.
+When off, GitHub controls/copy are hidden and OAuth routes return 404.
 GitHub authorization code + PKCE sign-in uses the existing Cipher session.
 Unknown identities are refused: sign in with your passphrase and link GitHub
 from the conversation sidebar first. OAuth does not unlock encryption keys.

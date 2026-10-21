@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { isGitHubAuthEnabled } from '../../config/auth';
 import {
   loginUserSchema,
   registerUserSchema,
@@ -9,6 +10,11 @@ import { AppError } from '../../http/errors';
 import { destroySession } from '../../db/session';
 
 export const authController = (app: FastifyInstance) => {
+  app.get('/config', (_req, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    return reply.send({ githubEnabled: isGitHubAuthEnabled() });
+  });
+
   app.post('/register', async (req, reply) => {
     const body = registerUserSchema.parse(req.body);
     const user = await userService.register(body);

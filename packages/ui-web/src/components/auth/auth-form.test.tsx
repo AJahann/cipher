@@ -22,6 +22,14 @@ function deferred() {
 }
 
 describe(AuthForm, () => {
+  it('does not mention GitHub without an enabled sign-in URL', () => {
+    render(<AuthForm onLogin={resolved} onRegister={resolved} />);
+    expect(screen.queryByText(/GitHub/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/passphrase is still needed/),
+    ).not.toBeInTheDocument();
+  });
+
   it('offers GitHub as a full navigation without passing any password or key', () => {
     render(
       <AuthForm

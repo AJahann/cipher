@@ -18,8 +18,9 @@ export const env = createEnv({
     DATABASE_URL: z.string(),
     BACKEND_PORT: z.string(),
     SESSION_SECRET: z.string().min(32),
-    // Optional as a group: password-only deployments still work. OAuth routes
-    // fail closed unless all three values are configured on the API server.
+    GITHUB_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
+    // Password-only deployments work without OAuth settings. Opt-in plus all
+    // three values are required before the UI and routes become available.
     GITHUB_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
     GITHUB_REDIRECT_URI: z.url().optional(),

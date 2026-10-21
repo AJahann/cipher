@@ -5,6 +5,7 @@ import { AppShell, EmptyState, Sidebar } from '@chat-app/ui-web';
 import { GitHubLinkButton } from './github-link-button';
 import { ChatPage } from './chat-page';
 import {
+  useAuthConfig,
   useGitHubLinkStatus,
   useMe,
   useUsersList,
@@ -19,7 +20,9 @@ import {
 
 export default function ChatLayout() {
   const { data: me } = useMe();
-  const { data: githubLinkStatus } = useGitHubLinkStatus(me?.id);
+  const { data: authConfig } = useAuthConfig();
+  const githubEnabled = authConfig?.githubEnabled === true;
+  const { data: githubLinkStatus } = useGitHubLinkStatus(me?.id, githubEnabled);
   const { data: users = [] } = useUsersList(100);
 
   const createConversation = useCreateConversation();
@@ -70,7 +73,11 @@ export default function ChatLayout() {
           pendingUserId={pendingUserId}
           errorMessage={selectionError}
           onSelect={handleSelectUser}
-          footer={<GitHubLinkButton linked={githubLinkStatus?.linked} />}
+          footer={
+            githubEnabled ? (
+              <GitHubLinkButton linked={githubLinkStatus?.linked} />
+            ) : undefined
+          }
         />
       }
     >

@@ -56,6 +56,7 @@ silently replaced. Unlinking/account recovery is not implemented in this change.
 2. Set these only in the **API deployment secret/config store**:
 
    ```text
+   GITHUB_AUTH_ENABLED=true
    GITHUB_CLIENT_ID=<OAuth app client id>
    GITHUB_CLIENT_SECRET=<OAuth app client secret>
    GITHUB_REDIRECT_URI=https://api.example.com/auth/github/callback
@@ -63,8 +64,17 @@ silently replaced. Unlinking/account recovery is not implemented in this change.
 
    Local callback: `http://localhost:3001/auth/github/callback`. Production
    callbacks must use HTTPS. Never prefix these variables with `NEXT_PUBLIC_`.
-   Leaving all three unset keeps password login available; GitHub endpoints
-   fail closed with a configuration error. The frontend buttons remain visible.
+   `GITHUB_AUTH_ENABLED` defaults to `false`. Credentials alone never enable it.
+   When disabled (or incompletely configured), sign-in/link buttons and explanatory
+   GitHub copy are hidden; all `/auth/github` routes return 404, including callbacks
+   and link-status requests. Password login and existing Cipher sessions still work.
+   `GET /auth/config` returns only `{ "githubEnabled": boolean }` with `no-store`;
+   the web app uses it as the single source of feature availability. Loading/failure
+   keeps GitHub UI hidden. No separate web flag or rebuild is required.
+   Set the flag to `true` with all three OAuth settings and restart the API to enable.
+   Set it back to `false` and restart to disable; reload open browser tabs to update
+   their UI. In-flight OAuth callbacks are rejected while disabled. Existing identity
+   links are retained, and enabling restores the normal linking/sign-in flow.
 3. Keep `CLIENT_ORIGIN` equal to the browser app origin, without a trailing
    slash, and `NEXT_PUBLIC_API_URL` pointing at the API. Use HTTPS and a same-site
    web/API deployment so the existing HttpOnly, Secure, SameSite=Lax session

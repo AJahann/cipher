@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { env } from '../../config/env';
+import { isGitHubAuthEnabled } from '../../config/auth';
 import { destroySession } from '../../db/session';
 import { AppError } from '../../http/errors';
 import { userService } from '../user/user.service';
@@ -17,6 +18,10 @@ export const githubController = (app: FastifyInstance) => {
   app.addHook('onRequest', (_req, reply, done) => {
     reply.header('Cache-Control', 'no-store');
     reply.header('Referrer-Policy', 'no-referrer');
+    if (!isGitHubAuthEnabled()) {
+      done(new AppError('ROUTE_NOT_FOUND'));
+      return;
+    }
     done();
   });
 

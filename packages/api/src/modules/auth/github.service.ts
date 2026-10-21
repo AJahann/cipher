@@ -7,6 +7,7 @@ import { githubIdentities, githubOAuthAttempts } from '../../db/schema';
 import { AppError, isUniqueViolation } from '../../http/errors';
 
 function config() {
+  if (env.GITHUB_AUTH_ENABLED !== 'true') throw new AppError('ROUTE_NOT_FOUND');
   const {
     GITHUB_CLIENT_ID: clientId,
     GITHUB_CLIENT_SECRET: clientSecret,

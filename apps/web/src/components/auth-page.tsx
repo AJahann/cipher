@@ -6,7 +6,7 @@ import {
   restoreSessionKeys,
   STORAGE_KEY,
 } from '@chat-app/shared/crypto';
-import { useLogin, useRegister } from '@/lib/data-layer/user';
+import { useAuthConfig, useLogin, useRegister } from '@/lib/data-layer/user';
 import { useRouter } from 'next/navigation';
 import { KeyStorage } from '@/lib/keyStorage';
 import { AuthForm } from '@chat-app/ui-web';
@@ -14,6 +14,7 @@ import { env } from '@/config/env';
 
 export default function AuthPage() {
   const router = useRouter();
+  const { data: authConfig } = useAuthConfig();
   const loginMutation = useLogin();
   const registerMutation = useRegister();
 
@@ -46,7 +47,11 @@ export default function AuthPage() {
     <AuthForm
       onLogin={handleLogin}
       onRegister={handleRegister}
-      githubSignInUrl={`${env.NEXT_PUBLIC_API_URL}/auth/github`}
+      githubSignInUrl={
+        authConfig?.githubEnabled === true
+          ? `${env.NEXT_PUBLIC_API_URL}/auth/github`
+          : undefined
+      }
     />
   );
 }
