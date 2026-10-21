@@ -1,10 +1,12 @@
 import { createHash } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { env } from '../../config/env';
+import { isGitHubAuthEnabled } from '../../config/auth';
 import { createGitHubFlow, loadGitHubUserId } from './github.service';
 
 const testEnv = vi.hoisted(() => ({
   NODE_ENV: 'test',
+  GITHUB_AUTH_ENABLED: 'true',
   GITHUB_CLIENT_ID: 'test-client',
   GITHUB_CLIENT_SECRET: 'test-secret-not-real' as string | undefined,
   GITHUB_REDIRECT_URI: 'http://localhost:3001/auth/github/callback',
@@ -14,6 +16,9 @@ vi.mock(import('../../config/env'), () => ({ env: testEnv as typeof env }));
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  testEnv.GITHUB_AUTH_ENABLED = 'true';
+  testEnv.GITHUB_CLIENT_SECRET = 'test-secret-not-real';
+  testEnv.NODE_ENV = 'test';
 });
 
 describe('GitHub OAuth protocol', () => {
@@ -149,5 +154,30 @@ describe('GitHub OAuth protocol', () => {
     testEnv.NODE_ENV = 'production';
     expect(createGitHubFlow).toThrow('HTTPS');
     testEnv.NODE_ENV = 'test';
+  });
+});
+
+describe('GitHub feature availability', () => {
+  it.each(['false', undefined])(
+    'is off without explicit opt-in (%s), even with credentials',
+    (flag) => {
+      Object.assign(testEnv, { GITHUB_AUTH_ENABLED: flag });
+      expect(isGitHubAuthEnabled()).toBe(false);
+      expect(createGitHubFlow).toThrow('Route not found');
+    },
+  );
+
+  it('is available with explicit opt-in and complete configuration', () => {
+    expect(isGitHubAuthEnabled()).toBe(true);
+  });
+
+  it('fails closed for incomplete credentials', () => {
+    testEnv.GITHUB_CLIENT_SECRET = undefined;
+    expect(isGitHubAuthEnabled()).toBe(false);
+  });
+
+  it('fails closed for an insecure production callback', () => {
+    testEnv.NODE_ENV = 'production';
+    expect(isGitHubAuthEnabled()).toBe(false);
   });
 });

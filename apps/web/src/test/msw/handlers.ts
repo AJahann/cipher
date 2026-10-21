@@ -26,6 +26,9 @@ export const MESSAGES_PATH = /\/chat\/messages/;
 export const ME_PATH = /\/auth\/me$/;
 
 export const handlers = [
+  http.get(/\/auth\/config$/, () =>
+    HttpResponse.json({ githubEnabled: false }),
+  ),
   http.get(CONV_PATH, () => HttpResponse.json([stubConversation])),
   http.get(MESSAGES_PATH, () =>
     HttpResponse.json({ items: [stubMessage], nextCursor: null }),

@@ -60,11 +60,20 @@ const listUsers = async (
 const getPublicKey = (userId: string) =>
   apiFetch<{ publicKey: string }>(`/users/${userId}/public-key`);
 
-export function useGitHubLinkStatus(userId?: string) {
+export function useAuthConfig() {
+  return useQuery({
+    queryKey: ['auth', 'config'],
+    queryFn: () => apiFetch<{ githubEnabled: boolean }>('/auth/config'),
+    retry: false,
+    staleTime: 0,
+  });
+}
+
+export function useGitHubLinkStatus(userId?: string, enabled = false) {
   return useQuery({
     queryKey: userKeys.githubLinkStatus(userId),
     queryFn: () => apiFetch<{ linked: boolean }>('/auth/github/status'),
-    enabled: Boolean(userId),
+    enabled: enabled && Boolean(userId),
     retry: false,
     staleTime: 0,
   });
