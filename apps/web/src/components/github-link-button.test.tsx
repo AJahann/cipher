@@ -7,7 +7,7 @@ afterEach(cleanup);
 
 describe(GitHubLinkButton, () => {
   it('hides the action for linked accounts', () => {
-    const { container } = render(<GitHubLinkButton linked={true} />);
+    const { container } = render(<GitHubLinkButton linked />);
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -27,7 +27,7 @@ describe(GitHubLinkButton, () => {
 
   it('removes the action when saved link status becomes linked', () => {
     const { container, rerender } = render(<GitHubLinkButton linked={false} />);
-    rerender(<GitHubLinkButton linked={true} />);
+    rerender(<GitHubLinkButton linked />);
     expect(container).toBeEmptyDOMElement();
   });
 });
