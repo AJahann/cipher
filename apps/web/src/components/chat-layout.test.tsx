@@ -1,6 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ send: vi.fn(), confirm: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  send: vi.fn(),
+  confirm: vi.fn(),
+  messages: [] as any[],
+  decrypt: vi.fn(),
+}));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
@@ -21,7 +26,11 @@ vi.mock('@/lib/data-layer/chats', () => ({
     messagesRoot: () => ['chat', 'messages'],
     historyRoot: () => ['chat', 'history'],
   },
-  useMessageHistory: () => ({ data: [], isLoading: false, isError: false }),
+  useMessageHistory: () => ({
+    data: mocks.messages,
+    isLoading: false,
+    isError: false,
+  }),
   useChatSocket: () => ({ connected: true }),
   useChatSocketActions: () => ({ joinConversation: vi.fn() }),
   useChatRealtimeSync: vi.fn(),
@@ -39,6 +48,12 @@ vi.mock('@/lib/data-layer/chats/use-chat-socket', () => ({
 }));
 vi.mock('@chat-app/shared/crypto', () => ({
   getSessionPrivateKey: () => new Uint8Array(32),
+  encryptChatMessage: async () => ({
+    ciphertext: 'encrypted',
+    nonce: 'nonce',
+    algorithm: 'cipher-v1-x25519-xsalsa20-poly1305',
+  }),
+  decryptChatMessage: (...args: any[]) => mocks.decrypt(...args),
   E2EEncryption: {
     encryptMessage: async () => ({
       ciphertext: 'encrypted',
@@ -93,6 +108,8 @@ vi.mock('@chat-app/ui-web', () => ({
 }));
 import ChatLayout from './chat-layout';
 beforeEach(() => {
+  mocks.messages = [];
+  mocks.decrypt.mockResolvedValue('decrypted');
   mocks.send.mockRejectedValue(new Error('MESSAGE_ACK_TIMEOUT'));
   mocks.confirm.mockReturnValue(true);
   vi.stubGlobal('confirm', mocks.confirm);
@@ -138,5 +155,27 @@ describe('conversation isolation', () => {
     fireEvent.click(screen.getByText('Bob'));
     expect(screen.getByRole('heading', { name: 'Alice' })).toBeVisible();
     expect(screen.getByLabelText('draft')).toHaveValue('keep me');
+  });
+  it('keeps an undecryptable message visible as an explicit failure', async () => {
+    mocks.messages = [
+      {
+        id: 'message',
+        clientMessageId: 'command',
+        senderId: 'alice',
+        conversationId: 'conv-alice',
+        ciphertext: 'bad',
+        nonce: 'bad',
+        algorithm: 'unknown',
+        createdAt: '2026-01-01T00:00:00Z',
+      },
+    ];
+    mocks.decrypt.mockRejectedValue(new Error('tampered'));
+    render(<ChatLayout />);
+    fireEvent.click(screen.getByText('Alice'));
+    await waitFor(() =>
+      expect(screen.getByTestId('messages')).toHaveTextContent(
+        'Unable to decrypt or verify this message',
+      ),
+    );
   });
 });
