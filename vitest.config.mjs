@@ -9,7 +9,9 @@ export default defineConfig({
       NEXT_PUBLIC_API_URL:
         process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001',
     },
-    reporters: ['verbose'],
+    reporters: process.env.GITHUB_ACTIONS
+      ? ['verbose', 'github-actions']
+      : ['verbose'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
