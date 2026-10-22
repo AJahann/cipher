@@ -29,3 +29,7 @@ Phase 1 PR #33 run [39763595968](https://github.com/AJahann/cipher/actions/runs/
 Browser installation was 77s versus the baseline 18s. E2E's job took 175s; the slower total is reported rather than hiding it behind the faster compilation step. Benchmark container setup before claiming any improvement. Routing and timestamp instrumentation remain independently useful.
 
 Proposed research ranges are hypotheses, not acceptance claims.
+
+## Documentation-only smoke coverage
+
+A dedicated docs-only PR exercises actual job routing in addition to the Node unit tests. It must show successful Change Scope and CI Gate checks with all six expensive jobs intentionally skipped. Mixed source/documentation changes must still execute the full acceptance matrix.
