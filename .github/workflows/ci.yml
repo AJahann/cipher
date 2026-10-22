@@ -302,6 +302,7 @@ jobs:
     if: needs.scope.outputs.docs_only != 'true'
     name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: read
@@ -343,8 +344,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium and OS dependencies
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Install Chromium headless shell and OS dependencies
+        timeout-minutes: 5
+        run: pnpm exec playwright install --with-deps --only-shell chromium
 
       - name: Apply database migrations
         run: pnpm --filter @chat-app/api exec drizzle-kit migrate
