@@ -37,6 +37,7 @@ async function main() {
     const response = await fetch(
       `${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT}/jobs?per_page=100&page=${page}`,
       {
+        signal: AbortSignal.timeout(30_000),
         headers: {
           authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
           accept: 'application/vnd.github+json',
