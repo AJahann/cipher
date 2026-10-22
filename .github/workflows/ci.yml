@@ -2,8 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main, remediation/security-reliability, fix/day-16-session-auth]
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      next_cache:
+        description: 'Benchmark Next.js cache (off by default: measured overhead exceeded savings)'
+        type: boolean
+        default: false
 
 # Disposable, non-production values: fork PRs need no repository secrets.
 env:
@@ -22,9 +28,26 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  scope:
+    name: Change Scope
+    runs-on: ubuntu-24.04
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify CI routing and gates
+        run: node --test scripts/ci/*.test.mjs
+      - name: Classify changed paths (fail closed)
+        id: scope
+        run: node scripts/ci/scope.mjs
+
   format:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -48,8 +71,10 @@ jobs:
         run: pnpm exec biome ci --reporter=github
 
   lint:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -73,8 +98,10 @@ jobs:
         run: pnpm lint --deny-warnings --format=github
 
   typecheck:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -98,8 +125,10 @@ jobs:
         run: pnpm typecheck
 
   build:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       CI: true
@@ -125,12 +154,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Next.js compiler cache
+        if: github.event_name == 'workflow_dispatch' && inputs.next_cache
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-next-node24-${{ hashFiles('pnpm-lock.yaml', '.github/workflows/ci.yml', 'apps/web/next.config.ts', '**/tsconfig.json') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-next-node24-${{ hashFiles('pnpm-lock.yaml', '.github/workflows/ci.yml', 'apps/web/next.config.ts', '**/tsconfig.json') }}-
+
       - name: Build all packages
         run: pnpm build
 
+      - name: Package web runtime (preserve hidden manifests; exclude compiler cache)
+        shell: bash
+        run: tar -C apps/web --exclude=.next/cache --exclude=.next/dev -cf - .next | gzip -1 > web-build.tgz
+
+      - name: Upload exact-run web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build-${{ github.run_id }}-${{ github.run_attempt }}
+          path: web-build.tgz
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+
   unit:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       CI: true
@@ -193,9 +246,11 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
-  e2e:
-    name: E2E Tests
-    runs-on: ubuntu-latest
+  postgres:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
+    name: PostgreSQL Tests
+    runs-on: ubuntu-24.04
 
     env:
       CI: true
@@ -234,21 +289,89 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium and OS dependencies
-        run: pnpm exec playwright install --with-deps chromium
-
       - name: Apply database migrations
         run: pnpm --filter @chat-app/api exec drizzle-kit migrate
 
       - name: Verify session auth against PostgreSQL
         env:
           SESSION_TEST_DATABASE_URL: ${{ env.DATABASE_URL }}
-        # These fixtures migrate and inspect the same disposable schema.
-        # Keep cross-file DB work serial; assertions and test coverage stay intact.
         run: pnpm test:unit:api --no-file-parallelism
 
-      - name: Build application
-        run: pnpm --filter web build
+  e2e:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
+    name: E2E Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --shm-size=1g
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      actions: read
+
+    env:
+      CI: true
+      PLAYWRIGHT_IMAGE_VERSION: '1.63.0'
+      DATABASE_URL: postgresql://cipher:cipher@postgres:5432/cipher_test
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cipher
+          POSTGRES_PASSWORD: cipher
+          POSTGRES_DB: cipher_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cipher -d cipher_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.6.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.1'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Playwright matches the pinned browser image
+        run: |
+          node -e "const installed = require('@playwright/test/package.json').version; if (installed !== process.env.PLAYWRIGHT_IMAGE_VERSION) throw new Error('Update the Playwright image tag, digest and version together with the lockfile: installed ' + installed);"
+
+      - name: Apply database migrations
+        run: pnpm --filter @chat-app/api exec drizzle-kit migrate
+
+      - name: Wait for exact-run web build (setup stays parallel)
+        timeout-minutes: 3
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BUILD_ARTIFACT: web-build-${{ github.run_id }}-${{ github.run_attempt }}
+        run: node scripts/ci/wait-artifact.mjs
+
+      - name: Download exact-run web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Restore web runtime
+        run: tar -xzf web-build.tgz -C apps/web
 
       - name: Run Chromium E2E tests
         run: pnpm test:e2e --project=chromium
@@ -265,3 +388,36 @@ jobs:
             test-results/
           retention-days: 14
           if-no-files-found: warn
+
+  gate:
+    name: CI Gate
+    if: always()
+    needs: [scope, format, lint, typecheck, build, unit, postgres, e2e]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require all expected acceptance results
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/ci/gate.mjs
+      - name: Record job and step timings
+        if: always()
+        timeout-minutes: 2
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DOCS_ONLY: ${{ needs.scope.outputs.docs_only }}
+          CACHE_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.next_cache }}
+        run: node scripts/ci/timings.mjs
+      - name: Upload timing evidence
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-timings
+          path: ci-timings.json
+          if-no-files-found: warn
+          retention-days: 14
