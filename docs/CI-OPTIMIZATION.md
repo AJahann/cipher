@@ -42,3 +42,14 @@ Proposed research ranges are hypotheses, not acceptance claims.
 The real docs-only smoke PR #35 ([run 39765662174](https://github.com/AJahann/cipher/actions/runs/39765662174)) passed Change Scope and CI Gate, with all six expensive jobs intentionally skipped. First job start to gate completion was 14s; queue time is excluded. GitHub reports inverted timestamps for some synthetic skipped jobs, so their duration is recorded as null/not run rather than a negative duration. The smoke PR is a disposable verification branch, not a feature merge.
 
 To rerun build-artifact acceptance, choose **Re-run all jobs**, not only failed jobs: exact-attempt naming deliberately requires a producer in the same attempt. The handoff refuses an older attempt rather than silently accepting stale artifacts.
+
+
+## Phase 3: browser environment and retain/defer decisions
+
+- Benchmark the public Microsoft Playwright `v1.63.0-noble` container instead of installing browser/OS dependencies every run. Pin its manifest digest and verify the installed `@playwright/test` version before acceptance. Dependency upgrades must update the image tag, digest and expected version together. Image pulling still costs time and is included in Initialize containers; it must not be hidden when comparing results.
+- E2E uses `postgres` DNS inside the job container; the separate host-run PostgreSQL test job retains loopback. Browser origin/API URLs and application behavior do not change. Keep one browser worker, all tests, retries and security checks.
+- A local shared-project pool pilot passed 24 tests in both modes: forks 3.01s, threads 3.36s (single non-coverage runs, not statistically conclusive). Keep the default pool: there is no demonstrated gain from changing it. Do not disable isolation or substitute DOM semantics.
+- Keep all current coverage reports/gates and compiler checks. Their short baseline durations do not justify assurance or compatibility risk. Native TypeScript, Turbo/affected-package caching, test sharding and database fixture redesign remain deferred experiments, not claimed completed migrations.
+- Keep Format and Lint named jobs for existing branch-protection compatibility. Consolidating them is deferred: their actual commands already take about a second, and a new reporting adapter would add complexity for runner-cost savings rather than shortening the E2E critical path.
+
+Phase 2 PR #34 passed all nine hosted checks, including restoration/execution of the exact produced build and the independent PostgreSQL acceptance job. Workflow runtime varies with hosted startup and browser installation; do not infer a universal speedup from a single green run.
