@@ -67,3 +67,8 @@ Phase 2 PR #34 passed all nine hosted checks, including restoration/execution of
 ### Smaller browser download without changing browser semantics
 
 Cipher's CI runs headless Chromium without a channel override. Playwright already uses its headless shell for that configuration. Use `playwright install --with-deps --only-shell chromium` to avoid additionally downloading the unused headed browser; this does not switch the browser engine or remove OS dependencies. [Official installation guidance](https://playwright.dev/docs/browsers#chromium-headless-shell). A regression guard requires installer review if the configuration introduces headed execution or an explicit channel. Full Chromium acceptance remains required. Browser installation has a five-minute bound and the E2E job a fifteen-minute bound, so network stalls cannot run indefinitely. This removes unnecessary download work; actual elapsed gains remain runner/network dependent.
+
+
+### Pin the runner platform and surface infrastructure failures
+
+The first headless-only hosted pilot ([39786553951](https://github.com/AJahann/cipher/actions/runs/39786553951)) failed before migrations/browser tests: the installation step hit its five-minute bound. The job annotation also reported that `ubuntu-latest` was migrating to Ubuntu 26. The exact download/OS root cause was not established; this is an infrastructure failure, not a passing performance result. Pin all jobs to `ubuntu-24.04` to remove rolling-image ambiguity and validate again. A regression guard rejects reverting the workflow to an unreviewed `ubuntu-latest` label. Keep the timeout and full browser acceptance rather than bypassing it.

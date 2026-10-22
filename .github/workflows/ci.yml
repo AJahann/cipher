@@ -30,7 +30,7 @@ concurrency:
 jobs:
   scope:
     name: Change Scope
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       docs_only: ${{ steps.scope.outputs.docs_only }}
     steps:
@@ -47,7 +47,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: Format
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -74,7 +74,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -101,7 +101,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -128,7 +128,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       CI: true
@@ -183,7 +183,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       CI: true
@@ -250,7 +250,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: PostgreSQL Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     env:
       CI: true
@@ -301,7 +301,7 @@ jobs:
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     name: E2E Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
@@ -386,7 +386,7 @@ jobs:
     name: CI Gate
     if: always()
     needs: [scope, format, lint, typecheck, build, unit, postgres, e2e]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       actions: read

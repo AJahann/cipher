@@ -137,4 +137,6 @@ test('headless-only installation matches the current Chromium CI project', () =>
     /playwright install --with-deps --only-shell chromium/,
   );
   assert.match(workflow, /pnpm test:e2e --project=chromium/);
+  assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
+  assert.match(workflow, /runs-on: ubuntu-24\.04/);
 });
