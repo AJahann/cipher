@@ -37,3 +37,8 @@ Proposed research ranges are hypotheses, not acceptance claims.
 - PostgreSQL API acceptance is a separate required job with its own database. Existing serial fixture execution is retained. Browser migrations still run against the browser job's separate database.
 - `CI Gate` also requires PostgreSQL Tests for code changes. Node regression tests cover exact-artifact selection, expiry, producer failure and timeouts.
 - Keep full build/runtime validation; no `ignoreBuildErrors`, hashing changes, auth mocks or test removal are involved.
+
+
+The real docs-only smoke PR #35 ([run 39765662174](https://github.com/AJahann/cipher/actions/runs/39765662174)) passed Change Scope and CI Gate, with all six expensive jobs intentionally skipped. First job start to gate completion was 14s; queue time is excluded. GitHub reports inverted timestamps for some synthetic skipped jobs, so their duration is recorded as null/not run rather than a negative duration. The smoke PR is a disposable verification branch, not a feature merge.
+
+To rerun build-artifact acceptance, choose **Re-run all jobs**, not only failed jobs: exact-attempt naming deliberately requires a producer in the same attempt. The handoff refuses an older attempt rather than silently accepting stale artifacts.

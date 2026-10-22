@@ -103,3 +103,18 @@ test('timings preserve overlapping job and individual step grain', () => {
     ],
   );
 });
+
+test('skipped GitHub jobs do not report negative execution durations', () => {
+  assert.equal(
+    summarize([
+      {
+        name: 'Skipped',
+        status: 'completed',
+        conclusion: 'skipped',
+        started_at: '2026-01-01T00:00:02Z',
+        completed_at: '2026-01-01T00:00:01Z',
+      },
+    ])[0].seconds,
+    null,
+  );
+});
