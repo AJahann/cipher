@@ -29,3 +29,11 @@ Phase 1 PR #33 run [39763595968](https://github.com/AJahann/cipher/actions/runs/
 Browser installation was 77s versus the baseline 18s. E2E's job took 175s; the slower total is reported rather than hiding it behind the faster compilation step. Benchmark container setup before claiming any improvement. Routing and timestamp instrumentation remain independently useful.
 
 Proposed research ranges are hypotheses, not acceptance claims.
+
+## Phase 2: build reuse and independent database acceptance
+
+- The Build job uploads a gzip archive of the exact web runtime, excluding compiler/dev caches. A local packaging pilot took 0.24s for a 4.26 MB archive; hosted transfer is measured separately, not inferred from local packing speed.
+- E2E still prepares dependencies, its own PostgreSQL service and Chromium in parallel with Build. It waits only when consuming the artifact, avoiding a job-level dependency that would serialize all setup. The wait is bounded and fails on producer failure/expiry/wrong-attempt artifacts; it never falls back to an older commit. Archives are named by run ID and attempt, produced and consumed in the same workflow run. No external tokens are used.
+- PostgreSQL API acceptance is a separate required job with its own database. Existing serial fixture execution is retained. Browser migrations still run against the browser job's separate database.
+- `CI Gate` also requires PostgreSQL Tests for code changes. Node regression tests cover exact-artifact selection, expiry, producer failure and timeouts.
+- Keep full build/runtime validation; no `ignoreBuildErrors`, hashing changes, auth mocks or test removal are involved.
