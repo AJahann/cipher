@@ -2,8 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main, remediation/security-reliability, fix/day-16-session-auth]
+    branches: [main, ci/optimization]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      next_cache:
+        description: 'Benchmark Next.js cache (off by default: measured overhead exceeded savings)'
+        type: boolean
+        default: false
 
 # Disposable, non-production values: fork PRs need no repository secrets.
 env:
@@ -22,7 +28,24 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  scope:
+    name: Change Scope
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify CI routing and gates
+        run: node --test scripts/ci/ci.test.mjs
+      - name: Classify changed paths (fail closed)
+        id: scope
+        run: node scripts/ci/scope.mjs
+
   format:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Format
     runs-on: ubuntu-latest
 
@@ -48,6 +71,8 @@ jobs:
         run: pnpm exec biome ci --reporter=github
 
   lint:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Lint
     runs-on: ubuntu-latest
 
@@ -73,6 +98,8 @@ jobs:
         run: pnpm lint --deny-warnings --format=github
 
   typecheck:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Typecheck
     runs-on: ubuntu-latest
 
@@ -98,6 +125,8 @@ jobs:
         run: pnpm typecheck
 
   build:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Build
     runs-on: ubuntu-latest
 
@@ -125,10 +154,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Next.js compiler cache
+        if: github.event_name == 'workflow_dispatch' && inputs.next_cache
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-next-node24-${{ hashFiles('pnpm-lock.yaml', '.github/workflows/ci.yml', 'apps/web/next.config.ts', '**/tsconfig.json') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-next-node24-${{ hashFiles('pnpm-lock.yaml', '.github/workflows/ci.yml', 'apps/web/next.config.ts', '**/tsconfig.json') }}-
+
       - name: Build all packages
         run: pnpm build
 
   unit:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: Unit Tests
     runs-on: ubuntu-latest
 
@@ -194,6 +234,8 @@ jobs:
           if-no-files-found: warn
 
   e2e:
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
     name: E2E Tests
     runs-on: ubuntu-latest
 
@@ -247,6 +289,15 @@ jobs:
         # Keep cross-file DB work serial; assertions and test coverage stay intact.
         run: pnpm test:unit:api --no-file-parallelism
 
+      - name: Restore Next.js compiler cache
+        if: github.event_name == 'workflow_dispatch' && inputs.next_cache
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-${{ runner.arch }}-next-node24-${{ hashFiles('pnpm-lock.yaml', '.github/workflows/ci.yml', 'apps/web/next.config.ts', '**/tsconfig.json') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-next-node24-${{ hashFiles('pnpm-lock.yaml', '.github/workflows/ci.yml', 'apps/web/next.config.ts', '**/tsconfig.json') }}-
+
       - name: Build application
         run: pnpm --filter web build
 
@@ -265,3 +316,34 @@ jobs:
             test-results/
           retention-days: 14
           if-no-files-found: warn
+
+  gate:
+    name: CI Gate
+    if: always()
+    needs: [scope, format, lint, typecheck, build, unit, e2e]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require all expected acceptance results
+        env:
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/ci/gate.mjs
+      - name: Record job and step timings
+        if: always()
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DOCS_ONLY: ${{ needs.scope.outputs.docs_only }}
+          CACHE_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.next_cache }}
+        run: node scripts/ci/timings.mjs
+      - name: Upload timing evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-timings
+          path: ci-timings.json
+          if-no-files-found: warn
+          retention-days: 14
