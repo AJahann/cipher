@@ -120,7 +120,7 @@ test('skipped GitHub jobs do not report negative execution durations', () => {
   );
 });
 
-test('headless-only installation matches the current Chromium CI project', () => {
+test('pinned browser image requires package parity and a fixed runner platform', () => {
   const config = readFileSync(
     new URL('../../playwright.config.ts', import.meta.url),
     'utf8',
@@ -129,12 +129,17 @@ test('headless-only installation matches the current Chromium CI project', () =>
     new URL('../../.github/workflows/ci.yml', import.meta.url),
     'utf8',
   );
-  // A future headed/channel migration must review the installer too.
-  assert.doesNotMatch(config, /\bchannel\s*:/);
   assert.doesNotMatch(config, /\bheadless\s*:\s*false/);
+  const image = workflow.match(
+    /image: mcr\.microsoft\.com\/playwright:v([\d.]+)-noble@sha256:[a-f\d]{64}/,
+  );
+  const expected = workflow.match(/PLAYWRIGHT_IMAGE_VERSION: '([\d.]+)'/);
+  assert.ok(image);
+  assert.ok(expected);
+  assert.equal(image[1], expected[1]);
   assert.match(
     workflow,
-    /playwright install --with-deps --only-shell chromium/,
+    /installed !== process\.env\.PLAYWRIGHT_IMAGE_VERSION/,
   );
   assert.match(workflow, /pnpm test:e2e --project=chromium/);
   assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
