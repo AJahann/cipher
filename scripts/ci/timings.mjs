@@ -10,7 +10,9 @@ export function summarize(jobs) {
       name: job.name,
       conclusion: job.conclusion,
       seconds:
-        (Date.parse(job.completed_at) - Date.parse(job.started_at)) / 1000,
+        job.conclusion === 'skipped'
+          ? null
+          : (Date.parse(job.completed_at) - Date.parse(job.started_at)) / 1000,
       steps: (job.steps ?? [])
         .filter((step) => step.started_at && step.completed_at)
         .map((step) => ({
@@ -61,7 +63,7 @@ async function main() {
   const table = completed
     .map(
       (job) =>
-        `| ${job.name.replaceAll('|', '\\|')} | ${job.conclusion} | ${job.seconds} |`,
+        `| ${job.name.replaceAll('|', '\\|')} | ${job.conclusion} | ${job.seconds ?? 'Not run'} |`,
     )
     .join('\n');
   appendFileSync(

@@ -6,6 +6,7 @@ export const requiredJobs = [
   'typecheck',
   'build',
   'unit',
+  'postgres',
   'e2e',
 ];
 export function acceptancePasses(needs) {
