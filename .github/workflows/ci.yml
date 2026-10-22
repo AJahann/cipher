@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       next_cache:
-        description: Benchmark Next.js cache (off by default: measured overhead exceeded savings)
+        description: 'Benchmark Next.js cache (off by default: measured overhead exceeded savings)'
         type: boolean
         default: false
 
