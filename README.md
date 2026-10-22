@@ -192,3 +192,5 @@ Please report suspected vulnerabilities privately to the repository owner instea
 ## License
 
 Cipher is available under the [MIT License](LICENSE).
+
+CI implementation, measured experiments and deferred options: [CI optimization](docs/CI-OPTIMIZATION.md).

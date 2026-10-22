@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { acceptancePasses, requiredJobs } from './gate.mjs';
 import { changedPaths, isDocsOnly } from './scope.mjs';
@@ -117,4 +118,25 @@ test('skipped GitHub jobs do not report negative execution durations', () => {
     ])[0].seconds,
     null,
   );
+});
+
+test('headless-only installation matches the current Chromium CI project', () => {
+  const config = readFileSync(
+    new URL('../../playwright.config.ts', import.meta.url),
+    'utf8',
+  );
+  const workflow = readFileSync(
+    new URL('../../.github/workflows/ci.yml', import.meta.url),
+    'utf8',
+  );
+  // A future headed/channel migration must review the installer too.
+  assert.doesNotMatch(config, /\bchannel\s*:/);
+  assert.doesNotMatch(config, /\bheadless\s*:\s*false/);
+  assert.match(
+    workflow,
+    /playwright install --with-deps --only-shell chromium/,
+  );
+  assert.match(workflow, /pnpm test:e2e --project=chromium/);
+  assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
+  assert.match(workflow, /runs-on: ubuntu-24\.04/);
 });
