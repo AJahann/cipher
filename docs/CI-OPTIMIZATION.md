@@ -10,8 +10,8 @@ Integration branch: `ci/optimization`. Each phase lands through a separate PR. P
 
 - A tested allowlist routes changes containing only `README.md` and Markdown under `docs/` through a lightweight gate. Unknown files, missing history, manual runs, mixed changes and tooling changes run full acceptance. Rename detection is disabled so moving runtime files into docs cannot hide their deletion.
 - The existing six acceptance job names remain. Their deliberate job-level skips are permitted only after successful docs-only classification. `CI Gate` rejects failures, cancellation and unexpected skips. Branch protection can require this aggregate gate; existing named checks are not renamed or removed.
-- Persist only `apps/web/.next/cache`, not arbitrary full build outputs. Cache keys bind OS, architecture, lockfile, workflow/build configuration and source revision; compatible fallback entries seed compiler work, not acceptance verdicts. GitHub's PR cache isolation must be preserved. Never use `pull_request_target` to execute untrusted code with privileged cache access.
-- `workflow_dispatch` always runs full acceptance. Toggle `next_cache` off for a cold-cache comparison. Compare several successful runs on the same commit/runner family, not isolated best cases. Report cold/warm/miss separately; record flakiness, queue time, job execution, relevant steps and artifact overhead.
+- The opt-in cache experiment persists only `apps/web/.next/cache`, not arbitrary full build outputs. Cache keys bind OS, architecture, lockfile, workflow/build configuration and source revision; compatible fallback entries seed compiler work, not acceptance verdicts. GitHub's PR cache isolation must be preserved. Never use `pull_request_target` to execute untrusted code with privileged cache access.
+- `workflow_dispatch` always runs full acceptance. `next_cache` is disabled by default: toggle it on only for a warm-cache comparison. Compare several successful runs on the same commit/runner family, not isolated best cases. Report cold/warm/miss separately; record flakiness, queue time, job execution, relevant steps and artifact overhead.
 - Every run records completed job/step timings in `ci-timings.json` and a job summary. Timestamps have integer-second API precision. Jobs overlap and must not be added as wall time. The currently running gate is excluded; timing telemetry is non-blocking, while acceptance remains blocking.
 
 ## Next phases and decision gates
@@ -24,4 +24,8 @@ Integration branch: `ci/optimization`. Each phase lands through a separate PR. P
 
 ## Results
 
-Hosted measurements and retain/defer decisions are added as each phase completes. Proposed research ranges are hypotheses, not acceptance claims.
+Phase 1 PR #33 run [39763595968](https://github.com/AJahann/cipher/actions/runs/39763595968) passed all acceptance. E2E web compilation was 7s versus baseline 11s, but compiler cache restore/save consumed 8s + 7s; the Build job also spent 4s + 6s on its cache for a 12s build. **Do not enable Next caching by default** at this workload size; retain only an opt-in manual benchmark. This is not a controlled causal comparison: runners and cache state differ.
+
+Browser installation was 77s versus the baseline 18s. E2E's job took 175s; the slower total is reported rather than hiding it behind the faster compilation step. Benchmark container setup before claiming any improvement. Routing and timestamp instrumentation remain independently useful.
+
+Proposed research ranges are hypotheses, not acceptance claims.
