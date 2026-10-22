@@ -72,3 +72,14 @@ Cipher's CI runs headless Chromium without a channel override. Playwright alread
 ### Pin the runner platform and surface infrastructure failures
 
 The first headless-only hosted pilot ([39786553951](https://github.com/AJahann/cipher/actions/runs/39786553951)) failed before migrations/browser tests: the installation step hit its five-minute bound. The job annotation also reported that `ubuntu-latest` was migrating to Ubuntu 26. The exact download/OS root cause was not established; this is an infrastructure failure, not a passing performance result. Pin all jobs to `ubuntu-24.04` to remove rolling-image ambiguity and validate again. A regression guard rejects reverting the workflow to an unreviewed `ubuntu-latest` label. Keep the timeout and full browser acceptance rather than bypassing it.
+
+
+## Phase 4: reliability evidence supersedes the initial container deferral
+
+The exact integration commit `4139ed1` passed one full hosted run but failed the parallel run [39788665528](https://github.com/AJahann/cipher/actions/runs/39788665528): browser/OS installation again hit the five-minute bound, now on explicitly pinned Ubuntu 24.04. Thus pinning the runner alone was not sufficient. These are infrastructure failures before browser assertions, not acceptance passes, and no OS-specific root cause is claimed.
+
+**Final decision:** adopt the previously validated Microsoft Playwright `v1.63.0-noble` image pinned by manifest digest. This removes the per-run browser/OS installation step, not browser assertions. Its dependency on public MCR image availability and image-pull cost remains; no universal speedup is claimed. Installed Playwright must match the pinned image version or the job fails with an upgrade instruction. Keep the fifteen-minute job bound, Ubuntu 24.04 hosts, one worker and unchanged tests. E2E PostgreSQL uses `postgres` DNS inside the container; independent API acceptance retains its host-local database. Tag, digest and expected version must be reviewed together on browser upgrades.
+
+The earlier headless-only host installer and initial image deferral above are historical experiments, **not the final default**. The image decision is based on avoiding the repeatedly failing installation phase, not the insignificant 117s versus 113s single-run timing difference.
+
+Only `main` pushes and pull requests trigger automatic acceptance. Integration branches receive PR acceptance before main, avoiding two simultaneous copies of every job for the same integration commit. Manual full acceptance remains available. Cache, compiler/pool and sharding deferrals are unchanged; no additional paid service or account is needed.

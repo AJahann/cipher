@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, ci/optimization]
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
@@ -303,13 +303,20 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      options: --shm-size=1g
+    defaults:
+      run:
+        shell: bash
     permissions:
       contents: read
       actions: read
 
     env:
       CI: true
-      DATABASE_URL: postgresql://cipher:cipher@127.0.0.1:5432/cipher_test
+      PLAYWRIGHT_IMAGE_VERSION: '1.63.0'
+      DATABASE_URL: postgresql://cipher:cipher@postgres:5432/cipher_test
 
     services:
       postgres:
@@ -344,9 +351,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium headless shell and OS dependencies
-        timeout-minutes: 5
-        run: pnpm exec playwright install --with-deps --only-shell chromium
+      - name: Verify Playwright matches the pinned browser image
+        run: |
+          node -e "const installed = require('@playwright/test/package.json').version; if (installed !== process.env.PLAYWRIGHT_IMAGE_VERSION) throw new Error('Update the Playwright image tag, digest and version together with the lockfile: installed ' + installed);"
 
       - name: Apply database migrations
         run: pnpm --filter @chat-app/api exec drizzle-kit migrate
