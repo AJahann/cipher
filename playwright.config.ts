@@ -40,7 +40,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: env.CI,
   retries: env.CI ? 2 : 0,
-  workers: env.CI ? 1 : 2,
+  // Bound concurrency: each worker provisions real memory-hard key material.
+  workers: 2,
   failOnFlakyTests: env.CI,
 
   // Registration generates a keypair in the browser, which is slow enough to
