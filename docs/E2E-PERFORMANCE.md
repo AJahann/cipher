@@ -134,3 +134,13 @@ Firefox and WebKit are not supported by this image. See
 | Baseline | 3 | 96 s | 91–133 s | 23 s | 46 s |
 | 1 · Restore-only cache | 3 | 93 s | 87–105 s | 20 s | 49 s |
 | 2 · Retry-only video | 3 | 84 s | 84–90 s | 17 s | 42 s |
+
+### Cache-path correction discovered during image review
+
+The original Phase 1 cache path came from each job's HOME. GitHub cache versions
+include paths, so host Build and container E2E paths could not share a populated
+store despite matching key text. Phase 1 therefore proved removal of E2E writes,
+not effective cross-environment cache hits. Corrected before the retained image
+trials: all jobs explicitly use `/tmp/cipher-pnpm-store` via pnpm's environment
+configuration, and cache that same absolute path. The first corrected-key version
+may be cold. No cache-hit percentage is inferred from timing alone.

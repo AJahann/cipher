@@ -179,6 +179,8 @@ test('pnpm caches have one writer and E2E is restore-only', () => {
   assert.match(action, /uses: actions\/cache\/restore@v4/);
   assert.match(action, /if: inputs.writer == 'true'/);
   assert.doesNotMatch(action, /restore-keys:/);
+  assert.match(action, /pnpm_config_store_dir=\/tmp\/cipher-pnpm-store/);
+  assert.match(action, /path=\/tmp\/cipher-pnpm-store/);
 });
 
 test('retry diagnostics preserve screenshots and first-retry video/trace', () => {

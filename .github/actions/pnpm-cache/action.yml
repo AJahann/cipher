@@ -10,7 +10,11 @@ runs:
     - name: Resolve pnpm store
       id: store
       shell: bash
-      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      # Identical absolute path is required: cache versions include paths, and
+      # the Build host and E2E container have different HOME directories.
+      run: |
+        echo "pnpm_config_store_dir=/tmp/cipher-pnpm-store" >> "$GITHUB_ENV"
+        echo "path=/tmp/cipher-pnpm-store" >> "$GITHUB_OUTPUT"
     - name: Restore dependency store (read only)
       if: inputs.writer != 'true'
       uses: actions/cache/restore@v4
