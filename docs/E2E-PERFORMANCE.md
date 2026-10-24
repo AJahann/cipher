@@ -108,15 +108,15 @@ intentional-failure test verified screenshot/no-initial-video/retry-video+trace.
 
 ### Phase 3 image candidate
 
-Published and smoke-tested in [40137357946](https://github.com/AJahann/cipher/actions/runs/40137357946).
+Final CA-correct image published and smoke-tested in [40139123937](https://github.com/AJahann/cipher/actions/runs/40139123937).
 Anonymous access succeeded both in the publisher and via an independent registry
 manifest request. Normal PR CI receives no GHCR credentials.
 
 Pinned candidate digest:
-`sha256:a226319f04b46a355621d8fde078714ada29dd232fe5d42e996446e5e74283f7`.
+`sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f`.
 
-Linux amd64 compressed manifest layer sizes: **383,361,788 bytes** candidate
-versus **955,790,767 bytes** previous MCR image (**59.9% smaller**). This measures
+Linux amd64 compressed manifest layer sizes: **384,085,775 bytes** candidate
+versus **955,790,767 bytes** previous MCR image (**59.8% smaller**). This measures
 registry layer bytes, not unpacked disk size or expected time savings. Debian
 Bookworm replaces Ubuntu inside the container; hosted validation must prove
 runtime compatibility. Host runners remain Ubuntu 24.04.

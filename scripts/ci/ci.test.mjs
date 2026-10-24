@@ -145,6 +145,17 @@ test('pinned browser image requires package parity and a fixed runner platform',
   assert.match(dockerfile, /install --with-deps --only-shell chromium/);
   assert.match(dockerfile, /@playwright\/test@1\.63\.0/);
   assert.doesNotMatch(config, /\bchannel\s*:/);
+  assert.match(dockerfile, /git zstd ca-certificates/);
+  const smoke = readFileSync(
+    new URL('../../.github/e2e-image/smoke.cjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(smoke, /ls-remote/);
+  assert.doesNotMatch(
+    smoke + dockerfile + workflow,
+    /GIT_SSL_NO_VERIFY|sslVerify=false/,
+  );
+
   assert.ok(image);
   assert.ok(expected);
   assert.equal(image[1], expected[1]);
@@ -192,4 +203,24 @@ test('retry diagnostics preserve screenshots and first-retry video/trace', () =>
   assert.match(config, /trace: 'on-first-retry'/);
   assert.match(config, /screenshot: 'only-on-failure'/);
   assert.match(config, /retries: env.CI \? 2 : 0/);
+});
+
+test('image publishing cannot receive package-write permission on fork PRs', () => {
+  const publisher = readFileSync(
+    new URL('../../.github/workflows/e2e-image.yml', import.meta.url),
+    'utf8',
+  );
+  const context = readFileSync(
+    new URL('../../.github/e2e-image/.dockerignore', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    publisher,
+    /github.repository == 'AJahann\/cipher' && github.event_name == 'push'/,
+  );
+  assert.doesNotMatch(publisher, /pull_request/);
+  assert.match(publisher, /persist-credentials: false/);
+  assert.match(publisher, /packages: write/);
+  assert.match(context, /^\*\*$/m);
+  assert.match(context, /^!Dockerfile$/m);
 });

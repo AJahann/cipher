@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     container:
-      image: ghcr.io/ajahann/cipher-e2e:pw1.63.0-node24.11.1-d21ced3bbb398388f86a5353b08d806dcf341064@sha256:a226319f04b46a355621d8fde078714ada29dd232fe5d42e996446e5e74283f7
+      image: ghcr.io/ajahann/cipher-e2e:pw1.63.0-node24.11.1-8e1b73e0f86ac5e61a2cd67ac360e055a0e2bb61@sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f
       options: --shm-size=1g
     defaults:
       run:
