@@ -28,7 +28,7 @@ interface Fixtures {
 async function withUnlockedPage(
   browser: Browser,
   state: string,
-  use: (page: Page) => Promise<void>,
+  fixtureUse: (page: Page) => Promise<void>,
 ): Promise<void> {
   const context = await browser.newContext({ storageState: state });
   try {
@@ -40,7 +40,7 @@ async function withUnlockedPage(
     await page.getByLabel('passphrase', { exact: true }).fill(PASSPHRASE);
     await page.getByRole('button', { name: 'unlock', exact: true }).click();
     await expect(page.getByText('conversations')).toBeVisible();
-    await use(page);
+    await fixtureUse(page);
   } finally {
     await context.close();
   }
@@ -48,7 +48,7 @@ async function withUnlockedPage(
 
 export const test = base.extend<Fixtures, { workerAuth: WorkerAuth }>({
   workerAuth: [
-    async ({}, use, workerInfo) => {
+    async ({}, fixtureUse, workerInfo) => {
       // Keep credentials outside uploaded test-results. mkdtemp isolates projects,
       // simultaneous runs and worker restarts, including after a failed test.
       const directory = createAuthDirectory(
@@ -57,35 +57,42 @@ export const test = base.extend<Fixtures, { workerAuth: WorkerAuth }>({
         workerInfo.workerIndex,
       );
       try {
-        const users = await provisionUsers(directory);
-        await use({ directory, users });
+        const apiURL = workerInfo.config.metadata.apiURL;
+        const baseURL = workerInfo.project.use.baseURL;
+        if (typeof apiURL !== 'string' || !baseURL) {
+          throw new Error(
+            'E2E provisioning requires metadata.apiURL and use.baseURL',
+          );
+        }
+        const users = await provisionUsers(directory, { apiURL, baseURL });
+        await fixtureUse({ directory, users });
       } finally {
         fs.rmSync(directory, { recursive: true, force: true });
       }
     },
     { scope: 'worker' },
   ],
-  aliceUsername: async ({ workerAuth }, use) => {
-    await use(workerAuth.users.alice);
+  aliceUsername: async ({ workerAuth }, fixtureUse) => {
+    await fixtureUse(workerAuth.users.alice);
   },
-  bobUsername: async ({ workerAuth }, use) => {
-    await use(workerAuth.users.bob);
+  bobUsername: async ({ workerAuth }, fixtureUse) => {
+    await fixtureUse(workerAuth.users.bob);
   },
-  aliceState: async ({ workerAuth }, use) => {
-    await use(path.join(workerAuth.directory, 'alice.json'));
+  aliceState: async ({ workerAuth }, fixtureUse) => {
+    await fixtureUse(path.join(workerAuth.directory, 'alice.json'));
   },
-  alicePage: async ({ browser, workerAuth }, use) => {
+  alicePage: async ({ browser, workerAuth }, fixtureUse) => {
     await withUnlockedPage(
       browser,
       path.join(workerAuth.directory, 'alice.json'),
-      use,
+      fixtureUse,
     );
   },
-  bobPage: async ({ browser, workerAuth }, use) => {
+  bobPage: async ({ browser, workerAuth }, fixtureUse) => {
     await withUnlockedPage(
       browser,
       path.join(workerAuth.directory, 'bob.json'),
-      use,
+      fixtureUse,
     );
   },
 });

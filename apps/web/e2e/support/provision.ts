@@ -9,7 +9,6 @@ import {
   wrapPrivateKey,
   type WrappedPrivateKey,
 } from '@chat-app/shared/crypto';
-import { env } from '../../../../env';
 import { PASSPHRASE } from './auth-paths';
 
 export interface AuthUsers {
@@ -17,14 +16,17 @@ export interface AuthUsers {
   bob: string;
 }
 
-export async function provisionUsers(directory: string): Promise<AuthUsers> {
+export async function provisionUsers(
+  directory: string,
+  options: { apiURL: string; baseURL: string },
+): Promise<AuthUsers> {
   fs.mkdirSync(directory, { recursive: true });
   // Random per invocation, including restarted workers/retries; under the API's
   // 32-character username limit. Never reuse a session from a previous run.
   const suffix = randomUUID().replaceAll('-', '').slice(0, 20);
   const users = { alice: `alice-${suffix}`, bob: `bob-${suffix}` };
   for (const role of ['alice', 'bob'] as const) {
-    const api = await request.newContext({ baseURL: env.NEXT_PUBLIC_API_URL });
+    const api = await request.newContext({ baseURL: options.apiURL });
     try {
       const pair = await E2EEncryption.generateKeyPair();
       let wrappedPrivateKey: WrappedPrivateKey;
@@ -35,7 +37,7 @@ export async function provisionUsers(directory: string): Promise<AuthUsers> {
         pair.privateKey.fill(0);
       }
       const response = await api.post('/auth/register', {
-        headers: { Origin: new URL(env.PLAYWRIGHT_BASE_URL).origin },
+        headers: { Origin: new URL(options.baseURL).origin },
         data: {
           username: users[role],
           password: PASSPHRASE,
@@ -61,7 +63,7 @@ export async function provisionUsers(directory: string): Promise<AuthUsers> {
       );
       state.origins = [
         {
-          origin: new URL(env.PLAYWRIGHT_BASE_URL).origin,
+          origin: new URL(options.baseURL).origin,
           localStorage: [
             { name: STORAGE_KEY, value: JSON.stringify(wrappedPrivateKey) },
             { name: 'e2e_public_key', value: pair.publicKeyB64 },

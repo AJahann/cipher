@@ -35,6 +35,8 @@ export default defineConfig({
   testMatch: '**/e2e/**/*.spec.ts',
   testIgnore: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
 
+  metadata: { apiURL: env.NEXT_PUBLIC_API_URL },
+
   fullyParallel: true,
   forbidOnly: env.CI,
   retries: env.CI ? 2 : 0,

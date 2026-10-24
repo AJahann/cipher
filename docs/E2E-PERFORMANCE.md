@@ -214,3 +214,22 @@ transition is still running (`transition-all duration-150`). Axe sampled that
 intermediate, low-contrast frame. The test now asserts the real submit button is
 enabled and has computed opacity 1 before scanning the stable error state. No
 axe rules, states or violations are excluded; no fixed sleeps or axe retries.
+
+### Hosted fixture pre-cohort failures (not hidden)
+
+[40140392138](https://github.com/AJahann/cipher/actions/runs/40140392138)
+caught two integration issues before the retained fixture cohort:
+
+- React 19's lint rule interpreted Playwright's callback parameter named `use`
+  as the React hook. Renamed fixture callbacks to `fixtureUse`, not disabled lint.
+- A CommonJS worker importing the root ESM environment module failed collection
+  under the exact repository config. The external local harness had masked that
+  loader boundary. Reproduced with the repository's own `--list`, removed the
+  worker import, and passed validated URLs explicitly from Playwright config
+  metadata and `use.baseURL`. The production environment schema stays intact.
+
+The two missing-CA development runs were
+[40138874577](https://github.com/AJahann/cipher/actions/runs/40138874577) and
+[40139127816](https://github.com/AJahann/cipher/actions/runs/40139127816); both
+failed verified HTTPS checkout before tests, and were corrected before the
+retained image cohort. None of these failures count as successful timings.
