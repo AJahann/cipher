@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      image: ghcr.io/ajahann/cipher-e2e:pw1.63.0-node24.11.1-8e1b73e0f86ac5e61a2cd67ac360e055a0e2bb61@sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f
       options: --shm-size=1g
     defaults:
       run:
@@ -357,19 +357,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.6.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24.11.1'
+      - name: Verify preinstalled toolchain
+        run: |
+          test "$(node --version)" = v24.11.1
+          test "$(pnpm --version)" = 12.6.0
 
       # Build is the only store-cache writer; PR caches remain PR-scoped.
       - name: Restore pnpm store (read only)
+        id: store
         uses: ./.github/actions/pnpm-cache
+
+      - name: Report dependency-store cache hit (${{ steps.store.outputs.cache-hit == 'true' }})
+        run: echo "Exact store hit is recorded in this step's name; misses install normally."
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

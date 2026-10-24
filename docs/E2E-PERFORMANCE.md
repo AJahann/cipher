@@ -40,8 +40,8 @@ startup: it is not an isolated browser-image pull measurement.
 | Phase | Change | Status / decision |
 | --- | --- | --- |
 | 1 | Restore-only E2E dependency caching; one Build cache writer | Retained: three successful trials; cache ownership is deterministic |
-| 2 | Record video only on first retry | Implemented; hosted trials pending; first-attempt video intentionally unavailable |
-| 3 | Pinned Chromium-only public GHCR image | Pending; publish/anonymous-pull verification required before use |
+| 2 | Record video only on first retry | Retained: three successful trials; diagnostic policy verified |
+| 3 | Pinned Chromium-only public GHCR image | Implemented: published, smoke-tested and anonymous access verified; CI trials pending |
 | 4 | API provisioning using production key generation/KDF | Pending; keep explicit UI auth coverage |
 | 5 | Worker-specific accounts and auth files; trial two workers | Pending; isolate before concurrency |
 
@@ -96,3 +96,68 @@ This is the explicitly accepted diagnostic tradeoff, not removal of assertions.
   Corrected disposable-server port, then all 74 API tests passed serially.
 - Local Chromium uses a sandbox-installed executable, not the pinned CI browser;
   local timings must not be compared with hosted job durations.
+
+### Phase 2 measured decision
+
+Three successful full CI trials: **84, 90, 84 s**; median **84 s**, range
+**84–90 s**. Playwright command median **17 s**, versus phase 1's **20 s**.
+Container medians also changed, so do not attribute the entire nine-second
+whole-job difference to video. Retain the lower recording workload with the
+explicitly approved diagnostic tradeoff. Local full suite passed 14/14; a separate
+intentional-failure test verified screenshot/no-initial-video/retry-video+trace.
+
+### Phase 3 image candidate
+
+Final CA-correct image published and smoke-tested in [40139123937](https://github.com/AJahann/cipher/actions/runs/40139123937).
+Anonymous access succeeded both in the publisher and via an independent registry
+manifest request. Normal PR CI receives no GHCR credentials.
+
+Pinned candidate digest:
+`sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f`.
+
+Linux amd64 compressed manifest layer sizes: **384,085,775 bytes** candidate
+versus **955,790,767 bytes** previous MCR image (**59.8% smaller**). This measures
+registry layer bytes, not unpacked disk size or expected time savings. Debian
+Bookworm replaces Ubuntu inside the container; hosted validation must prove
+runtime compatibility. Host runners remain Ubuntu 24.04.
+
+The image includes exact Node/pnpm versions and Chromium headless shell only.
+E2E removes redundant toolchain installers, verifies installed versions and keeps
+the Playwright package/image parity guard. Headed browsers, custom channels,
+Firefox and WebKit are not supported by this image. See
+`.github/e2e-image/README.md` for rebuild, anonymous-access and rollback gates.
+
+## Cumulative timing evidence (screening only)
+
+| Cohort | Runs | E2E median | Observed range | Playwright median | Container median |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 3 | 96 s | 91–133 s | 23 s | 46 s |
+| 1 · Restore-only cache | 3 | 93 s | 87–105 s | 20 s | 49 s |
+| 2 · Retry-only video | 3 | 84 s | 84–90 s | 17 s | 42 s |
+
+### Cache-path correction discovered during image review
+
+The original Phase 1 cache path came from each job's HOME. GitHub cache versions
+include paths, so host Build and container E2E paths could not share a populated
+store despite matching key text. Phase 1 therefore proved removal of E2E writes,
+not effective cross-environment cache hits. Corrected before the retained image
+trials: all jobs explicitly use `/tmp/cipher-pnpm-store` via pnpm's environment
+configuration, and cache that same absolute path. The first corrected-key version
+may be cold. No cache-hit percentage is inferred from timing alone.
+
+Image hardening before the retained cohort: install and smoke-test `git` and
+`zstd`. The latter avoids a second host/container cache-version mismatch from
+different compression availability. Candidate builds and pre-hardening CI runs
+are development checks, not silently mixed into the final image cohort.
+
+### Pre-cohort infrastructure failure (not hidden)
+
+[40138874577](https://github.com/AJahann/cipher/actions/runs/40138874577)
+failed E2E Checkout before any application test: Git reported `server certificate
+verification failed. CAfile: none`. Installing Git without recommended packages
+in a slim Debian image omitted OS CA certificates. Added explicit
+`ca-certificates` and a publisher smoke test that performs verified HTTPS
+`git ls-remote` against this public repository before publication. TLS verification
+remains enabled. This failed run is excluded from successful timing statistics
+but retained in the failure ledger; the final corrected image needs a fresh
+three-run cohort.

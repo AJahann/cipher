@@ -131,9 +131,31 @@ test('pinned browser image requires package parity and a fixed runner platform',
   );
   assert.doesNotMatch(config, /\bheadless\s*:\s*false/);
   const image = workflow.match(
-    /image: mcr\.microsoft\.com\/playwright:v([\d.]+)-noble@sha256:[a-f\d]{64}/,
+    /image: ghcr\.io\/ajahann\/cipher-e2e:pw([\d.]+)-node24\.11\.1-[a-f\d]{40}@sha256:[a-f\d]{64}/,
   );
   const expected = workflow.match(/PLAYWRIGHT_IMAGE_VERSION: '([\d.]+)'/);
+  const dockerfile = readFileSync(
+    new URL('../../.github/e2e-image/Dockerfile', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    dockerfile,
+    /FROM node:24\.11\.1-bookworm-slim@sha256:[a-f\d]{64}/,
+  );
+  assert.match(dockerfile, /install --with-deps --only-shell chromium/);
+  assert.match(dockerfile, /@playwright\/test@1\.63\.0/);
+  assert.doesNotMatch(config, /\bchannel\s*:/);
+  assert.match(dockerfile, /git zstd ca-certificates/);
+  const smoke = readFileSync(
+    new URL('../../.github/e2e-image/smoke.cjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(smoke, /ls-remote/);
+  assert.doesNotMatch(
+    smoke + dockerfile + workflow,
+    /GIT_SSL_NO_VERIFY|sslVerify=false/,
+  );
+
   assert.ok(image);
   assert.ok(expected);
   assert.equal(image[1], expected[1]);
@@ -168,6 +190,8 @@ test('pnpm caches have one writer and E2E is restore-only', () => {
   assert.match(action, /uses: actions\/cache\/restore@v4/);
   assert.match(action, /if: inputs.writer == 'true'/);
   assert.doesNotMatch(action, /restore-keys:/);
+  assert.match(action, /pnpm_config_store_dir=\/tmp\/cipher-pnpm-store/);
+  assert.match(action, /path=\/tmp\/cipher-pnpm-store/);
 });
 
 test('retry diagnostics preserve screenshots and first-retry video/trace', () => {
@@ -179,4 +203,24 @@ test('retry diagnostics preserve screenshots and first-retry video/trace', () =>
   assert.match(config, /trace: 'on-first-retry'/);
   assert.match(config, /screenshot: 'only-on-failure'/);
   assert.match(config, /retries: env.CI \? 2 : 0/);
+});
+
+test('image publishing cannot receive package-write permission on fork PRs', () => {
+  const publisher = readFileSync(
+    new URL('../../.github/workflows/e2e-image.yml', import.meta.url),
+    'utf8',
+  );
+  const context = readFileSync(
+    new URL('../../.github/e2e-image/.dockerignore', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    publisher,
+    /github.repository == 'AJahann\/cipher' && github.event_name == 'push'/,
+  );
+  assert.doesNotMatch(publisher, /pull_request/);
+  assert.match(publisher, /persist-credentials: false/);
+  assert.match(publisher, /packages: write/);
+  assert.match(context, /^\*\*$/m);
+  assert.match(context, /^!Dockerfile$/m);
 });

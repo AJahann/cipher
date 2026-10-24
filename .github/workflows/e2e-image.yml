@@ -1,0 +1,82 @@
+name: Publish E2E Chromium image
+
+on:
+  push:
+    branches: [main, e2e/chromium-image]
+    paths:
+      - '.github/e2e-image/**'
+      - '.github/workflows/e2e-image.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'AJahann/cipher' && github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build dependency-only image
+        id: image
+        shell: bash
+        run: |
+          image="ghcr.io/ajahann/cipher-e2e:pw1.63.0-node24.11.1-${GITHUB_SHA}"
+          echo "ref=$image" >> "$GITHUB_OUTPUT"
+          docker build --pull --platform linux/amd64 -t "$image" .github/e2e-image
+      - name: Smoke test Chromium shell and Node
+        env:
+          IMAGE: ${{ steps.image.outputs.ref }}
+        run: docker run --rm --shm-size=1g -v "$PWD/.github/e2e-image/smoke.cjs:/smoke.cjs:ro" "$IMAGE" node /smoke.cjs
+      - name: Publish with repository-scoped token
+        id: publish
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          IMAGE: ${{ steps.image.outputs.ref }}
+        shell: bash
+        run: |
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE"
+          digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE")
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          docker image inspect --format '{{json .}}' "$IMAGE" > e2e-image-metadata.json
+          printf '## Candidate image\n\n`%s`\n\nDo not adopt until anonymous pull and three full CI trials pass.\n' "$digest" >> "$GITHUB_STEP_SUMMARY"
+      - name: Log out
+        if: always()
+        run: docker logout ghcr.io
+      - name: Verify anonymous pull (required before CI adoption)
+        id: anonymous
+        continue-on-error: true
+        env:
+          IMAGE: ${{ steps.publish.outputs.digest }}
+        shell: bash
+        run: |
+          export DOCKER_CONFIG
+          DOCKER_CONFIG=$(mktemp -d)
+          trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+          test -n "$IMAGE"
+          docker manifest inspect "$IMAGE" > /dev/null
+      - name: Report visibility gate
+        if: always()
+        env:
+          ANONYMOUS_RESULT: ${{ steps.anonymous.outcome }}
+        run: |
+          if [ "$ANONYMOUS_RESULT" != success ]; then
+            echo 'Anonymous access not verified. Owner must make cipher-e2e public in GHCR package settings. Existing MCR CI image remains unchanged.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-image-metadata
+          path: e2e-image-metadata.json
+          if-no-files-found: warn
+          retention-days: 14
