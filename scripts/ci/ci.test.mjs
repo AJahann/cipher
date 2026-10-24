@@ -169,3 +169,14 @@ test('pnpm caches have one writer and E2E is restore-only', () => {
   assert.match(action, /if: inputs.writer == 'true'/);
   assert.doesNotMatch(action, /restore-keys:/);
 });
+
+test('retry diagnostics preserve screenshots and first-retry video/trace', () => {
+  const config = readFileSync(
+    new URL('../../playwright.config.ts', import.meta.url),
+    'utf8',
+  );
+  assert.match(config, /video: 'on-first-retry'/);
+  assert.match(config, /trace: 'on-first-retry'/);
+  assert.match(config, /screenshot: 'only-on-failure'/);
+  assert.match(config, /retries: env.CI \? 2 : 0/);
+});
