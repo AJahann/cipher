@@ -39,8 +39,8 @@ startup: it is not an isolated browser-image pull measurement.
 
 | Phase | Change | Status / decision |
 | --- | --- | --- |
-| 1 | Restore-only E2E dependency caching; one Build cache writer | Implemented; hosted trials pending |
-| 2 | Record video only on first retry | Pending; first-attempt video intentionally unavailable |
+| 1 | Restore-only E2E dependency caching; one Build cache writer | Retained: three successful trials; cache ownership is deterministic |
+| 2 | Record video only on first retry | Implemented; hosted trials pending; first-attempt video intentionally unavailable |
 | 3 | Pinned Chromium-only public GHCR image | Pending; publish/anonymous-pull verification required before use |
 | 4 | API provisioning using production key generation/KDF | Pending; keep explicit UI auth coverage |
 | 5 | Worker-specific accounts and auth files; trial two workers | Pending; isolate before concurrency |
@@ -69,3 +69,30 @@ occurred in only one run; the other two already spent zero seconds there.
   work on cache misses, and image upgrades require matching Playwright versions.
 - Do not enable workers against the existing shared Alice/Bob sessions.
 - Never commit `playwright/.auth`, cookies, wrapped private keys or trace data.
+
+### Phase 1 measured decision
+
+Trials: [105 s](https://github.com/AJahann/cipher/actions/runs/40137110848),
+[87 s](https://github.com/AJahann/cipher/actions/runs/40137297269),
+[93 s](https://github.com/AJahann/cipher/actions/runs/40137451625).
+All nine checks succeeded in each run. Median **93 s**, range **87–105 s**,
+versus baseline **96 s**, range **91–133 s**. The 3-second median difference is
+not convincing causal speed evidence with this sample and startup variance.
+Retain for removal of E2E save work and single-writer ownership; the E2E
+post-restore step was zero seconds in all three trials. No new failure observed
+in hosted acceptance; retry counts are not available from public timestamps.
+
+### Phase 2 diagnostic tradeoff
+
+Video now records only on first retry, matching the existing trace policy.
+Failure screenshots remain enabled. A failure on the initial attempt has a
+screenshot but no video; a first retry records video even if that retry passes.
+This is the explicitly accepted diagnostic tradeoff, not removal of assertions.
+
+### Local validation caveats
+
+- CI helper tests, formatting, typecheck and 141 non-database unit tests passed.
+- Initial local PostgreSQL attempt used the wrong port (connection refused).
+  Corrected disposable-server port, then all 74 API tests passed serially.
+- Local Chromium uses a sandbox-installed executable, not the pinned CI browser;
+  local timings must not be compared with hosted job durations.
