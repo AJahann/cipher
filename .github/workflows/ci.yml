@@ -364,7 +364,11 @@ jobs:
 
       # Build is the only store-cache writer; PR caches remain PR-scoped.
       - name: Restore pnpm store (read only)
+        id: store
         uses: ./.github/actions/pnpm-cache
+
+      - name: Report dependency-store cache hit (${{ steps.store.outputs.cache-hit == 'true' }})
+        run: echo "Exact store hit is recorded in this step's name; misses install normally."
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
