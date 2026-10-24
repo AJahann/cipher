@@ -145,3 +145,27 @@ test('pinned browser image requires package parity and a fixed runner platform',
   assert.doesNotMatch(workflow, /runs-on: ubuntu-latest/);
   assert.match(workflow, /runs-on: ubuntu-24\.04/);
 });
+
+test('pnpm caches have one writer and E2E is restore-only', () => {
+  const workflow = readFileSync(
+    new URL('../../.github/workflows/ci.yml', import.meta.url),
+    'utf8',
+  );
+  const action = readFileSync(
+    new URL('../../.github/actions/pnpm-cache/action.yml', import.meta.url),
+    'utf8',
+  );
+  assert.doesNotMatch(workflow, /cache: pnpm/);
+  assert.equal((workflow.match(/writer: 'true'/g) ?? []).length, 1);
+  assert.match(
+    workflow.slice(workflow.indexOf('  build:'), workflow.indexOf('  unit:')),
+    /writer: 'true'/,
+  );
+  assert.doesNotMatch(
+    workflow.slice(workflow.indexOf('  e2e:'), workflow.indexOf('  gate:')),
+    /writer: 'true'/,
+  );
+  assert.match(action, /uses: actions\/cache\/restore@v4/);
+  assert.match(action, /if: inputs.writer == 'true'/);
+  assert.doesNotMatch(action, /restore-keys:/);
+});
