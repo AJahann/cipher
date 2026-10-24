@@ -42,8 +42,8 @@ startup: it is not an isolated browser-image pull measurement.
 | 1 | Restore-only E2E dependency caching; one Build cache writer | Retained: three successful trials; cache ownership is deterministic |
 | 2 | Record video only on first retry | Retained: three successful trials; diagnostic policy verified |
 | 3 | Pinned Chromium-only public GHCR image | Retained: three successful trials; anonymous image access and cache hits verified |
-| 4 | API provisioning using production key generation/KDF | Implemented with worker-scoped accounts at one CI worker; trials pending |
-| 5 | Benchmark two workers after worker-scoped provisioning | Pending; isolation foundation is in phase 4 |
+| 4 | API provisioning using production key generation/KDF | Retained: three full green runs, median 77 s (76–81 s), one CI worker |
+| 5 | Benchmark two workers after worker-scoped provisioning | In progress: bounded two-worker trial after isolated foundation |
 
 ### Phase 1: single cache writer
 
@@ -233,3 +233,7 @@ The two missing-CA development runs were
 [40139127816](https://github.com/AJahann/cipher/actions/runs/40139127816); both
 failed verified HTTPS checkout before tests, and were corrected before the
 retained image cohort. None of these failures count as successful timings.
+
+### Phase 5 bounded parallelism trial
+
+Only worker count changes from one to two. Keep real key derivation, per-worker accounts, all application tests and fail-on-flaky acceptance. Compare three full hosted runs with phase 4; keep one worker if no worthwhile benefit or stability regresses. Never infer a linear 2× speedup.
