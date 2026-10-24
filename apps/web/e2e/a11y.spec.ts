@@ -171,6 +171,11 @@ test.describe('axe: route × SessionGate state', () => {
       .getByRole('log', { name: 'Messages' })
       .getByText(MIXED);
     await expect(message).toBeVisible();
+    // The ready-state scan must observe the server-acknowledged message, not
+    // the intentionally dimmed optimistic 'sending' bubble.
+    const bubble = message.locator('..');
+    await expect(bubble.getByText('sent', { exact: true })).toBeVisible();
+    await expect(bubble).toHaveCSS('opacity', '1');
     expect(await message.evaluate((el) => el.matches(':dir(rtl)'))).toBe(true);
     await expectNoBlockingViolations(
       page,
