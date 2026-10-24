@@ -4,7 +4,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import type { Page, TestInfo } from '@playwright/test';
 
 import { test, expect } from './fixtures';
-import { PASSPHRASE, storageStateFor } from './support/auth-paths';
+import { PASSPHRASE } from './support/auth-paths';
 
 // Every route × SessionGate state is scanned; a state only counts once it is
 // actually reached (asserted before scanning). The "ready" state cannot come
@@ -71,6 +71,15 @@ test.describe('axe: route × SessionGate state', () => {
     await page.getByLabel('passphrase', { exact: true }).fill('wrong');
     await page.getByRole('button', { name: 'authenticate' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
+    // The enabled submit button transitions from disabled opacity over 150 ms.
+    // Audit the settled error state, not an intermediate animation frame. Keep
+    // the contrast assertion; do not hide violations with axe retries or sleeps.
+    const submit = page.getByRole('button', {
+      name: 'authenticate',
+      exact: true,
+    });
+    await expect(submit).toBeEnabled();
+    await expect(submit).toHaveCSS('opacity', '1');
     await expectNoBlockingViolations(page, '/ login · auth failed', testInfo);
 
     await page.getByRole('button', { name: 'register' }).click();
@@ -82,10 +91,9 @@ test.describe('axe: route × SessionGate state', () => {
 
   test('/chat — authenticated fresh browser still needs passphrase unlock', async ({
     browser,
+    aliceState,
   }, testInfo) => {
-    const { cookies } = JSON.parse(
-      fs.readFileSync(storageStateFor('alice'), 'utf8'),
-    );
+    const { cookies } = JSON.parse(fs.readFileSync(aliceState, 'utf8'));
     // A valid session (including GitHub login) can load its own encrypted
     // bundle, but a fresh browser must still ask for the local passphrase.
     const context = await browser.newContext({
@@ -109,9 +117,10 @@ test.describe('axe: route × SessionGate state', () => {
 
   test('/chat — need-unlock, including a wrong passphrase', async ({
     browser,
+    aliceState,
   }, testInfo) => {
     const context = await browser.newContext({
-      storageState: storageStateFor('alice'),
+      storageState: aliceState,
     });
     const page = await context.newPage();
     await page.goto('/chat');

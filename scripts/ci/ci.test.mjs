@@ -224,3 +224,25 @@ test('image publishing cannot receive package-write permission on fork PRs', () 
   assert.match(context, /^\*\*$/m);
   assert.match(context, /^!Dockerfile$/m);
 });
+
+test('E2E accounts are worker-scoped and CI cannot accept flaky retries', () => {
+  const fixture = readFileSync(
+    new URL('../../apps/web/e2e/fixtures.ts', import.meta.url),
+    'utf8',
+  );
+  const paths = readFileSync(
+    new URL('../../apps/web/e2e/support/auth-paths.ts', import.meta.url),
+    'utf8',
+  );
+  const config = readFileSync(
+    new URL('../../playwright.config.ts', import.meta.url),
+    'utf8',
+  );
+  assert.match(fixture, /scope: 'worker'/);
+  assert.match(fixture, /createAuthDirectory/);
+  assert.match(fixture, /finally/);
+  assert.match(paths, /path.resolve\('playwright\/.auth'\)/);
+  assert.doesNotMatch(fixture, /USERS_FILE|storageStateFor/);
+  assert.match(config, /failOnFlakyTests: env.CI/);
+  assert.doesNotMatch(config, /dependencies: \['setup'\]/);
+});
