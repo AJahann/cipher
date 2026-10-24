@@ -144,3 +144,8 @@ not effective cross-environment cache hits. Corrected before the retained image
 trials: all jobs explicitly use `/tmp/cipher-pnpm-store` via pnpm's environment
 configuration, and cache that same absolute path. The first corrected-key version
 may be cold. No cache-hit percentage is inferred from timing alone.
+
+Image hardening before the retained cohort: install and smoke-test `git` and
+`zstd`. The latter avoids a second host/container cache-version mismatch from
+different compression availability. Candidate builds and pre-hardening CI runs
+are development checks, not silently mixed into the final image cohort.

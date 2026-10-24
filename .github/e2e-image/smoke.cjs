@@ -1,5 +1,12 @@
+const { execFileSync } = require('node:child_process');
 const { chromium } = require('/usr/local/lib/node_modules/@playwright/test');
 (async () => {
+  for (const tool of ['git', 'zstd']) execFileSync(tool, ['--version']);
+  if (
+    execFileSync('pnpm', ['--version'], { encoding: 'utf8' }).trim() !==
+    '12.6.0'
+  )
+    throw new Error('Unexpected pnpm version');
   if (process.version !== 'v24.11.1')
     throw new Error('Unexpected Node version');
   const installed =
