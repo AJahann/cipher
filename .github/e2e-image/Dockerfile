@@ -6,7 +6,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PLAYWRIGHT_IMAGE_VERSION=1.63.0 \
     PNPM_HOME=/usr/local/share/pnpm
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git zstd \
+    && apt-get install -y --no-install-recommends git zstd ca-certificates \
     && npm install --global pnpm@12.6.0 @playwright/test@1.63.0 \
     && playwright install --with-deps --only-shell chromium \
     && chmod -R a+rX /ms-playwright \

@@ -1,7 +1,7 @@
 # Cipher Chromium CI image
 
 Dependency-only, Linux amd64 image: Node 24.11.1, pnpm 12.6.0,
-Playwright 1.63.0 Chromium headless shell, ffmpeg, git, zstd and required Debian
+Playwright 1.63.0 Chromium headless shell, ffmpeg, git, zstd, CA certificates and required Debian
 libraries. zstd and an identical store path allow host/container cache versions
 to match; git avoids checkout archive fallback.
 No application source, node_modules, database, secrets or authenticated browser

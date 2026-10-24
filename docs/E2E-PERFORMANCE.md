@@ -149,3 +149,15 @@ Image hardening before the retained cohort: install and smoke-test `git` and
 `zstd`. The latter avoids a second host/container cache-version mismatch from
 different compression availability. Candidate builds and pre-hardening CI runs
 are development checks, not silently mixed into the final image cohort.
+
+### Pre-cohort infrastructure failure (not hidden)
+
+[40138874577](https://github.com/AJahann/cipher/actions/runs/40138874577)
+failed E2E Checkout before any application test: Git reported `server certificate
+verification failed. CAfile: none`. Installing Git without recommended packages
+in a slim Debian image omitted OS CA certificates. Added explicit
+`ca-certificates` and a publisher smoke test that performs verified HTTPS
+`git ls-remote` against this public repository before publication. TLS verification
+remains enabled. This failed run is excluded from successful timing statistics
+but retained in the failure ledger; the final corrected image needs a fresh
+three-run cohort.

@@ -1,6 +1,11 @@
 const { execFileSync } = require('node:child_process');
 const { chromium } = require('/usr/local/lib/node_modules/@playwright/test');
 (async () => {
+  execFileSync(
+    'git',
+    ['ls-remote', 'https://github.com/AJahann/cipher', 'HEAD'],
+    { timeout: 30_000, stdio: 'pipe' },
+  );
   for (const tool of ['git', 'zstd']) execFileSync(tool, ['--version']);
   if (
     execFileSync('pnpm', ['--version'], { encoding: 'utf8' }).trim() !==
