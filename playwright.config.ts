@@ -54,7 +54,8 @@ export default defineConfig({
     baseURL: env.PLAYWRIGHT_BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // Passing attempts do not encode video. First retry retains video + trace.
+    video: 'on-first-retry',
   },
 
   projects: [

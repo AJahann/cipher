@@ -62,7 +62,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (read only)
+        uses: ./.github/actions/pnpm-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -89,7 +92,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (read only)
+        uses: ./.github/actions/pnpm-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -116,7 +122,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (read only)
+        uses: ./.github/actions/pnpm-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -149,7 +158,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (designated writer)
+        uses: ./.github/actions/pnpm-cache
+        with:
+          writer: 'true'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -201,7 +215,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (read only)
+        uses: ./.github/actions/pnpm-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -284,7 +301,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (read only)
+        uses: ./.github/actions/pnpm-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -346,7 +366,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24.11.1'
-          cache: pnpm
+
+      # Build is the only store-cache writer; PR caches remain PR-scoped.
+      - name: Restore pnpm store (read only)
+        uses: ./.github/actions/pnpm-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
