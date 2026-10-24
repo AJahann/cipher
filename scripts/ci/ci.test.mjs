@@ -131,9 +131,20 @@ test('pinned browser image requires package parity and a fixed runner platform',
   );
   assert.doesNotMatch(config, /\bheadless\s*:\s*false/);
   const image = workflow.match(
-    /image: mcr\.microsoft\.com\/playwright:v([\d.]+)-noble@sha256:[a-f\d]{64}/,
+    /image: ghcr\.io\/ajahann\/cipher-e2e:pw([\d.]+)-node24\.11\.1-[a-f\d]{40}@sha256:[a-f\d]{64}/,
   );
   const expected = workflow.match(/PLAYWRIGHT_IMAGE_VERSION: '([\d.]+)'/);
+  const dockerfile = readFileSync(
+    new URL('../../.github/e2e-image/Dockerfile', import.meta.url),
+    'utf8',
+  );
+  assert.match(
+    dockerfile,
+    /FROM node:24\.11\.1-bookworm-slim@sha256:[a-f\d]{64}/,
+  );
+  assert.match(dockerfile, /install --with-deps --only-shell chromium/);
+  assert.match(dockerfile, /@playwright\/test@1\.63\.0/);
+  assert.doesNotMatch(config, /\bchannel\s*:/);
   assert.ok(image);
   assert.ok(expected);
   assert.equal(image[1], expected[1]);

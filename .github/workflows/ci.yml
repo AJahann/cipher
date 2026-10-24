@@ -324,7 +324,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27
+      image: ghcr.io/ajahann/cipher-e2e:pw1.63.0-node24.11.1-e6c0ae22e74bab090fabb0a06c4af3efe10e8c7a@sha256:bfaebb0ce67c5ed4b04e3587f3c20e95c5bf6d9dc3a1f74d3c7f6ed559666474
       options: --shm-size=1g
     defaults:
       run:
@@ -357,15 +357,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.6.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24.11.1'
+      - name: Verify preinstalled toolchain
+        run: |
+          test "$(node --version)" = v24.11.1
+          test "$(pnpm --version)" = 12.6.0
 
       # Build is the only store-cache writer; PR caches remain PR-scoped.
       - name: Restore pnpm store (read only)

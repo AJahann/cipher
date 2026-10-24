@@ -40,8 +40,8 @@ startup: it is not an isolated browser-image pull measurement.
 | Phase | Change | Status / decision |
 | --- | --- | --- |
 | 1 | Restore-only E2E dependency caching; one Build cache writer | Retained: three successful trials; cache ownership is deterministic |
-| 2 | Record video only on first retry | Implemented; hosted trials pending; first-attempt video intentionally unavailable |
-| 3 | Pinned Chromium-only public GHCR image | Pending; publish/anonymous-pull verification required before use |
+| 2 | Record video only on first retry | Retained: three successful trials; diagnostic policy verified |
+| 3 | Pinned Chromium-only public GHCR image | Implemented: published, smoke-tested and anonymous access verified; CI trials pending |
 | 4 | API provisioning using production key generation/KDF | Pending; keep explicit UI auth coverage |
 | 5 | Worker-specific accounts and auth files; trial two workers | Pending; isolate before concurrency |
 
@@ -96,3 +96,41 @@ This is the explicitly accepted diagnostic tradeoff, not removal of assertions.
   Corrected disposable-server port, then all 74 API tests passed serially.
 - Local Chromium uses a sandbox-installed executable, not the pinned CI browser;
   local timings must not be compared with hosted job durations.
+
+### Phase 2 measured decision
+
+Three successful full CI trials: **84, 90, 84 s**; median **84 s**, range
+**84–90 s**. Playwright command median **17 s**, versus phase 1's **20 s**.
+Container medians also changed, so do not attribute the entire nine-second
+whole-job difference to video. Retain the lower recording workload with the
+explicitly approved diagnostic tradeoff. Local full suite passed 14/14; a separate
+intentional-failure test verified screenshot/no-initial-video/retry-video+trace.
+
+### Phase 3 image candidate
+
+Published and smoke-tested in [40137357946](https://github.com/AJahann/cipher/actions/runs/40137357946).
+Anonymous access succeeded both in the publisher and via an independent registry
+manifest request. Normal PR CI receives no GHCR credentials.
+
+Pinned candidate digest:
+`sha256:bfaebb0ce67c5ed4b04e3587f3c20e95c5bf6d9dc3a1f74d3c7f6ed559666474`.
+
+Linux amd64 compressed manifest layer sizes: **351,325,837 bytes** candidate
+versus **955,790,767 bytes** previous MCR image (**63.2% smaller**). This measures
+registry layer bytes, not unpacked disk size or expected time savings. Debian
+Bookworm replaces Ubuntu inside the container; hosted validation must prove
+runtime compatibility. Host runners remain Ubuntu 24.04.
+
+The image includes exact Node/pnpm versions and Chromium headless shell only.
+E2E removes redundant toolchain installers, verifies installed versions and keeps
+the Playwright package/image parity guard. Headed browsers, custom channels,
+Firefox and WebKit are not supported by this image. See
+`.github/e2e-image/README.md` for rebuild, anonymous-access and rollback gates.
+
+## Cumulative timing evidence (screening only)
+
+| Cohort | Runs | E2E median | Observed range | Playwright median | Container median |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 3 | 96 s | 91–133 s | 23 s | 46 s |
+| 1 · Restore-only cache | 3 | 93 s | 87–105 s | 20 s | 49 s |
+| 2 · Retry-only video | 3 | 84 s | 84–90 s | 17 s | 42 s |
