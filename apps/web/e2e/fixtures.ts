@@ -57,8 +57,8 @@ export const test = base.extend<Fixtures, { workerAuth: WorkerAuth }>({
         workerInfo.workerIndex,
       );
       try {
-        const apiURL = workerInfo.config.metadata.apiURL;
-        const baseURL = workerInfo.project.use.baseURL;
+        const { apiURL } = workerInfo.config.metadata;
+        const { baseURL } = workerInfo.project.use;
         if (typeof apiURL !== 'string' || !baseURL) {
           throw new Error(
             'E2E provisioning requires metadata.apiURL and use.baseURL',
