@@ -41,9 +41,9 @@ startup: it is not an isolated browser-image pull measurement.
 | --- | --- | --- |
 | 1 | Restore-only E2E dependency caching; one Build cache writer | Retained: three successful trials; cache ownership is deterministic |
 | 2 | Record video only on first retry | Retained: three successful trials; diagnostic policy verified |
-| 3 | Pinned Chromium-only public GHCR image | Implemented: published, smoke-tested and anonymous access verified; CI trials pending |
-| 4 | API provisioning using production key generation/KDF | Pending; keep explicit UI auth coverage |
-| 5 | Worker-specific accounts and auth files; trial two workers | Pending; isolate before concurrency |
+| 3 | Pinned Chromium-only public GHCR image | Retained: three successful trials; anonymous image access and cache hits verified |
+| 4 | API provisioning using production key generation/KDF | Implemented with worker-scoped accounts at one CI worker; trials pending |
+| 5 | Benchmark two workers after worker-scoped provisioning | Pending; isolation foundation is in phase 4 |
 
 ### Phase 1: single cache writer
 
@@ -129,11 +129,15 @@ Firefox and WebKit are not supported by this image. See
 
 ## Cumulative timing evidence (screening only)
 
-| Cohort | Runs | E2E median | Observed range | Playwright median | Container median |
+| Cohort | Runs | E2E median | Observed range | Playwright median | Acceptance span median |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Baseline | 3 | 96 s | 91–133 s | 23 s | 46 s |
-| 1 · Restore-only cache | 3 | 93 s | 87–105 s | 20 s | 49 s |
-| 2 · Retry-only video | 3 | 84 s | 84–90 s | 17 s | 42 s |
+| Baseline | 3 | 96 s | 91–133 s | 23 s | 114 s |
+| 1 · Restore-only cache | 3 | 93 s | 87–105 s | 20 s | 111 s |
+| 2 · Retry-only video | 3 | 84 s | 84–90 s | 17 s | 104 s |
+| 3 · Slim Chromium image | 3 | 79 s | 75–80 s | 20 s | 96 s |
+
+Acceptance span is first job start through last required job completion; it
+includes internal scheduling and gate time, but not the initial workflow queue.
 
 ### Cache-path correction discovered during image review
 
@@ -161,3 +165,52 @@ in a slim Debian image omitted OS CA certificates. Added explicit
 remains enabled. This failed run is excluded from successful timing statistics
 but retained in the failure ledger; the final corrected image needs a fresh
 three-run cohort.
+
+### Phase 3 measured decision
+
+Final corrected cohort: **80, 75, 79 s**, median **79 s**, range **75–80 s**.
+All nine checks passed in each. Three exact dependency-store hits were explicitly
+reported; restore costs (5–8 s) are included. Container median was 30 s versus
+phase 2's 42 s, while the Playwright command median rose from 17 to 20 s. Thus
+image/startup work improved the whole job without proving faster browser tests.
+Retain the smaller pinned image and preinstalled toolchain; continue monitoring
+registry/cache overhead and patch the image through the documented upgrade gate.
+
+### Phase 4 fixture foundation (one worker)
+
+Provisioning and account isolation are deliberately implemented together, then
+benchmarked at **one** CI worker before changing concurrency. A worker gets
+unique Alice/Bob accounts and a private, atomic temporary directory beneath
+`playwright/.auth`, outside uploaded reports. Restarted workers and simultaneous
+runs cannot reuse global files. Contexts, request clients, private-key buffers and
+auth files are cleaned up in `finally` paths.
+
+Provisioning calls the real register API with production X25519 keys and the
+production Argon2id wrapping implementation (opslimit 2, memory 64 MiB). It checks
+201, authenticated identity, key-bundle equality and session cookies. No fake
+keys, database inserts, reduced password hashing or globally unlocked pages.
+Every authenticated browser still performs the real UI unlock.
+
+UI registration remains in the Charlie draft-isolation test; independent UI
+login/logout and unlock/wrong-passphrase tests remain. Charlie now also uses a
+random unique username. Application tests remain **13**; the former **14** total
+included a setup-only test that is replaced by the worker fixture, not removed
+application coverage. CI now fails on flaky retries rather than silently accepting
+a retry pass. Local worker-path tests cover simultaneous runs, projects,
+restarted workers, traversal-safe names and directory permissions.
+
+Local laboratory validation: typecheck and path unit test passed; 13 application
+E2E tests passed with one worker, and 39 executions passed with two workers across
+three repetitions. These local durations are not hosted speed evidence. Local
+Oxlint's JavaScript plugin bridge still hits its previously observed allocator
+panic; do not weaken lint configuration. Hosted full lint remains required.
+
+### Local accessibility flake found and fixed before hosted fixture trials
+
+The stricter flaky-test policy exposed one initial-attempt contrast failure on
+the login error-state scan; its retry passed, but the run correctly failed.
+The submit button becomes enabled while its `disabled:opacity-50` to full-opacity
+transition is still running (`transition-all duration-150`). Axe sampled that
+intermediate, low-contrast frame. The test now asserts the real submit button is
+enabled and has computed opacity 1 before scanning the stable error state. No
+axe rules, states or violations are excluded; no fixed sleeps or axe retries.

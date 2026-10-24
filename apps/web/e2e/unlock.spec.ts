@@ -1,12 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 
-import { PASSPHRASE, storageStateFor } from './support/auth-paths';
+import { PASSPHRASE } from './support/auth-paths';
 
 test('storageState alone lands on the unlock gate; passphrase restores the session', async ({
   browser,
+  aliceState,
 }) => {
   const context = await browser.newContext({
-    storageState: storageStateFor('alice'),
+    storageState: aliceState,
   });
   const page = await context.newPage();
 

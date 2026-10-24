@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from './fixtures';
 import { PASSPHRASE } from './support/auth-paths';
 
@@ -9,7 +10,7 @@ test('drafts do not follow the user into another conversation', async ({
   const context = await browser.newContext();
   try {
     const page = await context.newPage();
-    const charlie = `charlie-${Date.now()}`;
+    const charlie = `charlie-${randomUUID().replaceAll('-', '').slice(0, 20)}`;
     await page.goto('/');
     await page.getByRole('button', { name: 'register', exact: true }).click();
     await page.getByLabel('username', { exact: true }).fill(charlie);

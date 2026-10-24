@@ -1,5 +1,4 @@
-import { test, expect } from '@playwright/test';
-import { storageStateFor } from './support/auth-paths';
+import { test, expect } from './fixtures';
 
 test('disabled configuration leaves no GitHub sign-in UI', async ({ page }) => {
   await page.route('**/auth/config', (route) =>
@@ -28,9 +27,10 @@ test('enabled configuration exposes the existing GitHub sign-in navigation', asy
 
 test('chat respects the global switch and saved link status after reload', async ({
   browser,
+  aliceState,
 }) => {
   const context = await browser.newContext({
-    storageState: storageStateFor('alice'),
+    storageState: aliceState,
   });
   const page = await context.newPage();
   let githubEnabled = false;
