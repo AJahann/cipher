@@ -113,10 +113,10 @@ Anonymous access succeeded both in the publisher and via an independent registry
 manifest request. Normal PR CI receives no GHCR credentials.
 
 Pinned candidate digest:
-`sha256:bfaebb0ce67c5ed4b04e3587f3c20e95c5bf6d9dc3a1f74d3c7f6ed559666474`.
+`sha256:a226319f04b46a355621d8fde078714ada29dd232fe5d42e996446e5e74283f7`.
 
-Linux amd64 compressed manifest layer sizes: **351,325,837 bytes** candidate
-versus **955,790,767 bytes** previous MCR image (**63.2% smaller**). This measures
+Linux amd64 compressed manifest layer sizes: **383,361,788 bytes** candidate
+versus **955,790,767 bytes** previous MCR image (**59.9% smaller**). This measures
 registry layer bytes, not unpacked disk size or expected time savings. Debian
 Bookworm replaces Ubuntu inside the container; hosted validation must prove
 runtime compatibility. Host runners remain Ubuntu 24.04.
