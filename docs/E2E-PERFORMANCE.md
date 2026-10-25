@@ -1,243 +1,195 @@
 # E2E performance improvement report
 
-## Scope and acceptance
+## Outcome
 
-Integration branch: `e2e/performance`. Each phase is implemented on a child
-branch, tested, then merged into the integration branch. The final PR targets
-`main` for human review; it must not auto-merge.
+Retain all five phases on `e2e/performance`, including **two isolated Chromium
+workers**. Final PR targets `main` for human review; do not auto-merge.
 
-Preserve all required acceptance jobs, security assertions, real KDF/key
-operations, UI registration/login/unlock coverage, screenshots on failure and
-first-retry traces. No paid services or credentials are required. A custom image
-may contain public dependencies only. Never publish application data, auth
-states or secrets.
+- Hosted E2E median: **96 → 72 seconds**
+  (24 seconds / 25% lower observed median).
+- Observed range: **91–133 → 63–83 seconds**.
+- Playwright-command median: **23 → 13 seconds**.
+  This includes API/web startup, provisioning and tests, not only assertions.
+- Full acceptance span median: **114 → 87 seconds**.
+  First job start to last required job completion, excluding initial queue.
 
-Measure at least three successful, comparable hosted runs per phase. Use the
-whole E2E job median and observed range, not the sum of parallel job durations.
-The Playwright command includes API/web startup and setup, not just assertions.
-Report failures and retries separately; three runs are screening evidence, not
-statistical significance. Cache misses and first-time image pulls are real costs.
+These small sequential samples do **not** guarantee a speedup on every run.
+Container startup, cache/registry state and runner variability materially affect
+whole-job times. Do not attribute the entire improvement to one tool or parallelism.
 
-## Retained baseline
-
-Source commit: `feb58c51aef134d18751a033ed9a91c94e80d953`.
-All three completed full CI runs succeeded; two manual dispatches and one main
-push. Cache inputs, retry counts and per-test durations are not established by
-public job timestamps, so do not infer a controlled cold/warm comparison.
-
-| Run | E2E job | Containers | Playwright command | Post Node cache step |
-| --- | ---: | ---: | ---: | ---: |
-| [39791227119](https://github.com/AJahann/cipher/actions/runs/39791227119) | 133 s | 49 s | 23 s | 34 s |
-| [39826084181](https://github.com/AJahann/cipher/actions/runs/39826084181) | 96 s | 46 s | 22 s | 0 s |
-| [40135724420](https://github.com/AJahann/cipher/actions/runs/40135724420) | 91 s | 36 s | 23 s | 0 s |
-
-Whole-job median **96 s**, observed range **91–133 s**. Playwright command
-median **23 s**, range **22–23 s**. Container initialization includes PostgreSQL
-startup: it is not an isolated browser-image pull measurement.
-
-## Implementation order
-
-| Phase | Change | Status / decision |
-| --- | --- | --- |
-| 1 | Restore-only E2E dependency caching; one Build cache writer | Retained: three successful trials; cache ownership is deterministic |
-| 2 | Record video only on first retry | Retained: three successful trials; diagnostic policy verified |
-| 3 | Pinned Chromium-only public GHCR image | Retained: three successful trials; anonymous image access and cache hits verified |
-| 4 | API provisioning using production key generation/KDF | Retained: three full green runs, median 77 s (76–81 s), one CI worker |
-| 5 | Benchmark two workers after worker-scoped provisioning | In progress: bounded two-worker trial after isolated foundation |
-
-### Phase 1: single cache writer
-
-All dependency consumers restore an exact lockfile/OS/architecture/Node-major
-store key. Only Build saves via `actions/cache`; all other jobs use
-`actions/cache/restore`, with no post-job save. This removes E2E cache-write work
-and redundant writers without caching `node_modules`. The new explicit key
-namespace has an initial cold population cost, which must not be hidden.
-
-GitHub's cache scope applies unchanged: a fork PR may populate only its PR-scoped
-cache; no privileged workflow restores an untrusted PR cache into a trusted
-publish job. No broad restore prefixes are used. Failed installs cannot save a
-partial cache because the writer's normal post-save requires job success.
-
-No median speedup is claimed before trials. The baseline's 34-second cache tail
-occurred in only one run; the other two already spent zero seconds there.
-
-## Operational limits
-
-- Keep required `CI Gate`; never skip security tests to reduce duration.
-- Exact-run artifacts require rerunning all jobs, not failed jobs only.
-- Cache storage and GHCR availability are external dependencies; installs must
-  work on cache misses, and image upgrades require matching Playwright versions.
-- Do not enable workers against the existing shared Alice/Bob sessions.
-- Never commit `playwright/.auth`, cookies, wrapped private keys or trace data.
-
-### Phase 1 measured decision
-
-Trials: [105 s](https://github.com/AJahann/cipher/actions/runs/40137110848),
-[87 s](https://github.com/AJahann/cipher/actions/runs/40137297269),
-[93 s](https://github.com/AJahann/cipher/actions/runs/40137451625).
-All nine checks succeeded in each run. Median **93 s**, range **87–105 s**,
-versus baseline **96 s**, range **91–133 s**. The 3-second median difference is
-not convincing causal speed evidence with this sample and startup variance.
-Retain for removal of E2E save work and single-writer ownership; the E2E
-post-restore step was zero seconds in all three trials. No new failure observed
-in hosted acceptance; retry counts are not available from public timestamps.
-
-### Phase 2 diagnostic tradeoff
-
-Video now records only on first retry, matching the existing trace policy.
-Failure screenshots remain enabled. A failure on the initial attempt has a
-screenshot but no video; a first retry records video even if that retry passes.
-This is the explicitly accepted diagnostic tradeoff, not removal of assertions.
-
-### Local validation caveats
-
-- CI helper tests, formatting, typecheck and 141 non-database unit tests passed.
-- Initial local PostgreSQL attempt used the wrong port (connection refused).
-  Corrected disposable-server port, then all 74 API tests passed serially.
-- Local Chromium uses a sandbox-installed executable, not the pinned CI browser;
-  local timings must not be compared with hosted job durations.
-
-### Phase 2 measured decision
-
-Three successful full CI trials: **84, 90, 84 s**; median **84 s**, range
-**84–90 s**. Playwright command median **17 s**, versus phase 1's **20 s**.
-Container medians also changed, so do not attribute the entire nine-second
-whole-job difference to video. Retain the lower recording workload with the
-explicitly approved diagnostic tradeoff. Local full suite passed 14/14; a separate
-intentional-failure test verified screenshot/no-initial-video/retry-video+trace.
-
-### Phase 3 image candidate
-
-Final CA-correct image published and smoke-tested in [40139123937](https://github.com/AJahann/cipher/actions/runs/40139123937).
-Anonymous access succeeded both in the publisher and via an independent registry
-manifest request. Normal PR CI receives no GHCR credentials.
-
-Pinned candidate digest:
-`sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f`.
-
-Linux amd64 compressed manifest layer sizes: **384,085,775 bytes** candidate
-versus **955,790,767 bytes** previous MCR image (**59.8% smaller**). This measures
-registry layer bytes, not unpacked disk size or expected time savings. Debian
-Bookworm replaces Ubuntu inside the container; hosted validation must prove
-runtime compatibility. Host runners remain Ubuntu 24.04.
-
-The image includes exact Node/pnpm versions and Chromium headless shell only.
-E2E removes redundant toolchain installers, verifies installed versions and keeps
-the Playwright package/image parity guard. Headed browsers, custom channels,
-Firefox and WebKit are not supported by this image. See
-`.github/e2e-image/README.md` for rebuild, anonymous-access and rollback gates.
-
-## Cumulative timing evidence (screening only)
+## Hosted measurements
 
 | Cohort | Runs | E2E median | Observed range | Playwright median | Acceptance span median |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Baseline | 3 | 96 s | 91–133 s | 23 s | 114 s |
 | 1 · Restore-only cache | 3 | 93 s | 87–105 s | 20 s | 111 s |
 | 2 · Retry-only video | 3 | 84 s | 84–90 s | 17 s | 104 s |
-| 3 · Slim Chromium image | 3 | 79 s | 75–80 s | 20 s | 96 s |
+| 3 · Slim image + cache parity | 3 | 79 s | 75–80 s | 20 s | 96 s |
+| 4 · Isolated API fixtures (1 worker) | 3 | 77 s | 76–81 s | 17 s | 92 s |
+| 5 · Two isolated workers | 3 | 72 s | 63–83 s | 13 s | 87 s |
 
-Acceptance span is first job start through last required job completion; it
-includes internal scheduling and gate time, but not the initial workflow queue.
+Each cohort contains three full successful hosted runs. Non-Markdown source trees
+are identical within each cohort (fingerprints verified). Original baseline commit
+is `feb58c51aef134d18751a033ed9a91c94e80d953`; baseline mixes push/manual runs,
+whereas phase trials use PRs. This is not a randomized or statistically significant
+experiment. Timestamps have one-second precision. Public job durations do not
+establish per-test retry counts, warm/cold image state or a controlled cache comparison.
 
-### Cache-path correction discovered during image review
+[Machine-readable evidence](e2e-performance-results.json) contains every accepted
+run URL, SHA, source-tree fingerprint, job/step timing, cache observation and summary.
+UTC timestamp arithmetic and medians were independently checked. Failures are
+reported separately below, never treated as successful fast runs.
 
-The original Phase 1 cache path came from each job's HOME. GitHub cache versions
-include paths, so host Build and container E2E paths could not share a populated
-store despite matching key text. Phase 1 therefore proved removal of E2E writes,
-not effective cross-environment cache hits. Corrected before the retained image
-trials: all jobs explicitly use `/tmp/cipher-pnpm-store` via pnpm's environment
-configuration, and cache that same absolute path. The first corrected-key version
-may be cold. No cache-hit percentage is inferred from timing alone.
+## Implementation decisions, easy to hard
 
-Image hardening before the retained cohort: install and smoke-test `git` and
-`zstd`. The latter avoids a second host/container cache-version mismatch from
-different compression availability. Candidate builds and pre-hardening CI runs
-are development checks, not silently mixed into the final image cohort.
+### 1. Restore-only consumers, one cache writer — retained
 
-### Pre-cohort infrastructure failure (not hidden)
+Build is the sole pnpm-store cache writer. Other consumers, including E2E, restore
+only, using an exact lockfile/OS/architecture/Node-major key. No broad restore
+prefixes or cached `node_modules`. The small timing change alone is weak evidence;
+retain deterministic ownership and removal of E2E post-save work.
 
-[40138874577](https://github.com/AJahann/cipher/actions/runs/40138874577)
-failed E2E Checkout before any application test: Git reported `server certificate
-verification failed. CAfile: none`. Installing Git without recommended packages
-in a slim Debian image omitted OS CA certificates. Added explicit
-`ca-certificates` and a publisher smoke test that performs verified HTTPS
-`git ls-remote` against this public repository before publication. TLS verification
-remains enabled. This failed run is excluded from successful timing statistics
-but retained in the failure ledger; the final corrected image needs a fresh
-three-run cohort.
+**Correction during phase 3:** initial paths resolved from job-specific HOME values.
+Host Build and container E2E therefore had different cache versions despite equal
+key text. Phase 1 proved ownership, **not shared cache hits**. All jobs now use
+`/tmp/cipher-pnpm-store` through `pnpm_config_store_dir`, validate the resolved pnpm
+path, and use compatible compression tooling (`zstd`).
 
-### Phase 3 measured decision
+The corrected image, one-worker fixture and final two-worker cohorts each observed
+three exact store hits. Earlier unknown hit states are unknown, not misses. Restore
+cost is included; cache hits are not assumed cheaper than network installation.
+PR cache scope stays under GitHub rules; no privileged publisher restores PR caches.
 
-Final corrected cohort: **80, 75, 79 s**, median **79 s**, range **75–80 s**.
-All nine checks passed in each. Three exact dependency-store hits were explicitly
-reported; restore costs (5–8 s) are included. Container median was 30 s versus
-phase 2's 42 s, while the Playwright command median rose from 17 to 20 s. Thus
-image/startup work improved the whole job without proving faster browser tests.
-Retain the smaller pinned image and preinstalled toolchain; continue monitoring
-registry/cache overhead and patch the image through the documented upgrade gate.
+### 2. Retry-only video — retained with diagnostic tradeoff
 
-### Phase 4 fixture foundation (one worker)
+Passing attempts no longer encode video. Failure screenshots remain; trace and video
+record on first retry. An initial failure has **no initial-attempt video**. A local
+intentional-failure check verified initial screenshot, no initial video, and retry
+video plus trace. No assertions or required security tests were removed.
 
-Provisioning and account isolation are deliberately implemented together, then
-benchmarked at **one** CI worker before changing concurrency. A worker gets
-unique Alice/Bob accounts and a private, atomic temporary directory beneath
-`playwright/.auth`, outside uploaded reports. Restarted workers and simultaneous
-runs cannot reuse global files. Contexts, request clients, private-key buffers and
-auth files are cleaned up in `finally` paths.
+### 3. Pinned dependency-only Chromium image — retained
 
-Provisioning calls the real register API with production X25519 keys and the
-production Argon2id wrapping implementation (opslimit 2, memory 64 MiB). It checks
-201, authenticated identity, key-bundle equality and session cookies. No fake
-keys, database inserts, reduced password hashing or globally unlocked pages.
-Every authenticated browser still performs the real UI unlock.
+Digest: `sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f`.
+See [maintenance, upgrade and rollback](../.github/e2e-image/README.md).
 
-UI registration remains in the Charlie draft-isolation test; independent UI
-login/logout and unlock/wrong-passphrase tests remain. Charlie now also uses a
-random unique username. Application tests remain **13**; the former **14** total
-included a setup-only test that is replaced by the worker fixture, not removed
-application coverage. CI now fails on flaky retries rather than silently accepting
-a retry pass. Local worker-path tests cover simultaneous runs, projects,
-restarted workers, traversal-safe names and directory permissions.
+The image pins Node 24.11.1, pnpm 12.6.0 and Playwright 1.63.0, installing only
+Chromium headless shell. Its isolated Docker context excludes application source,
+auth states and secrets. Anonymous public pulls were verified in the publisher and
+by an independent registry request. PR jobs receive no GHCR credentials.
 
-Local laboratory validation: typecheck and path unit test passed; 13 application
-E2E tests passed with one worker, and 39 executions passed with two workers across
-three repetitions. These local durations are not hosted speed evidence. Local
-Oxlint's JavaScript plugin bridge still hits its previously observed allocator
-panic; do not weaken lint configuration. Hosted full lint remains required.
+Linux amd64 compressed manifest layers: **384,085,775 bytes** versus
+previous MCR image **955,790,767 bytes** (**59.8% smaller**).
+This is registry layer size, not unpacked size or an expected download time. The
+container uses Debian Bookworm; the host runner remains Ubuntu 24.04.
 
-### Local accessibility flake found and fixed before hosted fixture trials
+Publisher triggers are trusted pushes to approved image paths/branches, never PRs.
+Only its publishing job has package-write permission; checkout does not persist
+credentials. Smoke checks verify exact versions, browser launch and verified HTTPS
+Git before publication. Git, zstd and OS CA certificates are explicit dependencies;
+TLS verification stays enabled. Package/image parity remains a required CI guard.
 
-The stricter flaky-test policy exposed one initial-attempt contrast failure on
-the login error-state scan; its retry passed, but the run correctly failed.
-The submit button becomes enabled while its `disabled:opacity-50` to full-opacity
-transition is still running (`transition-all duration-150`). Axe sampled that
-intermediate, low-contrast frame. The test now asserts the real submit button is
-enabled and has computed opacity 1 before scanning the stable error state. No
-axe rules, states or violations are excluded; no fixed sleeps or axe retries.
+Upgrade package/image versions together, rebuild, smoke-test, verify anonymous access,
+then pin the new digest. This image does not support headed/custom-channel runs or
+Firefox/WebKit; those local projects remain available with normal browser installs.
+Phase 3 combines image/toolchain changes **and cache parity correction**: it is not
+an isolated image-size experiment. Its Playwright median rose while total time fell.
 
-### Hosted fixture pre-cohort failures (not hidden)
+### 4. Real API provisioning plus worker isolation — retained
 
-[40140392138](https://github.com/AJahann/cipher/actions/runs/40140392138)
-caught two integration issues before the retained fixture cohort:
+Provision Alice/Bob through the real register API with production X25519 keys and
+Argon2id wrapping (opslimit 2, memory 64 MiB), verifying identity, key bundle and
+session cookie. No fake keys, direct DB inserts, reduced hashing or global unlock.
+Authenticated browser contexts still perform the real passphrase UI unlock.
 
-- React 19's lint rule interpreted Playwright's callback parameter named `use`
-  as the React hook. Renamed fixture callbacks to `fixtureUse`, not disabled lint.
-- A CommonJS worker importing the root ESM environment module failed collection
-  under the exact repository config. The external local harness had masked that
-  loader boundary. Reproduced with the repository's own `--list`, removed the
-  worker import, and passed validated URLs explicitly from Playwright config
-  metadata and `use.baseURL`. The production environment schema stays intact.
+Workers get unique random accounts and atomic private directories beneath
+`playwright/.auth`, outside uploaded reports. Directories are 0700 and auth files
+0600. Project/run/worker-restart paths cannot collide. Finally blocks dispose
+requests/contexts, wipe private-key buffers and delete auth files. CI's disposable
+PostgreSQL is discarded at job end; this does not purge rows in persistent local DBs.
 
-The two missing-CA development runs were
-[40138874577](https://github.com/AJahann/cipher/actions/runs/40138874577) and
-[40139127816](https://github.com/AJahann/cipher/actions/runs/40139127816); both
-failed verified HTTPS checkout before tests, and were corrected before the
-retained image cohort. None of these failures count as successful timings.
+All **13 application tests** remain. Previous total 14 included a setup-only test
+replaced by provisioning, not removed application coverage. UI registration,
+independent UI login/logout, unlock/wrong-passphrase, encrypted messaging, RTL and
+all accessibility state assertions remain. Logout does not revoke worker fixture
+sessions. CI now **fails on flaky retries**, even when a retry passes.
+PostgreSQL API tests stay serial with a separate database service.
 
-### Phase 5 bounded parallelism trial
+### 5. Two bounded workers — retained after corrected trials
 
-Only worker count changes from one to two. Keep real key derivation, per-worker accounts, all application tests and fail-on-flaky acceptance. Compare three full hosted runs with phase 4; keep one worker if no worthwhile benefit or stability regresses. Never infer a linear 2× speedup.
+Final corrected E2E trials: **83, 72, 63 seconds**, median **72**,
+versus one-worker median **77**. Playwright-command median
+fell **17 → 13 seconds**.
+All nine jobs passed each corrected run; the final local stress run also passed
+39 executions without retries. Retain two as a bounded
+improvement, not linear scaling. Whole-job ranges overlap; startup variance remains.
 
-### Two-worker pre-cohort flake
+A ready-state accessibility assertion was also corrected after the optimistic-message
+flake below, so this is not a perfectly isolated worker-count experiment. Earlier
+green development runs 40141846737 (65 s) and 40142019523 (61 s) are not pooled with
+the corrected cohort. CLI `--workers=1` is the immediate concurrency rollback;
+retain isolated provisioning even if reducing workers.
 
-Run [40142184439](https://github.com/AJahann/cipher/actions/runs/40142184439) correctly failed on a flaky accessibility assertion (12 passed, 1 flaky). The conversation scan could observe the intentionally dimmed optimistic `sending` bubble before server acknowledgement. The ready-state test now asserts delivery is `sent` and bubble opacity is 1 before the unchanged axe scan. No axe exclusions, fixed sleep or reduced assertions. Earlier green two-worker development runs 40141846737 (65 s) and 40142019523 (61 s) are not mixed into the corrected cohort. Start three fresh full trials.
+Do not raise workers or shard blindly. Extra workers provision more accounts and
+run memory-hard crypto, competing for CPU/memory and API limits. Shards duplicate
+setup and runner costs. Require another measured stability/budget gate beyond two.
+
+## Failure and correction ledger
+
+| Run / check | Failure | Correction / disposition |
+| --- | --- | --- |
+| [40138874577](https://github.com/AJahann/cipher/actions/runs/40138874577), [40139127816](https://github.com/AJahann/cipher/actions/runs/40139127816) | Missing CA certificates broke checkout before tests | Install CA bundle; publisher verifies HTTPS Git; never disable TLS |
+| [40140392138](https://github.com/AJahann/cipher/actions/runs/40140392138) | React hook lint on callback `use`; CJS worker import of root ESM env failed collection | Rename callback `fixtureUse`; pass validated URLs through config metadata/use; verify exact root config |
+| [40140662448](https://github.com/AJahann/cipher/actions/runs/40140662448) | Two destructuring lint errors; E2E passed | Destructure URLs without weakening lint or behavior |
+| [40142184439](https://github.com/AJahann/cipher/actions/runs/40142184439) | Conversation scan: 12 passed, 1 flaky; CI correctly rejected retry pass | Assert delivered `sent` state and opacity 1 before unchanged ready-state axe scan; restart cohort |
+| Local login-error accessibility scan | Enabled submit button was still transitioning from disabled opacity | Assert enabled and computed opacity 1 before unchanged scan |
+
+The ready-state conversation scan raced the intentionally dimmed optimistic
+`sending` bubble. Synchronizing on acknowledgement does **not** prove that transient
+sending-state contrast meets accessibility requirements; that remains a separate
+product-accessibility question. No axe exclusions, arbitrary sleeps, scan retries
+or severity reductions were introduced.
+
+Four superseded development runs were cancelled: 40138788924, 40138728313,
+40138307314, 40138293289. Provisional image successes, including 40138568542 (69 s),
+are excluded because runtime source/image differs, not because timing was inconvenient.
+Corrected cohorts retain all completed accepted replicates with the same source.
+
+## Validation and operational limits
+
+- CI helper tests: **12 passed**. Unit suite: **142 passed,
+  34 DB-conditional skips**. Explicit serial API run:
+  **74 passed** (overlaps unit coverage; do not sum).
+- Final local Chromium stress: **39/39 without retries**;
+  targeted delivered-state scan: **5 repeats passed**.
+  Local system Chromium/custom harness timings are not hosted speed evidence.
+- Local Oxlint's JS plugin bridge has a known allocator panic; it was not bypassed
+  or claimed green. Hosted full lint passed in every retained final trial.
+- The initial local harness masked the ESM/CJS loader boundary. Exact repository
+  collection and hosted acceptance now validate the actual configuration.
+- Required jobs stay Change Scope, Format, Lint, Typecheck, Build, Unit Tests,
+  PostgreSQL Tests, E2E Tests and CI Gate. Keep CI Gate required.
+- Existing exact-run build reuse remains. **Rerun all jobs**, not failed jobs only:
+  artifact names are attempt-specific. E2E setup stays parallel with Build.
+- Third parties: GitHub Actions/cache/artifacts, public GHCR, npm/pnpm, Playwright.
+  No paid service, new account or user credential. Registry/cache availability,
+  cold image pulls and pinned-image security updates remain operational limits.
+- Existing action versions emit Node 20 runtime-migration warnings; app Node is 24.
+  Update action majors separately with acceptance, not as unmeasured scope expansion.
+- Never publish auth states, cookies, wrapped keys or production data. Retry traces
+  can contain disposable test data; existing artifact policy still applies.
+- Next compiler cache remains disabled. No paid remote-cache service, PostgreSQL
+  parallelism or broad sharding is introduced by this work.
+
+## Branch and trial audit
+
+Phase PRs, all merged into integration only:
+[#39](https://github.com/AJahann/cipher/pull/39),
+[#40](https://github.com/AJahann/cipher/pull/40),
+[#41](https://github.com/AJahann/cipher/pull/41),
+[#42](https://github.com/AJahann/cipher/pull/42),
+[#43](https://github.com/AJahann/cipher/pull/43).
+
+Trial ledgers: [cache](e2e-trials.md), [video](e2e-video-trials.md),
+[image](e2e-phase3-trials.md), [fixtures](e2e-phase4-trials.md),
+[two workers](e2e-phase5-trials.md). Exact sources are in the JSON evidence.
+The final PR must pass full acceptance and stay open for a human merge.
