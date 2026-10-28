@@ -1,0 +1,58 @@
+## memberships-hub
+Index Only Scan using conversation_members_user_conversation_idx on conversation_members  (cost=0.42..32.10 rows=667 width=16) (actual time=0.020..0.174 rows=800 loops=1)
+  Index Cond: (user_id = 'b960c3c0-d271-66e3-be8b-cf89d7079a9f'::uuid)
+  Heap Fetches: 0
+  Buffers: shared hit=9
+Planning Time: 0.044 ms
+Execution Time: 0.231 ms
+
+## memberships-whale
+Index Only Scan using conversation_members_user_conversation_idx on conversation_members  (cost=0.42..852.85 rows=20367 width=16) (actual time=0.018..4.040 rows=20000 loops=1)
+  Index Cond: (user_id = 'ca9d1a6b-0fb1-9330-ffa4-0b6fcc828d5b'::uuid)
+  Heap Fetches: 0
+  Buffers: shared hit=124
+Planning Time: 0.040 ms
+Execution Time: 5.312 ms
+
+## memberships-ordinary
+Index Only Scan using conversation_members_user_conversation_idx on conversation_members  (cost=0.42..4.55 rows=7 width=16) (actual time=0.014..0.015 rows=2 loops=1)
+  Index Cond: (user_id = '9750e18a-da78-9e0e-71ba-c6d3833c06af'::uuid)
+  Heap Fetches: 0
+  Buffers: shared hit=4
+Planning Time: 0.069 ms
+Execution Time: 0.026 ms
+
+## directory-first
+Limit  (cost=0.42..4.64 rows=101 width=29) (actual time=0.017..0.047 rows=101 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using users_directory_id_username_idx on users  (cost=0.42..10443.42 rows=249999 width=29) (actual time=0.016..0.034 rows=101 loops=1)
+        Filter: (id <> '000122b0-dd0c-cf8a-a08e-76816f188985'::uuid)
+        Rows Removed by Filter: 1
+        Heap Fetches: 0
+        Buffers: shared hit=4
+Planning Time: 0.056 ms
+Execution Time: 0.062 ms
+
+## directory-middle
+Limit  (cost=0.42..4.89 rows=101 width=29) (actual time=0.022..0.051 rows=101 loops=1)
+  Buffers: shared hit=4
+  ->  Index Only Scan using users_directory_id_username_idx on users  (cost=0.42..5479.42 rows=123750 width=29) (actual time=0.022..0.039 rows=101 loops=1)
+        Index Cond: (id > '7febafb3-99ac-459e-f8da-c44ddfc8605d'::uuid)
+        Filter: (id <> '7fecf512-d360-17b3-3a0f-340e565138fb'::uuid)
+        Rows Removed by Filter: 1
+        Heap Fetches: 0
+        Buffers: shared hit=4
+Planning Time: 0.060 ms
+Execution Time: 0.065 ms
+
+## directory-deep
+Limit  (cost=0.42..4.93 rows=101 width=29) (actual time=0.012..0.050 rows=101 loops=1)
+  Buffers: shared hit=5
+  ->  Index Only Scan using users_directory_id_username_idx on users  (cost=0.42..391.42 rows=8750 width=29) (actual time=0.011..0.038 rows=101 loops=1)
+        Index Cond: (id > 'f5ae25f9-a7a4-0aac-db95-48cd85321527'::uuid)
+        Filter: (id <> 'f5b05699-13f0-b4bb-e274-3d41a51efa30'::uuid)
+        Rows Removed by Filter: 1
+        Heap Fetches: 0
+        Buffers: shared hit=5
+Planning Time: 0.052 ms
+Execution Time: 0.064 ms

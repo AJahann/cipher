@@ -1,0 +1,64 @@
+## memberships-hub
+Bitmap Heap Scan on conversation_members  (cost=13.59..2093.60 rows=667 width=16) (actual time=0.169..1.074 rows=800 loops=1)
+  Recheck Cond: (user_id = 'b960c3c0-d271-66e3-be8b-cf89d7079a9f'::uuid)
+  Heap Blocks: exact=800
+  Buffers: shared hit=803
+  ->  Bitmap Index Scan on conversation_members_user_id_idx  (cost=0.00..13.43 rows=667 width=0) (actual time=0.083..0.083 rows=800 loops=1)
+        Index Cond: (user_id = 'b960c3c0-d271-66e3-be8b-cf89d7079a9f'::uuid)
+        Buffers: shared hit=3
+Planning Time: 0.049 ms
+Execution Time: 1.119 ms
+
+## memberships-whale
+Bitmap Heap Scan on conversation_members  (cost=354.27..9954.86 rows=20367 width=16) (actual time=0.513..3.372 rows=20000 loops=1)
+  Recheck Cond: (user_id = 'ca9d1a6b-0fb1-9330-ffa4-0b6fcc828d5b'::uuid)
+  Heap Blocks: exact=374
+  Buffers: shared hit=392
+  ->  Bitmap Index Scan on conversation_members_user_id_idx  (cost=0.00..349.18 rows=20367 width=0) (actual time=0.471..0.471 rows=20000 loops=1)
+        Index Cond: (user_id = 'ca9d1a6b-0fb1-9330-ffa4-0b6fcc828d5b'::uuid)
+        Buffers: shared hit=18
+Planning Time: 0.044 ms
+Execution Time: 4.107 ms
+
+## memberships-ordinary
+Bitmap Heap Scan on conversation_members  (cost=4.48..31.99 rows=7 width=16) (actual time=0.015..0.016 rows=2 loops=1)
+  Recheck Cond: (user_id = '9750e18a-da78-9e0e-71ba-c6d3833c06af'::uuid)
+  Heap Blocks: exact=1
+  Buffers: shared hit=4
+  ->  Bitmap Index Scan on conversation_members_user_id_idx  (cost=0.00..4.48 rows=7 width=0) (actual time=0.012..0.012 rows=2 loops=1)
+        Index Cond: (user_id = '9750e18a-da78-9e0e-71ba-c6d3833c06af'::uuid)
+        Buffers: shared hit=3
+Planning Time: 0.062 ms
+Execution Time: 0.028 ms
+
+## directory-first
+Limit  (cost=0.42..12.41 rows=101 width=29) (actual time=0.017..0.158 rows=101 loops=1)
+  Buffers: shared hit=105
+  ->  Index Scan using users_pkey on users  (cost=0.42..29670.68 rows=249999 width=29) (actual time=0.016..0.147 rows=101 loops=1)
+        Filter: (id <> '000122b0-dd0c-cf8a-a08e-76816f188985'::uuid)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=105
+Planning Time: 0.040 ms
+Execution Time: 0.172 ms
+
+## directory-middle
+Limit  (cost=0.42..21.07 rows=101 width=29) (actual time=0.018..0.157 rows=101 loops=1)
+  Buffers: shared hit=105
+  ->  Index Scan using users_pkey on users  (cost=0.42..25306.56 rows=123750 width=29) (actual time=0.017..0.147 rows=101 loops=1)
+        Index Cond: (id > '7febafb3-99ac-459e-f8da-c44ddfc8605d'::uuid)
+        Filter: (id <> '7fecf512-d360-17b3-3a0f-340e565138fb'::uuid)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=105
+Planning Time: 0.054 ms
+Execution Time: 0.171 ms
+
+## directory-deep
+Limit  (cost=0.42..221.97 rows=101 width=29) (actual time=0.013..0.145 rows=101 loops=1)
+  Buffers: shared hit=106
+  ->  Index Scan using users_pkey on users  (cost=0.42..19194.52 rows=8750 width=29) (actual time=0.013..0.134 rows=101 loops=1)
+        Index Cond: (id > 'f5ae25f9-a7a4-0aac-db95-48cd85321527'::uuid)
+        Filter: (id <> 'f5b05699-13f0-b4bb-e274-3d41a51efa30'::uuid)
+        Rows Removed by Filter: 1
+        Buffers: shared hit=106
+Planning Time: 0.046 ms
+Execution Time: 0.158 ms
