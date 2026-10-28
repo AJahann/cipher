@@ -23,7 +23,7 @@ JSON out (`Content-Type: application/json`).
 **Authentication.** A server-side session (`@fastify/session`, stored in
 Postgres table `user_sessions`) identified by the signed, `HttpOnly`,
 `SameSite=Lax` cookie **`sessionId`** (7-day max age, `Secure` in
-production). Register and login set it; logout destroys it. "Auth: session"
+production), renewed on authenticated requests. Register and login set it; logout destroys it. "Auth: session"
 below means the route runs `requireAuth` and answers `401 UNAUTHENTICATED`
 without a valid session. CORS allows only `CLIENT_ORIGIN`, with credentials.
 
@@ -146,7 +146,7 @@ Create an account with its E2EE key material and start a session.
 
 - **Auth:** session.
 - **Request:** no body.
-- **Response 200:** `{ "ok": true }`. Destroys the session row.
+- **Response 200:** `{ "ok": true }`. Destroys the session row and permanently revokes its ID, so a stale in-flight response cannot restore it.
 - **Errors:** `401 UNAUTHENTICATED`.
 - **Idempotent:** the effect is (you end up logged out), the response is not:
   a second call has no session and gets `401`. Clients treat 401 from logout

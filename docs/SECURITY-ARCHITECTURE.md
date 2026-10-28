@@ -8,6 +8,10 @@ Cipher is an educational, single-instance encrypted messenger, not an independen
 
 HTTP sessions are stored in PostgreSQL, rotated on authentication, and destroyed on logout. Socket handshakes require the configured browser Origin and a valid signed session cookie. Each socket joins a session-scoped room. Logout and session rotation disconnect that room immediately; sensitive events reload session authority; idle sockets are checked every five seconds and disconnected on expiry or store failure. The bounded idle interval is an explicit receive-authority window, not instantaneous distributed revocation.
 
+Session saves and destruction serialize by session ID using a PostgreSQL transaction-scoped advisory lock. Destruction atomically records the ID in `session_revocations` and deletes its `user_sessions` row. Later rolling or explicit saves for that ID cannot recreate authority. Session IDs are not reused. Valid sessions retain rolling seven-day expiry; this does not cancel work already authorized before revocation.
+
+Apply migration `0005_session_revocations` before starting the updated API. Drain/stop old API processes before rollout: old binaries do not participate in the revocation lock or tombstone checks. Revocation records are intentionally permanent and are not removed by expired-session pruning; storage grows with revoked IDs. Do not add time-based tombstone pruning without a reviewed bound on stale writers. No request-time schema creation is introduced.
+
 Local IP, per-account event, and hash-concurrency limits bound work on a single API process. They are not distributed controls. Browser auth mutations with an Origin must match CLIENT_ORIGIN; non-browser HTTP clients without Origin remain supported, while WebSocket handshakes without Origin are refused. Configure the proxy and CLIENT_ORIGIN consistently; do not trust arbitrary forwarded client-IP headers.
 
 ## Password migration

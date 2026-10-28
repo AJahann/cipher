@@ -11,3 +11,11 @@ export const userSessions = pgTable(
   },
   (table) => [index('IDX_session_expire').on(table.expire)],
 );
+
+// Revoked IDs never become valid again, even if an older response saves later.
+export const sessionRevocations = pgTable('session_revocations', {
+  sid: varchar('sid').primaryKey(),
+  revokedAt: timestamp('revoked_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});

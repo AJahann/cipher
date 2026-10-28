@@ -169,7 +169,11 @@ Corrected cohorts retain all completed accepted replicates with the same source.
 - Required jobs stay Change Scope, Format, Lint, Typecheck, Build, Unit Tests,
   PostgreSQL Tests, E2E Tests and CI Gate. Keep CI Gate required.
 - Existing exact-run build reuse remains. **Rerun all jobs**, not failed jobs only:
-  artifact names are attempt-specific. E2E setup stays parallel with Build.
+  artifact names are attempt-specific. A carried-over successful Build with no
+  matching artifact fails promptly with that instruction, rather than waiting for
+  an artifact no job will produce. The attempt start/completion timestamps identify
+  carried-over jobs because GitHub may relabel their `run_attempt`. A current
+  attempt Build still waits for artifact visibility. E2E setup stays parallel with Build.
 - Third parties: GitHub Actions/cache/artifacts, public GHCR, npm/pnpm, Playwright.
   No paid service, new account or user credential. Registry/cache availability,
   cold image pulls and pinned-image security updates remain operational limits.
