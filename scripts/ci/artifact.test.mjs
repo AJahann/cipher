@@ -47,9 +47,11 @@ test('artifact wait fails closed on producer failure or timeout', async () => {
 });
 
 test('failed-job reruns fail promptly rather than accepting a prior-attempt artifact', async () => {
-  let slept = false;
+  let slept = false,
+    time = 0;
   await assert.rejects(
     waitForArtifact({
+      now: () => time,
       name: 'web-build-42-2',
       attemptStartedAt: '2026-10-28T07:58:21Z',
       getArtifacts: async () => [{ name: 'web-build-42-1', expired: false }],
@@ -60,8 +62,9 @@ test('failed-job reruns fail promptly rather than accepting a prior-attempt arti
         run_attempt: 2,
         completed_at: '2026-10-28T07:47:18Z',
       }),
-      sleep: async () => {
+      sleep: async (ms) => {
         slept = true;
+        time += ms;
       },
     }),
     /Re-run all jobs/,

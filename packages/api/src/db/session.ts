@@ -32,7 +32,7 @@ class RevocationSafeSessionStore extends PgSession {
   override set(id: string, value: SessionData, callback?: Callback) {
     // Preserve connect-pg-simple's expiry calculation (including its 1-day
     // fallback). Fastify supplies the rolling cookie's 7-day expiry normally.
-    const expires = value.cookie.expires;
+    const { expires } = value.cookie;
     const expireTime = expires
       ? Math.ceil(new Date(expires).valueOf() / 1000)
       : Math.ceil(Date.now() / 1000 + 86_400);

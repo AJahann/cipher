@@ -1,6 +1,7 @@
 /* oxlint-disable max-lines-per-function, no-await-in-loop -- This bounded live fixture deliberately sequences setup and expiry checks. */
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { io as connect, type Socket } from 'socket.io-client';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -48,6 +49,9 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
     if (pool) await pool.end();
     vi.unstubAllEnvs();
   });
+  function sessionCookie(cookies: { name: string; value: string }[]) {
+    return cookies.filter((value) => value.name === 'sessionId').at(-1)!;
+  }
   async function register() {
     const username = `transport_${randomUUID().slice(0, 12)}`;
     const response = await app.inject({
@@ -61,9 +65,7 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
       },
     });
     expect(response.statusCode).toBe(201);
-    const cookie = response.cookies
-      .filter((c) => c.name === 'sessionId')
-      .at(-1)!;
+    const cookie = sessionCookie(response.cookies);
     const id = response.json().id as string;
     users.push(id);
     return {
@@ -182,9 +184,7 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
         payload: { username: user.username, password },
       });
       expect(response.statusCode).toBe(200);
-      const cookie = response.cookies
-        .filter((value) => value.name === 'sessionId')
-        .at(-1)!;
+      const cookie = sessionCookie(response.cookies);
       expect(
         (
           await app.inject({
@@ -199,28 +199,19 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
   });
   it('a stale explicit save cannot restore destroyed session authority', async () => {
     const user = await register();
-    const snapshot = await new Promise<import('express-session').SessionData>(
-      (resolve, reject) => {
-        store.get(user.sid, (error, value) =>
-          error ? reject(error) : resolve(value!),
-        );
-      },
-    );
+    const snapshot = (await promisify(store.get.bind(store))(user.sid))!;
     const response = await app.inject({
       method: 'POST',
       url: '/auth/logout',
       headers: { cookie: user.cookie, origin },
     });
     expect(response.statusCode).toBe(200);
-    await new Promise<void>((resolve, reject) => {
-      store.set(
-        user.sid,
-        Object.assign({}, snapshot, {
-          staleUpdate: 'must-not-restore-authority',
-        }),
-        (error) => (error ? reject(error) : resolve()),
-      );
-    });
+    await promisify(store.set.bind(store))(
+      user.sid,
+      Object.assign({}, snapshot, {
+        staleUpdate: 'must-not-restore-authority',
+      }),
+    );
     await expectRevoked(user.cookie, user.sid);
   });
   it('valid authenticated reads still renew the rolling seven-day session', async () => {
