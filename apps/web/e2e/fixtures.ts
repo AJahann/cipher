@@ -1,64 +1,99 @@
 import fs from 'node:fs';
-
+import path from 'node:path';
 import {
   test as base,
   expect,
   type Browser,
   type Page,
 } from '@playwright/test';
-
 import {
   PASSPHRASE,
-  USERS_FILE,
-  storageStateFor,
-  type Role,
+  AUTH_DIR,
+  createAuthDirectory,
 } from './support/auth-paths';
+import { provisionUsers, type AuthUsers } from './support/provision';
 
+interface WorkerAuth {
+  directory: string;
+  users: AuthUsers;
+}
 interface Fixtures {
   aliceUsername: string;
   bobUsername: string;
+  aliceState: string;
   alicePage: Page;
   bobPage: Page;
 }
 
-function readUsers(): { alice: string; bob: string } {
-  return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-}
-
 async function withUnlockedPage(
   browser: Browser,
-  role: Role,
-  pageUse: (page: Page) => Promise<void>,
+  state: string,
+  fixtureUse: (page: Page) => Promise<void>,
 ): Promise<void> {
-  const context = await browser.newContext({
-    storageState: storageStateFor(role),
-  });
-  const page = await context.newPage();
-
-  await page.goto('/chat');
-
-  await page.getByLabel('passphrase', { exact: true }).fill(PASSPHRASE);
-  await page.getByRole('button', { name: 'unlock', exact: true }).click();
-
-  await expect(page.getByText('conversations')).toBeVisible();
-
-  await pageUse(page);
-  await context.close();
+  const context = await browser.newContext({ storageState: state });
+  try {
+    const page = await context.newPage();
+    await page.goto('/chat');
+    await expect(
+      page.getByRole('heading', { name: 'Unlock session' }),
+    ).toBeVisible();
+    await page.getByLabel('passphrase', { exact: true }).fill(PASSPHRASE);
+    await page.getByRole('button', { name: 'unlock', exact: true }).click();
+    await expect(page.getByText('conversations')).toBeVisible();
+    await fixtureUse(page);
+  } finally {
+    await context.close();
+  }
 }
 
-export const test = base.extend<Fixtures>({
-  aliceUsername: async ({}, pageUse) => {
-    await pageUse(readUsers().alice);
+export const test = base.extend<Fixtures, { workerAuth: WorkerAuth }>({
+  workerAuth: [
+    async ({}, fixtureUse, workerInfo) => {
+      // Keep credentials outside uploaded test-results. mkdtemp isolates projects,
+      // simultaneous runs and worker restarts, including after a failed test.
+      const directory = createAuthDirectory(
+        AUTH_DIR,
+        workerInfo.project.name,
+        workerInfo.workerIndex,
+      );
+      try {
+        const { apiURL } = workerInfo.config.metadata;
+        const { baseURL } = workerInfo.project.use;
+        if (typeof apiURL !== 'string' || !baseURL) {
+          throw new Error(
+            'E2E provisioning requires metadata.apiURL and use.baseURL',
+          );
+        }
+        const users = await provisionUsers(directory, { apiURL, baseURL });
+        await fixtureUse({ directory, users });
+      } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+      }
+    },
+    { scope: 'worker' },
+  ],
+  aliceUsername: async ({ workerAuth }, fixtureUse) => {
+    await fixtureUse(workerAuth.users.alice);
   },
-  bobUsername: async ({}, pageUse) => {
-    await pageUse(readUsers().bob);
+  bobUsername: async ({ workerAuth }, fixtureUse) => {
+    await fixtureUse(workerAuth.users.bob);
   },
-  alicePage: async ({ browser }, use) => {
-    await withUnlockedPage(browser, 'alice', use);
+  aliceState: async ({ workerAuth }, fixtureUse) => {
+    await fixtureUse(path.join(workerAuth.directory, 'alice.json'));
   },
-  bobPage: async ({ browser }, use) => {
-    await withUnlockedPage(browser, 'bob', use);
+  alicePage: async ({ browser, workerAuth }, fixtureUse) => {
+    await withUnlockedPage(
+      browser,
+      path.join(workerAuth.directory, 'alice.json'),
+      fixtureUse,
+    );
+  },
+  bobPage: async ({ browser, workerAuth }, fixtureUse) => {
+    await withUnlockedPage(
+      browser,
+      path.join(workerAuth.directory, 'bob.json'),
+      fixtureUse,
+    );
   },
 });
-
 export { expect };

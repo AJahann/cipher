@@ -35,10 +35,14 @@ export default defineConfig({
   testMatch: '**/e2e/**/*.spec.ts',
   testIgnore: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
 
+  metadata: { apiURL: env.NEXT_PUBLIC_API_URL },
+
   fullyParallel: true,
   forbidOnly: env.CI,
   retries: env.CI ? 2 : 0,
-  workers: env.CI ? 1 : undefined,
+  // Bound concurrency: each worker provisions real memory-hard key material.
+  workers: 2,
+  failOnFlakyTests: env.CI,
 
   // Registration generates a keypair in the browser, which is slow enough to
   // blow the 30s default on cold runs.
@@ -54,28 +58,22 @@ export default defineConfig({
     baseURL: env.PLAYWRIGHT_BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // Passing attempts do not encode video. First retry retains video + trace.
+    video: 'on-first-retry',
   },
 
   projects: [
-    // Runs once before the browser projects. Its own testMatch overrides the
-    // top-level `*.spec.ts` glob so only the setup file runs here (and the
-    // browser projects, which inherit the glob, never re-run it).
-    { name: 'setup', testMatch: /.*\.setup\.ts/ },
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      dependencies: ['setup'],
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      dependencies: ['setup'],
     },
   ],
 

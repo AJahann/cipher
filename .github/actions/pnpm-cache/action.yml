@@ -1,0 +1,39 @@
+name: Cipher pnpm store cache
+description: Restore everywhere; only the Build job may save the shared store.
+inputs:
+  writer:
+    description: Whether this job owns cache writes (Build only).
+    default: 'false'
+outputs:
+  cache-hit:
+    description: Exact dependency-store cache hit (not inferred from timing).
+    value: ${{ steps.restore.outputs.cache-hit || steps.writer.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - name: Resolve pnpm store
+      id: store
+      shell: bash
+      # Identical absolute path is required: cache versions include paths, and
+      # the Build host and E2E container have different HOME directories.
+      run: |
+        echo "pnpm_config_store_dir=/tmp/cipher-pnpm-store" >> "$GITHUB_ENV"
+        echo "path=/tmp/cipher-pnpm-store" >> "$GITHUB_OUTPUT"
+        case "$(pnpm_config_store_dir=/tmp/cipher-pnpm-store pnpm store path --silent)" in
+          /tmp/cipher-pnpm-store/*) ;;
+          *) echo "pnpm ignored the explicit store path" >&2; exit 1 ;;
+        esac
+    - name: Restore dependency store (read only)
+      id: restore
+      if: inputs.writer != 'true'
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: cipher-pnpm-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('pnpm-lock.yaml') }}
+    - name: Restore and save dependency store (single writer)
+      id: writer
+      if: inputs.writer == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: cipher-pnpm-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('pnpm-lock.yaml') }}

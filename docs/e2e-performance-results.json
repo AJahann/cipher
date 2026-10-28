@@ -1,0 +1,1720 @@
+{
+  "comparison_plan": {
+    "question": "Which incremental E2E changes survive full acceptance and measured job timings?",
+    "grain": "complete successful hosted CI run / E2E job",
+    "unit": "seconds; one-second timestamp precision",
+    "eligibility": "all nine checks successful; identical non-Markdown source within each cohort",
+    "limitations": "sequential nonrandomized n=3; uncontrolled runner/image/cache state; baseline push/manual vs PR trials; failures separately disclosed",
+    "delivery": "phase medians with range, browser-command drilldown, no single-cause attribution"
+  },
+  "cohorts": [
+    {
+      "phase": "Baseline",
+      "n": 3,
+      "median_seconds": 96.0,
+      "min_seconds": 91.0,
+      "max_seconds": 133.0,
+      "playwright_median_seconds": 23.0,
+      "container_median_seconds": 46.0,
+      "acceptance_span_median_seconds": 114.0,
+      "cache_hits": 0,
+      "cache_hit_observations": 0,
+      "runs": [
+        {
+          "run": 39791227119,
+          "sha": "feb58c51aef134d18751a033ed9a91c94e80d953",
+          "url": "https://github.com/AJahann/cipher/actions/runs/39791227119",
+          "seconds": 133.0,
+          "playwright_seconds": 23.0,
+          "container_seconds": 49.0,
+          "acceptance_span_seconds": 152.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "542f4487a4c1da79e894ad323bb291d09542af763344f10108757d6ceee6ef82",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 49.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 4.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 5.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 6.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 23.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 34.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        },
+        {
+          "run": 39826084181,
+          "sha": "feb58c51aef134d18751a033ed9a91c94e80d953",
+          "url": "https://github.com/AJahann/cipher/actions/runs/39826084181",
+          "seconds": 96.0,
+          "playwright_seconds": 22.0,
+          "container_seconds": 46.0,
+          "acceptance_span_seconds": 114.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "542f4487a4c1da79e894ad323bb291d09542af763344f10108757d6ceee6ef82",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 3.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 46.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 3.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 9.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 4.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 22.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 3.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 1.0
+        },
+        {
+          "run": 40135724420,
+          "sha": "feb58c51aef134d18751a033ed9a91c94e80d953",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40135724420",
+          "seconds": 91.0,
+          "playwright_seconds": 23.0,
+          "container_seconds": 36.0,
+          "acceptance_span_seconds": 108.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "542f4487a4c1da79e894ad323bb291d09542af763344f10108757d6ceee6ef82",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 36.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 3.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 13.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 4.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 2.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 23.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        }
+      ]
+    },
+    {
+      "phase": "1 \u00b7 Restore-only cache",
+      "n": 3,
+      "median_seconds": 93.0,
+      "min_seconds": 87.0,
+      "max_seconds": 105.0,
+      "playwright_median_seconds": 20.0,
+      "container_median_seconds": 49.0,
+      "acceptance_span_median_seconds": 111.0,
+      "cache_hits": 0,
+      "cache_hit_observations": 0,
+      "runs": [
+        {
+          "run": 40137110848,
+          "sha": "de74e21373bcd1f8eed85baf86bccb2c50eab427",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40137110848",
+          "seconds": 105.0,
+          "playwright_seconds": 20.0,
+          "container_seconds": 54.0,
+          "acceptance_span_seconds": 129.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "eacf55fc4280b0050c69220254d924214927066525ee2e3effb08f082526517e",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 4.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 54.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 3.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 4.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 7.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 4.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 20.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 2.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        },
+        {
+          "run": 40137297269,
+          "sha": "d1884a554dbf3bff56c4e4d2f16f8e72a075f205",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40137297269",
+          "seconds": 87.0,
+          "playwright_seconds": 21.0,
+          "container_seconds": 38.0,
+          "acceptance_span_seconds": 108.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "eacf55fc4280b0050c69220254d924214927066525ee2e3effb08f082526517e",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 38.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 3.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 5.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 5.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 21.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 4.0
+        },
+        {
+          "run": 40137451625,
+          "sha": "4a125846652f504ce22c7d1a04f82e73f864c907",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40137451625",
+          "seconds": 93.0,
+          "playwright_seconds": 18.0,
+          "container_seconds": 49.0,
+          "acceptance_span_seconds": 111.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "eacf55fc4280b0050c69220254d924214927066525ee2e3effb08f082526517e",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 49.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 2.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 5.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 5.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 1.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 18.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 2.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        }
+      ]
+    },
+    {
+      "phase": "2 \u00b7 Retry-only video",
+      "n": 3,
+      "median_seconds": 84.0,
+      "min_seconds": 84.0,
+      "max_seconds": 90.0,
+      "playwright_median_seconds": 17.0,
+      "container_median_seconds": 42.0,
+      "acceptance_span_median_seconds": 104.0,
+      "cache_hits": 0,
+      "cache_hit_observations": 0,
+      "runs": [
+        {
+          "run": 40137684774,
+          "sha": "263d539937b4b222adc393578aba1b232b1b4246",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40137684774",
+          "seconds": 84.0,
+          "playwright_seconds": 15.0,
+          "container_seconds": 42.0,
+          "acceptance_span_seconds": 101.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "ce7ec5fb8ba232a67555949b06b48ce4d7f55e5b5eb3959bb9bfcfbd6031e53b",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 42.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 2.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 8.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 5.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 15.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        },
+        {
+          "run": 40137853274,
+          "sha": "1620a479d875fb2e88f60b6237e275a2dfb5c02b",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40137853274",
+          "seconds": 90.0,
+          "playwright_seconds": 17.0,
+          "container_seconds": 45.0,
+          "acceptance_span_seconds": 104.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "ce7ec5fb8ba232a67555949b06b48ce4d7f55e5b5eb3959bb9bfcfbd6031e53b",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 45.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 3.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 5.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 5.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 2.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 17.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 2.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        },
+        {
+          "run": 40138058615,
+          "sha": "235432adbf02bae4349b23783c59bb4c5b5a9e3e",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40138058615",
+          "seconds": 84.0,
+          "playwright_seconds": 19.0,
+          "container_seconds": 38.0,
+          "acceptance_span_seconds": 105.0,
+          "store_cache_hit": null,
+          "runtime_tree_fingerprint": "ce7ec5fb8ba232a67555949b06b48ce4d7f55e5b5eb3959bb9bfcfbd6031e53b",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 1.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 38.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Setup pnpm",
+              "seconds": 3.0
+            },
+            {
+              "name": "Setup Node.js",
+              "seconds": 5.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 5.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 1.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 0.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 19.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup Node.js",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Setup pnpm",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 1.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        }
+      ]
+    },
+    {
+      "phase": "3 \u00b7 Slim image + cache parity",
+      "n": 3,
+      "median_seconds": 79.0,
+      "min_seconds": 75.0,
+      "max_seconds": 80.0,
+      "playwright_median_seconds": 20.0,
+      "container_median_seconds": 30.0,
+      "acceptance_span_median_seconds": 96.0,
+      "cache_hits": 3,
+      "cache_hit_observations": 3,
+      "runs": [
+        {
+          "run": 40139283443,
+          "sha": "5151a22f2b5c4712ec6d2ca284915202d0cefe3e",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40139283443",
+          "seconds": 80.0,
+          "playwright_seconds": 20.0,
+          "container_seconds": 30.0,
+          "acceptance_span_seconds": 98.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "7991ec1c8a85769b9d4d6531cc67821fe33e8bf641a6a06e5519d859f42ea926",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 1.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 30.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 7.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 8.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 2.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 20.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 4.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        },
+        {
+          "run": 40139469444,
+          "sha": "167f7684eb09b4d4d8315f025b9865882273f8cb",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40139469444",
+          "seconds": 75.0,
+          "playwright_seconds": 15.0,
+          "container_seconds": 30.0,
+          "acceptance_span_seconds": 91.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "7991ec1c8a85769b9d4d6531cc67821fe33e8bf641a6a06e5519d859f42ea926",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 30.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 5.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 7.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 1.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 15.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 6.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        },
+        {
+          "run": 40139663235,
+          "sha": "98e87af028b5d43f3cce01835d4485102b1bc160",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40139663235",
+          "seconds": 79.0,
+          "playwright_seconds": 20.0,
+          "container_seconds": 28.0,
+          "acceptance_span_seconds": 96.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "7991ec1c8a85769b9d4d6531cc67821fe33e8bf641a6a06e5519d859f42ea926",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 1.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 28.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 8.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 7.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 2.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 1.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 20.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 2.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 5.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        }
+      ]
+    },
+    {
+      "phase": "4 \u00b7 Isolated API fixtures (1 worker)",
+      "n": 3,
+      "median_seconds": 77.0,
+      "min_seconds": 76.0,
+      "max_seconds": 81.0,
+      "playwright_median_seconds": 17.0,
+      "container_median_seconds": 32.0,
+      "acceptance_span_median_seconds": 92.0,
+      "cache_hits": 3,
+      "cache_hit_observations": 3,
+      "runs": [
+        {
+          "run": 40141195091,
+          "sha": "05d6c4e85723b4fc196791742f132703ad3de40d",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40141195091",
+          "seconds": 76.0,
+          "playwright_seconds": 16.0,
+          "container_seconds": 32.0,
+          "acceptance_span_seconds": 92.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "7d6dd408c80645e2584b8bc6900930780ec598ed41d20d29908ac34b6023c6c3",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 32.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 6.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 6.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 16.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 6.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        },
+        {
+          "run": 40141432532,
+          "sha": "0f42aeb5be2c116e25953a752b150bd959d27c30",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40141432532",
+          "seconds": 77.0,
+          "playwright_seconds": 18.0,
+          "container_seconds": 28.0,
+          "acceptance_span_seconds": 91.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "7d6dd408c80645e2584b8bc6900930780ec598ed41d20d29908ac34b6023c6c3",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 28.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 7.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 7.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 1.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 18.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 5.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        },
+        {
+          "run": 40141609389,
+          "sha": "ab12b706827c7e6399e382eb400aba14f79b61d8",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40141609389",
+          "seconds": 81.0,
+          "playwright_seconds": 17.0,
+          "container_seconds": 33.0,
+          "acceptance_span_seconds": 97.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "7d6dd408c80645e2584b8bc6900930780ec598ed41d20d29908ac34b6023c6c3",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 1.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 33.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 6.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 6.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 1.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 17.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 8.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        }
+      ]
+    },
+    {
+      "phase": "5 \u00b7 Two isolated workers",
+      "n": 3,
+      "median_seconds": 72.0,
+      "min_seconds": 63.0,
+      "max_seconds": 83.0,
+      "playwright_median_seconds": 13.0,
+      "container_median_seconds": 33.0,
+      "acceptance_span_median_seconds": 87.0,
+      "cache_hits": 3,
+      "cache_hit_observations": 3,
+      "runs": [
+        {
+          "run": 40142453275,
+          "sha": "9c47e1ec8faf0712d7bb5597552b99056187eef0",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40142453275",
+          "seconds": 83.0,
+          "playwright_seconds": 14.0,
+          "container_seconds": 33.0,
+          "acceptance_span_seconds": 103.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "bde693cb6538b404f9ccd53b5e71bddba27c15947b6abb2a637290fa86feb86b",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 33.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 6.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 9.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 14.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 6.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 6.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        },
+        {
+          "run": 40142662927,
+          "sha": "8f95be4428ab9086dd6bc143508d3c044de9cc38",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40142662927",
+          "seconds": 72.0,
+          "playwright_seconds": 13.0,
+          "container_seconds": 33.0,
+          "acceptance_span_seconds": 87.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "bde693cb6538b404f9ccd53b5e71bddba27c15947b6abb2a637290fa86feb86b",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 1.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 33.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 7.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 5.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 1.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 2.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 13.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 0.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 6.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 3.0
+        },
+        {
+          "run": 40142930119,
+          "sha": "26cdf28bc576dde93425d4f9d2750dc11bd4f21f",
+          "url": "https://github.com/AJahann/cipher/actions/runs/40142930119",
+          "seconds": 63.0,
+          "playwright_seconds": 13.0,
+          "container_seconds": 25.0,
+          "acceptance_span_seconds": 78.0,
+          "store_cache_hit": true,
+          "runtime_tree_fingerprint": "bde693cb6538b404f9ccd53b5e71bddba27c15947b6abb2a637290fa86feb86b",
+          "steps": [
+            {
+              "name": "Set up job",
+              "seconds": 2.0
+            },
+            {
+              "name": "Initialize containers",
+              "seconds": 25.0
+            },
+            {
+              "name": "Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Verify preinstalled toolchain",
+              "seconds": 0.0
+            },
+            {
+              "name": "Restore pnpm store (read only)",
+              "seconds": 5.0
+            },
+            {
+              "name": "Report dependency-store cache hit (true)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Install dependencies",
+              "seconds": 6.0
+            },
+            {
+              "name": "Verify Playwright matches the pinned browser image",
+              "seconds": 0.0
+            },
+            {
+              "name": "Apply database migrations",
+              "seconds": 0.0
+            },
+            {
+              "name": "Wait for exact-run web build (setup stays parallel)",
+              "seconds": 1.0
+            },
+            {
+              "name": "Download exact-run web build",
+              "seconds": 1.0
+            },
+            {
+              "name": "Restore web runtime",
+              "seconds": 0.0
+            },
+            {
+              "name": "Run Chromium E2E tests",
+              "seconds": 13.0
+            },
+            {
+              "name": "Upload Playwright report and traces",
+              "seconds": 1.0
+            },
+            {
+              "name": "Post Restore pnpm store (read only)",
+              "seconds": 0.0
+            },
+            {
+              "name": "Post Checkout",
+              "seconds": 1.0
+            },
+            {
+              "name": "Stop containers",
+              "seconds": 5.0
+            },
+            {
+              "name": "Complete job",
+              "seconds": 0.0
+            }
+          ],
+          "unattributed_seconds": 2.0
+        }
+      ]
+    }
+  ],
+  "headline": {
+    "baseline_seconds": 96.0,
+    "final_seconds": 72.0,
+    "observed_delta_seconds": 24.0,
+    "observed_reduction_percent": 25.0,
+    "baseline_span_seconds": 114.0,
+    "final_span_seconds": 87.0
+  },
+  "image": {
+    "candidate_bytes": 384085775,
+    "original_bytes": 955790767,
+    "reduction_fraction": 0.5981486866570662,
+    "digest": "sha256:87dc299f5fb469371950d93c0336f9e4f3ac6e955809fa627f9c797332b01c4f"
+  },
+  "hosted_development_failures": [
+    40138874577, 40139127816, 40140392138, 40140662448, 40142184439
+  ],
+  "cancelled_development_runs": [
+    40138788924, 40138728313, 40138307314, 40138293289
+  ],
+  "local_validation": {
+    "ci_helpers": 12,
+    "unit_passed": 142,
+    "unit_db_conditional_skips": 34,
+    "serial_postgres_api_passed": 74,
+    "final_browser_no_retry_passed": 39,
+    "targeted_delivery_state_repeats": 5
+  }
+}
