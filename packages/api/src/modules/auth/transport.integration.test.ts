@@ -1,6 +1,7 @@
 /* oxlint-disable max-lines-per-function, no-await-in-loop -- This bounded live fixture deliberately sequences setup and expiry checks. */
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { io as connect, type Socket } from 'socket.io-client';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -48,6 +49,9 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
     if (pool) await pool.end();
     vi.unstubAllEnvs();
   });
+  function sessionCookie(cookies: { name: string; value: string }[]) {
+    return cookies.filter((value) => value.name === 'sessionId').at(-1)!;
+  }
   async function register() {
     const username = `transport_${randomUUID().slice(0, 12)}`;
     const response = await app.inject({
@@ -61,9 +65,7 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
       },
     });
     expect(response.statusCode).toBe(201);
-    const cookie = response.cookies
-      .filter((c) => c.name === 'sessionId')
-      .at(-1)!;
+    const cookie = sessionCookie(response.cookies);
     const id = response.json().id as string;
     users.push(id);
     return {
@@ -117,6 +119,128 @@ describe.skipIf(!databaseUrl)('transport authority (real PostgreSQL)', () => {
       (await app.inject({ url: '/auth/me', headers: { cookie: user.cookie } }))
         .statusCode,
     ).toBe(401);
+  });
+  async function withPausedSessionSave(
+    cookie: string,
+    action: () => Promise<void>,
+  ) {
+    const originalSet = store.set.bind(store);
+    let release = () => {};
+    let entered = () => {};
+    const started = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const spy = vi
+      .spyOn(store, 'set')
+      .mockImplementationOnce((sid, value, done) => {
+        entered();
+        void pending.then(() => originalSet(sid, value, done));
+      });
+    // Start a real authenticated response, paused just before its rolling save.
+    const request = app
+      .inject({ url: '/auth/me', headers: { cookie } })
+      .then((response) => response);
+    try {
+      await started;
+      await action();
+    } finally {
+      release();
+      await request;
+      spy.mockRestore();
+    }
+  }
+  async function expectRevoked(cookie: string, sid: string) {
+    expect(
+      (await app.inject({ url: '/auth/me', headers: { cookie } })).statusCode,
+    ).toBe(401);
+    expect(
+      (await pool.query('SELECT sid FROM user_sessions WHERE sid=$1', [sid]))
+        .rows,
+    ).toEqual([]);
+  }
+  it('a response completing after logout cannot resurrect its session', async () => {
+    const user = await register();
+    await withPausedSessionSave(user.cookie, async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/auth/logout',
+        headers: { cookie: user.cookie, origin },
+      });
+      expect(response.statusCode).toBe(200);
+      await expectRevoked(user.cookie, user.sid);
+    });
+    await expectRevoked(user.cookie, user.sid);
+  });
+  it('a response completing after login rotation cannot restore the old session', async () => {
+    const user = await register();
+    await withPausedSessionSave(user.cookie, async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        headers: { cookie: user.cookie, origin },
+        payload: { username: user.username, password },
+      });
+      expect(response.statusCode).toBe(200);
+      const cookie = sessionCookie(response.cookies);
+      expect(
+        (
+          await app.inject({
+            url: '/auth/me',
+            headers: { cookie: `sessionId=${cookie.value}` },
+          })
+        ).statusCode,
+      ).toBe(200);
+      await expectRevoked(user.cookie, user.sid);
+    });
+    await expectRevoked(user.cookie, user.sid);
+  });
+  it('a stale explicit save cannot restore destroyed session authority', async () => {
+    const user = await register();
+    const snapshot = (await promisify(store.get.bind(store))(user.sid))!;
+    const response = await app.inject({
+      method: 'POST',
+      url: '/auth/logout',
+      headers: { cookie: user.cookie, origin },
+    });
+    expect(response.statusCode).toBe(200);
+    await promisify(store.set.bind(store))(
+      user.sid,
+      Object.assign({}, snapshot, {
+        staleUpdate: 'must-not-restore-authority',
+      }),
+    );
+    await expectRevoked(user.cookie, user.sid);
+  });
+  it('valid authenticated reads still renew the rolling seven-day session', async () => {
+    const user = await register();
+    const { rows } = await pool.query(
+      'SELECT sess FROM user_sessions WHERE sid=$1',
+      [user.sid],
+    );
+    const earlierExpiry = new Date(Date.now() + 60_000);
+    rows[0].sess.cookie.expires = earlierExpiry.toISOString();
+    await pool.query(
+      'UPDATE user_sessions SET sess=$2, expire=$3 WHERE sid=$1',
+      [user.sid, rows[0].sess, earlierExpiry],
+    );
+    const response = await app.inject({
+      url: '/auth/me',
+      headers: { cookie: user.cookie },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.cookies.some((value) => value.name === 'sessionId')).toBe(
+      true,
+    );
+    const renewed = await pool.query(
+      'SELECT expire FROM user_sessions WHERE sid=$1',
+      [user.sid],
+    );
+    expect(renewed.rows[0].expire.getTime()).toBeGreaterThan(
+      Date.now() + 6 * 24 * 60 * 60 * 1000,
+    );
   });
   it('rotating a login disconnects only the old session', async () => {
     const user = await register();

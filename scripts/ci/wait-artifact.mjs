@@ -4,6 +4,7 @@ export async function waitForArtifact({
   getArtifacts,
   getBuild,
   name,
+  attemptStartedAt,
   now = Date.now,
   sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   timeoutMs = 120_000,
@@ -20,6 +21,17 @@ export async function waitForArtifact({
     if (build?.status === 'completed' && build.conclusion !== 'success') {
       throw new Error(
         'Producer build failed; refusing to use an older artifact.',
+      );
+    }
+    // GitHub can report carried-over jobs with the NEW run_attempt, so compare
+    // completion time to the attempt boundary instead of trusting that field.
+    if (
+      build?.status === 'completed' &&
+      build.conclusion === 'success' &&
+      Date.parse(build.completed_at) < Date.parse(attemptStartedAt)
+    ) {
+      throw new Error(
+        'This attempt has no matching Build artifact. Use "Re-run all jobs" to regenerate the exact-attempt build.',
       );
     }
     await sleep(2_000);
@@ -47,7 +59,12 @@ async function main() {
       throw new Error(`Artifact API returned ${response.status}`);
     return response.json();
   }
+  const attempt = await get(`/attempts/${GITHUB_RUN_ATTEMPT}`);
+  if (!Number.isFinite(Date.parse(attempt.run_started_at))) {
+    throw new Error('Workflow attempt start time is missing or invalid.');
+  }
   await waitForArtifact({
+    attemptStartedAt: attempt.run_started_at,
     name: process.env.BUILD_ARTIFACT,
     getArtifacts: async () => (await get('/artifacts?per_page=100')).artifacts,
     getBuild: async () =>
