@@ -43,6 +43,13 @@
       "when": 1793175711473,
       "tag": "0005_session_revocations",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793227061128,
+      "tag": "0006_day18_covering_reads",
+      "breakpoints": true
     }
   ]
 }
