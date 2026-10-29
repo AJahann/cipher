@@ -6,6 +6,7 @@ import {
 import { userService } from './user.service';
 import { requireAuth } from '../auth/auth.middleware';
 import { AppError } from '../../http/errors';
+import { decodeCursor } from '../../http/cursor';
 
 export const userController = (app: FastifyInstance) => {
   app.addHook('preHandler', requireAuth);
@@ -13,12 +14,17 @@ export const userController = (app: FastifyInstance) => {
   /** GET /users?limit=&cursor= — directory, everyone except the caller. */
   app.get('/', async (req, reply) => {
     const { limit, cursor } = listUsersQuerySchema.parse(req.query);
-    const page = await userService.listUsers(
-      req.session.userId!,
-      limit,
-      cursor,
+    // Validate cursor semantics even on a cache hit, not only its string shape.
+    const cursorId = cursor
+      ? decodeCursor('users', cursor).toLowerCase()
+      : undefined;
+    const result = await app.directoryCache.read(
+      { caller: req.session.userId!, limit, cursorId },
+      () => userService.listUsers(req.session.userId!, limit, cursor),
     );
-    return reply.send(page);
+    reply.header('Cache-Control', 'private, no-store');
+    reply.header('X-Directory-Cache', result.cache);
+    return reply.send(result.page);
   });
 
   app.get('/:id/public-key', async (req, reply) => {

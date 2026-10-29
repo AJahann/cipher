@@ -1,5 +1,7 @@
 import '@fastify/session';
 import type { Server as SocketIOServer } from 'socket.io';
+import type { DirectoryCache } from '../redis/directory-cache';
+import type { RedisRuntime } from '../redis/runtime';
 
 declare module '@fastify/session' {
   interface FastifySessionObject {
@@ -15,5 +17,7 @@ declare module 'fastify' {
      * through a getter decorator, so always access it optionally (`app.io?.…`).
      */
     io: SocketIOServer | null;
+    directoryCache: DirectoryCache;
+    redisRuntime: RedisRuntime;
   }
 }

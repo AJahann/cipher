@@ -17,6 +17,7 @@ import { userService } from '../user/user.service';
 import { AppError, toApiError } from '../../http/errors';
 import { sessionRoom } from '../auth/session-authority';
 import { createLimiter } from '../../security/rate-limit';
+import type { Presence } from '../../redis/presence';
 
 interface SocketData {
   userId: string;
@@ -49,20 +50,11 @@ function unauthenticated() {
   return err;
 }
 
-async function broadcastPresence(io: AppIO, userId: string, online: boolean) {
-  const conversationIds = await chatService
-    .getConversationIds(userId)
-    .catch(() => []);
-  for (const id of conversationIds) {
-    io.to(conversationRoom(id)).emit('presence:update', { userId, online });
-  }
-}
-
 export function registerChatSocket(
   io: AppIO,
   log: FastifyBaseLogger,
   store: Store,
-  app: FastifyInstance,
+  { app, presence }: { app: FastifyInstance; presence: Presence },
 ) {
   const handshakeLimit = createLimiter(60, 60_000);
   const eventLimit = createLimiter(120, 10_000);
@@ -150,8 +142,6 @@ export function registerChatSocket(
       { userId, conversations: conversationIds.length },
       'Socket connected',
     );
-
-    await broadcastPresence(io, userId, true);
 
     /** Reports a rejected fire-and-forget event back to the sender only. */
     const reject = (event: keyof ClientToServerEvents, err: unknown) => {
@@ -271,10 +261,31 @@ export function registerChatSocket(
       socket.leave(conversationRoom(parsed.data.conversationId));
     });
 
-    socket.on('disconnect', async () => {
+    socket.on('presence:sync', () => {
+      try {
+        limit();
+        presence.sync(socket.id);
+      } catch (err) {
+        reject('presence:sync', err);
+      }
+    });
+    if (!socket.connected) return;
+    const stopPresence = presence.track({
+      id: socket.id,
+      userId,
+      authorize,
+      peers: () => chatService.getPeerIds(userId),
+      send: (states, available) => {
+        socket.emit('presence:snapshot', {
+          states,
+          availability: available ? 'available' : 'unknown',
+        });
+        for (const state of states) socket.emit('presence:update', state);
+      },
+    });
+    socket.on('disconnect', () => {
+      stopPresence();
       log.info({ userId }, 'Socket disconnected');
-      const remaining = await io.in(userRoom(userId)).fetchSockets();
-      if (remaining.length === 0) await broadcastPresence(io, userId, false);
     });
   });
 }

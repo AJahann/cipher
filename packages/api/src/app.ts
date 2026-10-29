@@ -11,6 +11,9 @@ import { chatController } from './modules/chat/chat.controller';
 import { registerChatSocket } from './modules/chat/chat.socket';
 import { sessionStore } from './db/session';
 import { registerErrorHandling } from './http/errors';
+import { RedisRuntime } from './redis/runtime';
+import { DirectoryCache } from './redis/directory-cache';
+import { Presence } from './redis/presence';
 
 export const buildApp = async () => {
   const app = Fastify({
@@ -35,6 +38,15 @@ export const buildApp = async () => {
   // them a late-bound reference instead of capturing `null` forever.
   let io: SocketIOServer | null = null;
   app.decorate('io', { getter: () => io });
+  const redis = new RedisRuntime(env.REDIS_URL, env.REDIS_NAMESPACE);
+  const presence = new Presence(redis, env.PRESENCE_LEASE_MS);
+  app.decorate('redisRuntime', redis);
+  app.decorate('directoryCache', new DirectoryCache(redis));
+  app.addHook('onClose', (_instance, done) => {
+    presence.close();
+    redis.close();
+    done();
+  });
 
   // One error envelope for every route, registered before any plugin.
   registerErrorHandling(app);
@@ -83,7 +95,7 @@ export const buildApp = async () => {
 
   io = socketServer;
 
-  registerChatSocket(socketServer, app.log, sessionStore, app);
+  registerChatSocket(socketServer, app.log, sessionStore, { app, presence });
 
   return { app, io: socketServer };
 };
