@@ -180,3 +180,31 @@ Local PostgreSQL 16.15 / Redis 6.2.20, Node 24 / pnpm 12.6:
 
 Small disposable fixtures establish correctness/recovery, not production capacity,
 Redis HA/Cluster support, a security audit, or exactly-once peer delivery.
+
+### Migration metadata continuity
+
+The outbox migration now has a canonical `meta/0007_snapshot.json` linked to
+`0006_snapshot.json`. The exported table includes all three SQL checks (status,
+nonnegative generation, and attempts between zero and three), plus the existing
+PostgreSQL foreign-key name and cascade behavior. Existing table snapshots are
+unchanged. The applied `0007_notification_outbox.sql`, journal, and legacy-message
+`LEGACY_NO_DISPATCH` backfill remain byte-for-byte unchanged; no database reset or
+migration-history deletion is involved.
+
+Verification in a disposable detached worktree with frozen dependencies:
+
+```sh
+# Supply the normal API environment variables; generation/check are offline.
+pnpm --dir packages/api exec drizzle-kit generate --config drizzle.config.ts
+# No schema changes, nothing to migrate
+pnpm --dir packages/api exec drizzle-kit check --config drizzle.config.ts
+pnpm exec vitest run packages/api/src/db/migrations.test.ts
+```
+
+The generator was run with an unreachable disposable database URL, so this checks
+schema-generation continuity, not a live database diff. SHA-256 manifests of the
+entire migration directory before and after generation matched exactly: no extra
+migration, snapshot, or journal edit. Three regression tests cover the snapshot
+parent/journal linkage, no generated SQL against the latest exported schema, and
+the check/foreign-key metadata plus preservation of the legacy backfill. Hosted
+PostgreSQL tests remain the gate for applying migrations and runtime behavior.
