@@ -50,6 +50,13 @@
       "when": 1793227061128,
       "tag": "0006_day18_covering_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793277300000,
+      "tag": "0007_notification_outbox",
+      "breakpoints": true
     }
   ]
 }

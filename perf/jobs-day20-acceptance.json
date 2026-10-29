@@ -1,0 +1,15 @@
+{
+  "pids": [2778, 2799, 2813, 2828, 2845],
+  "checks": [
+    "message+intent rollback is atomic; validation/membership reject before acceptance",
+    "paused dispatcher/consumer do not block durable ack; release emits real notifications with ID-only queue payload",
+    "8 concurrent command replays share a message/intent; changed payload conflicts",
+    "injected transient failure backs off and succeeds on durable attempt 2, without another message row",
+    "committed intent survives API downtime; actual SIGKILL after enqueue/before marker reuses the same stable job ID",
+    "actual SIGKILL after Socket.IO side effect/before SQL completion recovers via lease/stall handling; duplicate hints retain one persisted message",
+    "3 exhausted attempts retain sanitized SQL failure history and failed BullMQ job; explicit redrive increments generation, preserves history, and succeeds",
+    "Redis connection outage does not gate PG acceptance; recovery dispatches; deleting only this fixture queue after dispatch is repaired from retained PG intent",
+    "30 accepted commands: dispatcher enqueues only 25 per batch; held worker shows exactly 4 concurrent durable claims; all 30 complete",
+    "notification consumer excludes unrelated membership and rejects revoked receive sessions before emit"
+  ]
+}

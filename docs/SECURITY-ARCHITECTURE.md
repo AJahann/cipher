@@ -40,7 +40,7 @@ New private-key bundles encode version 1, Argon2id13, two operations and 64 MiB 
 
 Conversation components are keyed by account and conversation. Switching with a draft/pending outbox requires discard confirmation; pending plaintext is not a durable offline queue. Sign-out cancels query work, clears account caches and key storage, disconnects the socket, and reloads the public page. Identity changes notify other tabs to clear local state.
 
-Stored ciphertext is durable history, not proof of peer receipt. If notification fails after insertion, the send may return an error despite persistence. Retrying the original command ID/ciphertext safely repeats notifications without inserting a second row. Disconnects require HTTP history reconciliation on reconnect; the client refreshes conversations, contacts and loaded histories. Cursor pages remain authoritative and realtime updates invalidate rather than append into old pages. This trades extra reads for simple correctness; a transactional outbox/watermark protocol is a future optimization.
+Stored ciphertext is durable history, not proof of peer receipt. Message and notification intent commit atomically before a successful send acknowledgement; notification failures are retried asynchronously and do not turn durable acceptance into a peer-delivery claim. Retrying the original command ID/ciphertext returns the same message and does not create another logical notification intent. Disconnects require HTTP history reconciliation on reconnect; the client refreshes conversations, contacts and loaded histories. Cursor pages remain authoritative and realtime updates invalidate rather than append into old pages. Duplicate hints across worker crash recovery converge by persisted message ID; no peer-delivery watermark is claimed.
 
 ## Deployment boundaries
 
@@ -50,3 +50,16 @@ unknown during shared-state uncertainty and never grants message-receive
 authority. See [cache coherence, lease guarantees, and two-process acceptance](day-19-redis.md).
 
 Run one API instance unless you implement and test a Socket.IO adapter, distributed session revocation, globally coordinated abuse controls, and catch-up semantics. In-memory rooms and local limits do not become distributed just because sessions use PostgreSQL. Keep auth responses out of caches and avoid logging session IDs, tokens, passwords, private keys or OAuth callback queries. Configure trusted TLS termination, database backups/restore drills, monitoring, and graceful process shutdown before sensitive deployment.
+
+## Day 20 asynchronous notification boundary
+
+Message and notification intent now commit atomically in PostgreSQL; successful
+send acknowledgements mean durable acceptance, not peer delivery/read. The
+BullMQ consumer shares the single messenger API's in-memory Socket.IO server,
+checks current membership/session authority before emission, and retains terminal
+failures for operator re-drive. Duplicate notification hints are possible across
+crash recovery; persisted message IDs and client history reconciliation converge.
+Only cache/presence remain cross-instance. Do not run this consumer on multiple
+message API instances without implementing a delivery bridge. See
+[Day 20 design and operations](day-20-jobs.md) for finite retries, PostgreSQL
+reconciliation after Redis loss, retention, and deployment assumptions.

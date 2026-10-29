@@ -18,6 +18,7 @@ export interface PresenceState {
 /** Events the server emits. Shared by the Socket.IO server and client. */
 export interface ServerToClientEvents {
   'message:new': (message: MessageDto) => void;
+  /** Message + outbox intent committed; does not assert peer delivery/read. */
   'message:ack': (data: {
     clientMessageId: string;
     message: MessageDto;
