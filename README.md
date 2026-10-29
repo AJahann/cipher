@@ -168,6 +168,7 @@ for the API-only OAuth App configuration and required migration.
 - [Historical code review](docs/security-review-2026-10-21.md)
 - [Day 18: PostgreSQL indexes, plans, and reproducible measurements](docs/day-18-postgres-performance.md)
 - [Day 19: Redis directory coherence and cross-instance leased presence](docs/day-19-redis.md)
+- [Day 20 — transactional outbox and asynchronous notifications](docs/day-20-jobs.md)
 
 The directory and message history support cursor-based load-more controls. Drafts and pending messages are in-memory; switching conversations asks before discarding them. Sign out clears local keys/caches and revokes that session's connected sockets.
 

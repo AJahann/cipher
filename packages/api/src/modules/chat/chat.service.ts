@@ -4,6 +4,7 @@ import {
   conversations,
   conversationMembers,
   messageReads,
+  notificationOutbox,
 } from '../../db/schema';
 import { eq, and, ne, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
@@ -118,40 +119,43 @@ export const chatService = {
    * the same payload returns the stored row with `replayed: true`; the same
    * key with a different payload is IDEMPOTENCY_CONFLICT. Keys never expire.
    */
-  async sendMessage(
+  sendMessage(
     data: SendMessageInput & { senderId: string },
   ): Promise<{ message: MessageRow; replayed: boolean }> {
-    if (!(await chatService.isMember(data.conversationId, data.senderId))) {
-      throw new AppError('CONVERSATION_NOT_FOUND');
-    }
-
-    const [inserted] = await db
-      .insert(messages)
-      .values(data)
-      .onConflictDoNothing({
-        target: [messages.senderId, messages.clientMessageId],
-      })
-      .returning();
-
-    if (inserted) return { message: inserted, replayed: false };
-
-    const existing = await db.query.messages.findFirst({
-      where: and(
-        eq(messages.senderId, data.senderId),
-        eq(messages.clientMessageId, data.clientMessageId),
-      ),
+    return db.transaction(async (tx) => {
+      const member = await tx.query.conversationMembers.findFirst({
+        where: and(
+          eq(conversationMembers.conversationId, data.conversationId),
+          eq(conversationMembers.userId, data.senderId),
+        ),
+      });
+      if (!member) throw new AppError('CONVERSATION_NOT_FOUND');
+      const [inserted] = await tx
+        .insert(messages)
+        .values(data)
+        .onConflictDoNothing({
+          target: [messages.senderId, messages.clientMessageId],
+        })
+        .returning();
+      if (inserted) {
+        await tx.insert(notificationOutbox).values({ messageId: inserted.id });
+        return { message: inserted, replayed: false };
+      }
+      const existing = await tx.query.messages.findFirst({
+        where: and(
+          eq(messages.senderId, data.senderId),
+          eq(messages.clientMessageId, data.clientMessageId),
+        ),
+      });
+      if (!existing) throw new Error('MESSAGE_IDEMPOTENCY_LOOKUP_FAILED');
+      const sameCommand =
+        existing.conversationId === data.conversationId &&
+        existing.ciphertext === data.ciphertext &&
+        existing.nonce === data.nonce &&
+        existing.algorithm === data.algorithm;
+      if (!sameCommand) throw new AppError('IDEMPOTENCY_CONFLICT');
+      return { message: existing, replayed: true };
     });
-
-    if (!existing) throw new Error('MESSAGE_IDEMPOTENCY_LOOKUP_FAILED');
-
-    const sameCommand =
-      existing.conversationId === data.conversationId &&
-      existing.ciphertext === data.ciphertext &&
-      existing.nonce === data.nonce &&
-      existing.algorithm === data.algorithm;
-
-    if (!sameCommand) throw new AppError('IDEMPOTENCY_CONFLICT');
-    return { message: existing, replayed: true };
   },
 
   /**

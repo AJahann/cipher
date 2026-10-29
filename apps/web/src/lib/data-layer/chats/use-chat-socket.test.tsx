@@ -1,9 +1,18 @@
 import type { SendMessageInput } from '@chat-app/shared/contracts';
-import { act, renderHook } from '@testing-library/react';
+import {
+  act,
+  renderHook,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { makeClient, makeWrapper } from '../../../test/helpers';
 import { userKeys } from '../user/use-user';
-import { chatKeys } from './use-chat';
+import { chatKeys, useMessageHistory } from './use-chat';
+import { http, HttpResponse } from 'msw';
+import { server } from '../../../test/msw/server';
+import { MESSAGES_PATH, stubMessage } from '../../../test/msw/handlers';
 
 const { fakeSocket, ioMock } = vi.hoisted(() => {
   type Listener = (...args: unknown[]) => void;
@@ -40,7 +49,11 @@ vi.mock(import('socket.io-client'), () => ({
 }));
 
 // oxlint-disable-next-line import/first -- Vitest hoists this mock before the module import.
-import { useChatRealtimeSync, useChatSocketActions } from './use-chat-socket';
+import {
+  useChatRealtimeSync,
+  useChatRealtimeMessages,
+  useChatSocketActions,
+} from './use-chat-socket';
 
 function rejectMessageSends(
   event: string,
@@ -139,5 +152,53 @@ describe('chat socket hooks', () => {
     expect(sends).toHaveLength(2);
     expect(sends[0][1]).toEqual(payload);
     expect(sends[1][1]).toEqual(payload);
+  });
+  it('repeated async job notifications converge on one rendered history bubble', async () => {
+    let reads = 0;
+    const message = {
+      ...stubMessage,
+      conversationId: payload.conversationId,
+      ciphertext: 'one-durable-bubble',
+    };
+    let items: (typeof message)[] = [];
+    server.use(
+      http.get(MESSAGES_PATH, () => {
+        reads += 1;
+        return HttpResponse.json({
+          items,
+          nextCursor: null,
+        });
+      }),
+    );
+    function Bubbles() {
+      useChatRealtimeSync();
+      useChatRealtimeMessages();
+      const { data } = useMessageHistory(payload.conversationId, 'account');
+      return (
+        <ul>
+          {data?.map((m) => (
+            <li key={m.id}>{m.ciphertext}</li>
+          ))}
+        </ul>
+      );
+    }
+    render(<Bubbles />, { wrapper: makeWrapper(makeClient()) });
+    await waitFor(() => expect(reads).toBe(1));
+    items = [message];
+    act(() => {
+      for (const _attempt of [1, 2]) {
+        fakeSocket.trigger('message:new', message);
+        fakeSocket.trigger('conversation:updated', {
+          conversationId: message.conversationId,
+          message,
+        });
+      }
+    });
+    await waitFor(() =>
+      expect(screen.getAllByText('one-durable-bubble')).toHaveLength(1),
+    );
+    act(() => fakeSocket.trigger('message:new', message));
+    await waitFor(() => expect(reads).toBeGreaterThan(1));
+    expect(screen.getAllByText('one-durable-bubble')).toHaveLength(1);
   });
 });

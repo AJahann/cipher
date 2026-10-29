@@ -37,6 +37,7 @@ export type MessageDto = z.infer<typeof messageSchema>;
 
 export const sendMessageAckSchema = z.discriminatedUnion('ok', [
   z.object({
+    /** Durable message + notification-intent acceptance, NOT peer delivery/read. */
     ok: z.literal(true),
     message: messageSchema,
     /** True when this clientMessageId was already stored (a retry). */

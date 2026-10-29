@@ -5,3 +5,4 @@ allowBuilds:
   bcrypt: false
   esbuild: false
   msw: false
+  msgpackr-extract: false

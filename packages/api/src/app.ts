@@ -14,8 +14,28 @@ import { registerErrorHandling } from './http/errors';
 import { RedisRuntime } from './redis/runtime';
 import { DirectoryCache } from './redis/directory-cache';
 import { Presence } from './redis/presence';
+import {
+  NotificationJobs,
+  type NotificationOptions,
+} from './jobs/notification-jobs';
+import { messageNotifier } from './jobs/notify-message';
+import { pool } from './db';
 
-export const buildApp = async () => {
+export const buildApp = async (
+  jobOptions: Partial<
+    Pick<
+      NotificationOptions,
+      | 'beforeEffect'
+      | 'afterEnqueue'
+      | 'afterEffect'
+      | 'leaseMs'
+      | 'reconcileMs'
+      | 'lockMs'
+      | 'autoDispatch'
+      | 'autoRun'
+    >
+  > = {},
+) => {
   const app = Fastify({
     logger: {
       // Authorization codes/state must not enter application access logs.
@@ -42,10 +62,10 @@ export const buildApp = async () => {
   const presence = new Presence(redis, env.PRESENCE_LEASE_MS);
   app.decorate('redisRuntime', redis);
   app.decorate('directoryCache', new DirectoryCache(redis));
-  app.addHook('onClose', (_instance, done) => {
+  app.addHook('onClose', async () => {
+    await notificationJobs.close();
     presence.close();
     redis.close();
-    done();
   });
 
   // One error envelope for every route, registered before any plugin.
@@ -97,5 +117,12 @@ export const buildApp = async () => {
 
   registerChatSocket(socketServer, app.log, sessionStore, { app, presence });
 
-  return { app, io: socketServer };
+  const notificationJobs = new NotificationJobs({
+    ...jobOptions,
+    redisUrl: env.REDIS_URL,
+    namespace: env.REDIS_NAMESPACE,
+    pool,
+    notify: messageNotifier(socketServer, sessionStore),
+  });
+  return { app, io: socketServer, notificationJobs };
 };
