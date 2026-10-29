@@ -5,7 +5,8 @@ import {
   conversationMembers,
   messageReads,
 } from '../../db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, ne, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import type { SendMessageInput } from '@chat-app/shared/contracts';
 import { AppError } from '../../http/errors';
 import { decodeCursor, encodeCursor } from '../../http/cursor';
@@ -90,6 +91,18 @@ export const chatService = {
       .from(conversationMembers)
       .where(eq(conversationMembers.userId, userId));
     return rows.map((r) => r.conversationId);
+  },
+
+  /** Fresh authorised peer set for presence, never the public user directory. */
+  async getPeerIds(userId: string): Promise<string[]> {
+    const own = alias(conversationMembers, 'own_membership');
+    const peer = alias(conversationMembers, 'peer_membership');
+    const rows = await db
+      .selectDistinct({ userId: peer.userId })
+      .from(own)
+      .innerJoin(peer, eq(own.conversationId, peer.conversationId))
+      .where(and(eq(own.userId, userId), ne(peer.userId, userId)));
+    return rows.map((row) => row.userId);
   },
 
   async getConversationMembers(conversationId: string): Promise<string[]> {

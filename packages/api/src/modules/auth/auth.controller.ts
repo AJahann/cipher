@@ -33,6 +33,9 @@ export const authController = (app: FastifyInstance) => {
     limit(req.ip);
     const body = registerUserSchema.parse(req.body);
     const user = await userService.register(body);
+    // The SQL transaction has committed. Redis failure cannot undo registration;
+    // pages expire within the documented original ten-second freshness budget.
+    await app.directoryCache.invalidate();
     const previousSessionId = req.session.sessionId;
     await req.session.regenerate();
     // @fastify/session regenerates without deleting the old store row.

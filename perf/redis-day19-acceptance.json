@@ -1,0 +1,16 @@
+{
+  "apiPids": [3338, 3357, 3390],
+  "checks": [
+    "miss/population/hit across PIDs; normalized limits; caller isolation; auth/validation before cache",
+    "directory pages equal ordered PostgreSQL reference, no duplicate/self rows, exact continuation",
+    "registration across processes rotates epoch; paused pre-write fill cannot repopulate old generation",
+    "40 identical cross-process misses used 1 PG reads; expiring lock release is owner-only",
+    "authorised presence across API PIDs 3338/3357; unrelated user receives no peer metadata",
+    "two per-connection leases across processes; one-tab close stays online; last close becomes offline",
+    "real API process SIGKILL without cleanup; surviving API prunes expired lease and publishes offline",
+    "subscriber disconnection marks unknown; resubscription snapshot repairs a missed transition",
+    "blackholed commands hit bounded timeout; dropped Redis connections use PG, preserve auth and emit unknown, then recover",
+    "registration invalidation failure explicitly permits stale copy only until its original bounded TTL",
+    "logout on A revokes B socket via PG authority; forbidden send stores nothing and revoked cookie cannot use cache"
+  ]
+}

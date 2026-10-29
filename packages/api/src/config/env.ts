@@ -18,6 +18,20 @@ export const env = createEnv({
     DATABASE_URL: z.string(),
     BACKEND_PORT: z.string(),
     SESSION_SECRET: z.string().min(32),
+    REDIS_URL: z
+      .url()
+      .regex(/^rediss?:\/\//)
+      .optional(),
+    REDIS_NAMESPACE: z
+      .string()
+      .regex(/^[\w\-:]{1,64}$/)
+      .default('cipher'),
+    PRESENCE_LEASE_MS: z.coerce
+      .number()
+      .int()
+      .min(3000)
+      .max(60000)
+      .default(15000),
     GITHUB_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
     // Password-only deployments work without OAuth settings. Opt-in plus all
     // three values are required before the UI and routes become available.

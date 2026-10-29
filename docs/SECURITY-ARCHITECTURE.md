@@ -6,7 +6,7 @@ Cipher is an educational, single-instance encrypted messenger, not an independen
 
 ## Authority and revocation
 
-HTTP sessions are stored in PostgreSQL, rotated on authentication, and destroyed on logout. Socket handshakes require the configured browser Origin and a valid signed session cookie. Each socket joins a session-scoped room. Logout and session rotation disconnect that room immediately; sensitive events reload session authority; idle sockets are checked every five seconds and disconnected on expiry or store failure. The bounded idle interval is an explicit receive-authority window, not instantaneous distributed revocation.
+HTTP sessions are stored in PostgreSQL, rotated on authentication, and destroyed on logout. Socket handshakes require the configured browser Origin and a valid signed session cookie. Each socket joins a session-scoped room. Logout and session rotation disconnect that local room immediately; sensitive events reload session authority; idle sockets on any API instance are checked every five seconds and disconnected on expiry or store failure. The bounded idle interval is an explicit receive-authority window, not instantaneous distributed revocation.
 
 Session saves and destruction serialize by session ID using a PostgreSQL transaction-scoped advisory lock. Destruction atomically records the ID in `session_revocations` and deletes its `user_sessions` row. Later rolling or explicit saves for that ID cannot recreate authority. Session IDs are not reused. Valid sessions retain rolling seven-day expiry; this does not cancel work already authorized before revocation.
 
@@ -43,5 +43,10 @@ Conversation components are keyed by account and conversation. Switching with a 
 Stored ciphertext is durable history, not proof of peer receipt. If notification fails after insertion, the send may return an error despite persistence. Retrying the original command ID/ciphertext safely repeats notifications without inserting a second row. Disconnects require HTTP history reconciliation on reconnect; the client refreshes conversations, contacts and loaded histories. Cursor pages remain authoritative and realtime updates invalidate rather than append into old pages. This trades extra reads for simple correctness; a transactional outbox/watermark protocol is a future optimization.
 
 ## Deployment boundaries
+
+Day 19 adds optional Redis directory copies and cross-instance presence leases,
+not a distributed message adapter or distributed abuse controls. Presence is
+unknown during shared-state uncertainty and never grants message-receive
+authority. See [cache coherence, lease guarantees, and two-process acceptance](day-19-redis.md).
 
 Run one API instance unless you implement and test a Socket.IO adapter, distributed session revocation, globally coordinated abuse controls, and catch-up semantics. In-memory rooms and local limits do not become distributed just because sessions use PostgreSQL. Keep auth responses out of caches and avoid logging session IDs, tokens, passwords, private keys or OAuth callback queries. Configure trusted TLS termination, database backups/restore drills, monitoring, and graceful process shutdown before sensitive deployment.

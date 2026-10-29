@@ -8,6 +8,13 @@ import type {
 } from './chat';
 import type { UserSummary } from './user';
 
+export interface PresenceState {
+  userId: string;
+  status: 'online' | 'offline' | 'unknown';
+  /** null is unknown, never an inferred offline result during an outage. */
+  online: boolean | null;
+}
+
 /** Events the server emits. Shared by the Socket.IO server and client. */
 export interface ServerToClientEvents {
   'message:new': (message: MessageDto) => void;
@@ -25,7 +32,11 @@ export interface ServerToClientEvents {
     userId: string;
     isTyping: boolean;
   }) => void;
-  'presence:update': (data: { userId: string; online: boolean }) => void;
+  'presence:update': (data: PresenceState) => void;
+  'presence:snapshot': (data: {
+    states: PresenceState[];
+    availability: 'available' | 'unknown';
+  }) => void;
   /** Rejection of a fire-and-forget client event (one without an ack). */
   error: (data: {
     event: keyof ClientToServerEvents;
@@ -35,6 +46,7 @@ export interface ServerToClientEvents {
 
 /** Events the client emits. Payloads are validated with the zod schemas. */
 export interface ClientToServerEvents {
+  'presence:sync': () => void;
   'message:send': (
     data: SendMessageInput,
     ack: (result: SendMessageAck) => void,
