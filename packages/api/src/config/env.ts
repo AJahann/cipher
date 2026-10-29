@@ -24,7 +24,7 @@ export const env = createEnv({
       .optional(),
     REDIS_NAMESPACE: z
       .string()
-      .regex(/^[a-zA-Z0-9:_-]{1,64}$/)
+      .regex(/^[\w\-:]{1,64}$/)
       .default('cipher'),
     PRESENCE_LEASE_MS: z.coerce
       .number()
