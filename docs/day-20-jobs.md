@@ -166,6 +166,9 @@ Local PostgreSQL 16.15 / Redis 6.2.20, Node 24 / pnpm 12.6:
 - **13 Chromium browser E2E tests passed**, with the production web build, local
   API and real Redis consumer (system Chromium, not the pinned hosted browser image).
 - Workspace type checks, production build, Biome formatting: passed.
+- Clean-checkout frozen dependency installation: passed after explicitly declining
+  the optional `msgpackr-extract` native build in `allowBuilds`. BullMQ uses the
+  tested JavaScript fallback; no dependency scripts or CI checks were enabled/bypassed.
 - **14 CI-helper tests passed**; native lint: zero warnings/errors, with original
   severity/options/overrides preserved. The unchanged full plugin-enabled Oxlint
   command still hits the known sandbox allocator panic. Hosted full CI remains a
