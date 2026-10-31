@@ -1,5 +1,6 @@
 /* oxlint-disable no-await-in-loop -- Sequential bounded polling/lease reads avoid a Redis command burst. */
 import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import type { PresenceState } from '@chat-app/shared/contracts';
 import type { RedisRuntime } from './runtime';
 
@@ -56,8 +57,13 @@ export class Presence {
   private readonly changed = () => this.reconcileAll();
   private readonly transition = (raw: string) => {
     try {
-      const value = JSON.parse(raw) as { userId?: unknown };
-      if (typeof value.userId !== 'string') return;
+      if (Buffer.byteLength(raw) > 128) return;
+      const parsed = z
+        .object({ userId: z.uuid() })
+        .strict()
+        .safeParse(JSON.parse(raw));
+      if (!parsed.success) return;
+      const value = parsed.data;
       for (const entry of this.connections.values()) {
         if (entry.peersKnown.has(value.userId)) this.schedule(entry);
       }

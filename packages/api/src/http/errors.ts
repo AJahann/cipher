@@ -114,14 +114,14 @@ export function toApiError(error: unknown): {
 export function registerErrorHandling(app: FastifyInstance) {
   app.setErrorHandler((error, req, reply) => {
     const { status, body } = toApiError(error);
-    if (status >= 500) req.log.error(error);
+    if (status >= 500) req.log.error({ code: 'INTERNAL' }, 'Request failed');
     return reply.code(status).send(body);
   });
 
   app.setNotFoundHandler((req, reply) => {
     const body: ApiErrorBody = {
       code: 'ROUTE_NOT_FOUND',
-      message: `${req.method} ${req.url} does not exist`,
+      message: `${req.method} route does not exist`,
     };
     return reply.code(404).send(body);
   });

@@ -1,7 +1,9 @@
 import type { Pool } from 'pg';
+import { z } from 'zod';
 
 /** Retains prior failure history and queue generations; never re-drives a success. */
 export async function redrive(pool: Pool, eventId: string) {
+  z.uuid().parse(eventId);
   const result = await pool.query(
     `UPDATE notification_outbox SET status='pending', generation=generation+1, attempts=0,
     next_attempt_at=now(), next_dispatch_at=now(), lease_token=NULL, lease_until=NULL, last_error=NULL, completed_at=NULL

@@ -171,13 +171,19 @@ export class DirectoryCache {
 
   private async get(key: string, request: Request) {
     const raw = await this.redis.command((client) => client.get(key));
-    if (!raw) return null;
+    if (!raw || Buffer.byteLength(raw) > 32 * 1024) return null;
     const parsed = usersPageSchema.safeParse(JSON.parse(raw));
     if (!parsed.success || parsed.data.items.length > request.limit)
       return null;
     let previous = request.cursorId ?? '';
     for (const user of parsed.data.items) {
-      if (user.id === request.caller || user.id <= previous) return null;
+      if (
+        user.username.length > 32 ||
+        user.id !== user.id.toLowerCase() ||
+        user.id === request.caller ||
+        user.id <= previous
+      )
+        return null;
       previous = user.id;
     }
     if (

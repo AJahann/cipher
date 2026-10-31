@@ -50,3 +50,56 @@ describe('bounded directory fallback without Redis', () => {
     runtime.close();
   });
 });
+
+describe('untrusted cached directory pages', () => {
+  const caller = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const peer = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  it.each([
+    'not-json',
+    'x'.repeat(32 * 1024 + 1),
+    JSON.stringify({
+      items: [{ id: caller, username: 'self' }],
+      nextCursor: null,
+    }),
+    JSON.stringify({
+      items: [{ id: peer, username: 'x'.repeat(33) }],
+      nextCursor: null,
+    }),
+    JSON.stringify({
+      items: [{ id: peer.toUpperCase(), username: 'peer' }],
+      nextCursor: null,
+    }),
+    JSON.stringify({
+      items: [
+        { id: peer, username: 'peer' },
+        { id: peer, username: 'duplicate' },
+      ],
+      nextCursor: null,
+    }),
+    JSON.stringify({ items: [], nextCursor: 'invalid-continuation' }),
+  ])(
+    'uses the database instead of an invalid/oversized cached page (case %#)',
+    async (raw) => {
+      const runtime = new RedisRuntime(undefined);
+      const client = {
+        set: vi.fn().mockResolvedValue('OK'),
+        get: vi.fn().mockResolvedValueOnce('epoch').mockResolvedValue(raw),
+        eval: vi.fn().mockResolvedValue(Date.now() + 10_000),
+      };
+      vi.spyOn(runtime, 'command').mockImplementation((work) =>
+        work(client as never),
+      );
+      const load = vi.fn(() =>
+        Promise.resolve({ items: [], nextCursor: null }),
+      );
+      const result = await new DirectoryCache(runtime).read(
+        { caller, limit: 2 },
+        load,
+      );
+      expect(result.cache).not.toBe('hit');
+      expect(result.page).toEqual({ items: [], nextCursor: null });
+      expect(load).toHaveBeenCalledOnce();
+      runtime.close();
+    },
+  );
+});

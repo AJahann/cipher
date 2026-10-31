@@ -11,6 +11,7 @@ declare module '@fastify/session' {
 
 declare module 'fastify' {
   interface FastifyInstance {
+    securityBudgets: import('../security/policy').SecurityBudgets;
     /**
      * Socket.IO server. Attached only after `app.ready()`, because it needs the
      * underlying HTTP server. REST handlers registered before that point read it
