@@ -20,7 +20,7 @@ export function createLimiter(
       entry = { count: 0, resetAt: now + windowMs };
       entries.set(key, entry);
     }
+    if (entry.count >= limit) throw new AppError('RATE_LIMITED');
     entry.count += 1;
-    if (entry.count > limit) throw new AppError('RATE_LIMITED');
   };
 }

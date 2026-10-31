@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { env } from '../../config/env';
 import { isGitHubAuthEnabled } from '../../config/auth';
 import { revokeSession } from './session-authority';
-import { createLimiter } from '../../security/rate-limit';
 import { AppError } from '../../http/errors';
 import { userService } from '../user/user.service';
 import { requireAuth } from './auth.middleware';
@@ -15,10 +14,8 @@ import {
 } from './github.service';
 
 export const githubController = (app: FastifyInstance) => {
-  const limit = createLimiter(60, 60_000);
   // Auth redirects and errors must not be cached or leak callback queries via Referer.
   app.addHook('onRequest', (req, reply, done) => {
-    limit(req.ip);
     reply.header('Cache-Control', 'no-store');
     reply.header('Referrer-Policy', 'no-referrer');
     if (!isGitHubAuthEnabled()) {

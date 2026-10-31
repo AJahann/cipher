@@ -16,7 +16,6 @@ import { chatService } from './chat.service';
 import { userService } from '../user/user.service';
 import { AppError, toApiError } from '../../http/errors';
 import { sessionRoom } from '../auth/session-authority';
-import { createLimiter } from '../../security/rate-limit';
 import type { Presence } from '../../redis/presence';
 
 interface SocketData {
@@ -56,11 +55,8 @@ export function registerChatSocket(
   store: Store,
   { app, presence }: { app: FastifyInstance; presence: Presence },
 ) {
-  const handshakeLimit = createLimiter(60, 60_000);
-  const eventLimit = createLimiter(120, 10_000);
   io.use(async (socket, next) => {
     try {
-      handshakeLimit(socket.handshake.address);
       const rawCookie = socket.handshake.headers.cookie ?? '';
       const cookies = parseCookie(rawCookie);
       const rawSid = cookies.sessionId;
@@ -83,20 +79,32 @@ export function registerChatSocket(
       const userId = session?.userId as string | undefined;
       if (!userId) return next(unauthenticated());
 
+      app.securityBudgets.take('account.connect', userId);
       socket.data.userId = userId;
       socket.data.sessionId = sid;
       next();
     } catch (err) {
-      log.error(err, 'Socket auth error');
+      if (toApiError(err).body.code === 'RATE_LIMITED') {
+        const error = new Error('RATE_LIMITED');
+        return next(error);
+      }
+      log.warn('Socket authentication refused');
       next(unauthenticated());
     }
   });
 
   io.on('connection', async (socket: AppSocket) => {
     const { userId } = socket.data;
+    try {
+      const release = app.securityBudgets.connect(userId);
+      socket.once('disconnect', release);
+    } catch (_error) {
+      socket.disconnect(true);
+      return;
+    }
     socket.join(userRoom(userId));
     socket.join(sessionRoom(socket.data.sessionId));
-    const limit = () => eventLimit(userId);
+    const limit = () => app.securityBudgets.take('account.event', userId);
     const authorize = async () => {
       const current = await new Promise<Record<string, any> | null>(
         (resolve, reject) => {
@@ -146,7 +154,7 @@ export function registerChatSocket(
     /** Reports a rejected fire-and-forget event back to the sender only. */
     const reject = (event: keyof ClientToServerEvents, err: unknown) => {
       const { status, body } = toApiError(err);
-      if (status >= 500) log.error(err, `${event} failed`);
+      if (status >= 500) log.error({ event }, 'Socket event failed');
       socket.emit('error', { event, error: body });
     };
 
@@ -156,8 +164,8 @@ export function registerChatSocket(
       };
       try {
         limit();
-        await authorize();
         const parsed = sendMessageSchema.parse(data);
+        await authorize();
 
         const { message, replayed } = await chatService.sendMessage({
           ...parsed,
@@ -179,7 +187,7 @@ export function registerChatSocket(
         reply({ ok: true, message: payload, replayed });
       } catch (err) {
         const { status, body } = toApiError(err);
-        if (status >= 500) log.error(err, 'message:send failed');
+        if (status >= 500) log.error('message:send failed');
         reply({ ok: false, error: body });
       }
     });
@@ -187,8 +195,8 @@ export function registerChatSocket(
     socket.on('message:read', async (data) => {
       try {
         limit();
-        await authorize();
         const { messageId, conversationId } = messageReadSchema.parse(data);
+        await authorize();
         await chatService.markRead(messageId, conversationId, userId);
       } catch (err) {
         reject('message:read', err);
@@ -200,13 +208,16 @@ export function registerChatSocket(
       async (data: unknown) => {
         try {
           limit();
-          await authorize();
           const parsed = conversationRefSchema.safeParse(data);
           if (!parsed.success) return reject(event, parsed.error);
+          await authorize();
           const room = conversationRoom(parsed.data.conversationId);
-          // Rooms are only ever joined after a membership check, so being in the
-          // room is the authorisation. Typing is ephemeral: no DB round-trip.
-          if (!socket.rooms.has(room)) {
+          // A room is routing state, not durable authority after membership changes.
+          if (
+            !socket.rooms.has(room) ||
+            !(await chatService.isMember(parsed.data.conversationId, userId))
+          ) {
+            socket.leave(room);
             return reject(event, new AppError('CONVERSATION_NOT_FOUND'));
           }
           socket.to(room).emit('typing:indicator', {
@@ -225,8 +236,8 @@ export function registerChatSocket(
     socket.on('conversation:join', async (data) => {
       try {
         limit();
-        await authorize();
         const { conversationId } = conversationRefSchema.parse(data);
+        await authorize();
         if (!(await chatService.isMember(conversationId, userId))) {
           throw new AppError('CONVERSATION_NOT_FOUND');
         }
@@ -236,15 +247,22 @@ export function registerChatSocket(
       }
     });
 
-    socket.on('conversation:leave', (data) => {
-      const parsed = conversationRefSchema.safeParse(data);
-      if (!parsed.success) return reject('conversation:leave', parsed.error);
-      socket.leave(conversationRoom(parsed.data.conversationId));
-    });
-
-    socket.on('presence:sync', () => {
+    socket.on('conversation:leave', async (data) => {
       try {
         limit();
+        const parsed = conversationRefSchema.parse(data);
+        await authorize();
+        socket.leave(conversationRoom(parsed.conversationId));
+      } catch (err) {
+        reject('conversation:leave', err);
+      }
+    });
+
+    socket.on('presence:sync', async () => {
+      try {
+        limit();
+        app.securityBudgets.take('account.presence', userId);
+        await authorize();
         presence.sync(socket.id);
       } catch (err) {
         reject('presence:sync', err);

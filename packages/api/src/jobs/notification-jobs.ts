@@ -12,10 +12,13 @@ interface Event {
   generation: number;
   attempts: number;
 }
-interface Payload {
-  eventId: string;
-  generation: number;
-}
+export const notificationPayloadSchema = z
+  .object({
+    eventId: z.uuid(),
+    generation: z.number().int().min(0).max(2_147_483_647),
+  })
+  .strict();
+type Payload = z.infer<typeof notificationPayloadSchema>;
 export interface NotificationOptions {
   redisUrl?: string;
   namespace: string;
@@ -154,14 +157,10 @@ export class NotificationJobs {
   }
 
   private async process(job: Job<Payload>) {
-    const { eventId, generation } = job.data;
-    // Payloads are untrusted metadata. No arbitrary identifiers/ciphertext are emitted.
-    if (
-      !z.uuid().safeParse(eventId).success ||
-      !Number.isSafeInteger(generation) ||
-      generation < 0
-    )
-      throw new Error('INVALID_NOTIFICATION_JOB');
+    // Validate unknown infrastructure input before destructuring or SQL work.
+    const parsed = notificationPayloadSchema.safeParse(job.data);
+    if (!parsed.success) throw new Error('INVALID_NOTIFICATION_JOB');
+    const { eventId, generation } = parsed.data;
     const token = randomUUID();
     const { rows } = await this.options.pool.query<Event>(
       `UPDATE notification_outbox SET attempts=attempts+1, lease_token=$3,

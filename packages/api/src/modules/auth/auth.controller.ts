@@ -8,20 +8,10 @@ import { userService } from '../user/user.service';
 import { requireAuth } from './auth.middleware';
 import { AppError } from '../../http/errors';
 import { revokeSession, sessionRoom } from './session-authority';
-import { createLimiter } from '../../security/rate-limit';
-import { env } from '../../config/env';
 
 export const authController = (app: FastifyInstance) => {
-  const limit = createLimiter(30, 60_000);
   app.addHook('onRequest', (req, reply, done) => {
     reply.header('Cache-Control', 'no-store');
-    if (
-      req.method === 'POST' &&
-      req.headers.origin &&
-      req.headers.origin !== env.CLIENT_ORIGIN
-    ) {
-      throw new AppError('BAD_REQUEST', 'Untrusted request origin');
-    }
     done();
   });
   app.get('/config', (_req, reply) => {
@@ -30,7 +20,6 @@ export const authController = (app: FastifyInstance) => {
   });
 
   app.post('/register', async (req, reply) => {
-    limit(req.ip);
     const body = registerUserSchema.parse(req.body);
     const user = await userService.register(body);
     // The SQL transaction has committed. Redis failure cannot undo registration;
@@ -52,7 +41,6 @@ export const authController = (app: FastifyInstance) => {
   });
 
   app.post('/login', async (req, reply) => {
-    limit(req.ip);
     const body = loginUserSchema.parse(req.body);
     const user = await userService.login(body);
     const previousSessionId = req.session.sessionId;

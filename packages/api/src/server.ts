@@ -11,7 +11,9 @@ const start = async () => {
   console.log(`  Socket.IO: ws://localhost:${env.BACKEND_PORT}`);
 };
 
-start().catch((err) => {
-  console.error(err);
+start().catch(() => {
+  console.error(
+    'API startup failed; inspect deployment configuration and service health.',
+  );
   process.exit(1);
 });

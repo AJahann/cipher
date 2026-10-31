@@ -12,7 +12,7 @@ Session saves and destruction serialize by session ID using a PostgreSQL transac
 
 Apply migration `0005_session_revocations` before starting the updated API. Drain/stop old API processes before rollout: old binaries do not participate in the revocation lock or tombstone checks. Revocation records are intentionally permanent and are not removed by expired-session pruning; storage grows with revoked IDs. Do not add time-based tombstone pruning without a reviewed bound on stale writers. No request-time schema creation is introduced.
 
-Local IP, per-account event, and hash-concurrency limits bound work on a single API process. They are not distributed controls. Browser auth mutations with an Origin must match CLIENT_ORIGIN; non-browser HTTP clients without Origin remain supported, while WebSocket handshakes without Origin are refused. Configure the proxy and CLIENT_ORIGIN consistently; do not trust arbitrary forwarded client-IP headers.
+Local IP, per-account event, and hash-concurrency limits bound work on a single API process. They are not distributed controls. All HTTP mutations with a present Origin must match CLIENT_ORIGIN; non-browser HTTP clients without Origin remain supported, while WebSocket handshakes without Origin are refused. Configure the proxy and CLIENT_ORIGIN consistently; do not trust arbitrary forwarded client-IP headers.
 
 ## Password migration
 
@@ -63,3 +63,16 @@ Only cache/presence remain cross-instance. Do not run this consumer on multiple
 message API instances without implementing a delivery bridge. See
 [Day 20 design and operations](day-20-jobs.md) for finite retries, PostgreSQL
 reconciliation after Redis loss, retention, and deployment assumptions.
+
+## Day 21 input, authority and cost boundaries
+
+See [the inspected boundary inventory, concrete local IP/account budgets, abuse
+tests and code-linked OWASP threat statuses](day-21-security.md). HTTP admission
+now precedes avoidable parsing/session/hash work; authenticated reads and
+conversation creation have account budgets shared across tabs/sessions, and
+socket work remains shared across reconnects. Explicit body/Engine.IO ceilings,
+live-connection caps and infrastructure payload checks bound selected costs.
+These are process-local controls, not a global DoS defense or a security audit.
+Absent-Origin HTTP support remains deliberate; forwarded IP is not trusted.
+The malicious-server, server-supplied-key and browser-compromise limitations above
+remain open.

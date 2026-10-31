@@ -20,6 +20,13 @@ import {
 } from './jobs/notification-jobs';
 import { messageNotifier } from './jobs/notify-message';
 import { pool } from './db';
+import {
+  HTTP_BODY_BYTES,
+  SOCKET_PAYLOAD_BYTES,
+  SecurityBudgets,
+} from './security/policy';
+import { registerHttpSecurity } from './security/http';
+import { securityLogger } from './security/logging';
 
 export const buildApp = async (
   jobOptions: Partial<
@@ -35,22 +42,17 @@ export const buildApp = async (
       | 'autoRun'
     >
   > = {},
+  securityOptions: { now?: () => number } = {},
 ) => {
   const app = Fastify({
-    logger: {
-      // Authorization codes/state must not enter application access logs.
-      serializers: {
-        req(req) {
-          return {
-            method: req.method,
-            url: req.url?.split('?')[0],
-            hostname: req.hostname,
-            remoteAddress: req.ip,
-          };
-        },
-      },
-    },
+    bodyLimit: HTTP_BODY_BYTES,
+    trustProxy: false, // No forwarded IP authority without a reviewed proxy policy.
+    logger: securityLogger,
   });
+
+  const budgets = new SecurityBudgets(securityOptions.now);
+  app.decorate('securityBudgets', budgets);
+  registerHttpSecurity(app, budgets, env.CLIENT_ORIGIN);
 
   // Socket.IO can only attach once the HTTP server is ready, but the REST
   // handlers registered below need to emit on it at request time (e.g. telling
@@ -105,8 +107,16 @@ export const buildApp = async (
   await app.ready();
 
   const socketServer = new SocketIOServer(app.server, {
-    allowRequest: (req, accept) =>
-      accept(null, req.headers.origin === env.CLIENT_ORIGIN),
+    maxHttpBufferSize: SOCKET_PAYLOAD_BYTES,
+    perMessageDeflate: false,
+    allowRequest: (req, accept) => {
+      try {
+        budgets.take('ip.handshake', req.socket.remoteAddress ?? 'unknown');
+        accept(null, req.headers.origin === env.CLIENT_ORIGIN);
+      } catch (_error) {
+        accept(null, false);
+      }
+    },
     cors: {
       origin: env.CLIENT_ORIGIN,
       credentials: true,
