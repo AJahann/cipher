@@ -3,10 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "files": [
+    "dist",
+    "drizzle/*.sql",
+    "drizzle/meta"
+  ],
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -b",
-    "start": "tsx dist/src/server.js",
+    "build": "tsc -b && node scripts/finalize-dist.mjs",
+    "start": "node dist/src/server.js",
+    "migrate": "node dist/src/db/migrate.js",
     "typecheck": "tsc -b",
     "jobs": "tsx src/jobs/cli.ts"
   },

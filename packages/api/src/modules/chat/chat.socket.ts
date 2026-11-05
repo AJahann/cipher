@@ -1,7 +1,6 @@
 // oxlint-disable max-lines-per-function
 import type { Server as SocketIOServer, Socket } from 'socket.io';
 import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
-import { parseCookie } from 'cookie';
 import type { Store } from 'express-session';
 import {
   conversationRefSchema,
@@ -58,7 +57,7 @@ export function registerChatSocket(
   io.use(async (socket, next) => {
     try {
       const rawCookie = socket.handshake.headers.cookie ?? '';
-      const cookies = parseCookie(rawCookie);
+      const cookies = app.parseCookie(rawCookie);
       const rawSid = cookies.sessionId;
 
       if (!rawSid) return next(unauthenticated());

@@ -1,0 +1,140 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cipher}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cipher}
+      POSTGRES_DB: ${POSTGRES_DB:-cipher}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U $${POSTGRES_USER:-cipher} -d $${POSTGRES_DB:-cipher}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  migrate:
+    image: cipher-api:local
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    restart: 'no'
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cipher}:${POSTGRES_PASSWORD:-cipher}@postgres:5432/${POSTGRES_DB:-cipher}
+      REDIS_URL: redis://redis:6379/0
+      BACKEND_PORT: '3001'
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:-cipher-compose-dev-session-secret-32chars}
+      REDIS_NAMESPACE: ${REDIS_NAMESPACE:-cipher}
+      PRESENCE_LEASE_MS: ${PRESENCE_LEASE_MS:-15000}
+      GITHUB_AUTH_ENABLED: ${GITHUB_AUTH_ENABLED:-false}
+    command: ['node', 'dist/src/db/migrate.js']
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: cipher-api:local
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cipher}:${POSTGRES_PASSWORD:-cipher}@postgres:5432/${POSTGRES_DB:-cipher}
+      REDIS_URL: redis://redis:6379/0
+      BACKEND_PORT: '3001'
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:-cipher-compose-dev-session-secret-32chars}
+      REDIS_NAMESPACE: ${REDIS_NAMESPACE:-cipher}
+      PRESENCE_LEASE_MS: ${PRESENCE_LEASE_MS:-15000}
+      GITHUB_AUTH_ENABLED: ${GITHUB_AUTH_ENABLED:-false}
+    ports:
+      - '${BACKEND_PORT:-3001}:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3001/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  web:
+    image: cipher-web:local
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      HOSTNAME: 0.0.0.0
+    ports:
+      - '3000:3000'
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  postgres_data:
