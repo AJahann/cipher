@@ -32,7 +32,7 @@ function pruneTests(dir) {
 }
 
 function resolveRelative(fromDir, specifier) {
-  if (/\.(?:cjs|json|m?js)$/.test(specifier)) return specifier;
+  if (/\.(?:cjs|js|json|mjs)$/.test(specifier)) return specifier;
   const target = path.resolve(fromDir, specifier);
   if (existsSync(`${target}.js`)) return `${specifier}.js`;
   if (existsSync(path.join(target, 'index.js'))) {
@@ -56,18 +56,18 @@ function rewriteFile(filePath) {
   const dir = path.dirname(filePath);
   const source = readFileSync(filePath, 'utf8');
   const updated = source.replace(
-    /(\b(?:from|import)\s+)(["'])([^"']+)(["'])/g,
-    (match, prefix, quote, specifier, suffix) => {
+    /(\b(?:from|import)\s+)(["'])([^"']+)\2/g,
+    (_match, prefix, quote, specifier) => {
       if (
         specifier === '@chat-app/shared' ||
         specifier.startsWith('@chat-app/shared/')
       ) {
-        return `${prefix}${quote}${resolveShared(dir, specifier)}${suffix}`;
+        return `${prefix}${quote}${resolveShared(dir, specifier)}${quote}`;
       }
       if (specifier.startsWith('./') || specifier.startsWith('../')) {
-        return `${prefix}${quote}${resolveRelative(dir, specifier)}${suffix}`;
+        return `${prefix}${quote}${resolveRelative(dir, specifier)}${quote}`;
       }
-      return match;
+      return `${prefix}${quote}${specifier}${quote}`;
     },
   );
   if (updated !== source) writeFileSync(filePath, updated, 'utf8');
