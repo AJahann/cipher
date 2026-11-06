@@ -68,4 +68,26 @@ export class RedisRuntime extends EventEmitter {
     this.subscriber?.disconnect();
     this.removeAllListeners();
   }
+
+  async quit() {
+    this.closing = true;
+    this.subscribed = false;
+    const closeConnection = async (connection: Redis | null) => {
+      if (!connection) return;
+      if (connection.status === 'ready') {
+        try {
+          await connection.quit();
+          return;
+        } catch (_error) {
+          // Fall through to disconnect if the socket already closed.
+        }
+      }
+      connection.disconnect();
+    };
+    await Promise.all([
+      closeConnection(this.client),
+      closeConnection(this.subscriber),
+    ]);
+    this.removeAllListeners();
+  }
 }

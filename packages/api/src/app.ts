@@ -67,7 +67,7 @@ export const buildApp = async (
   app.addHook('onClose', async () => {
     await notificationJobs.close();
     presence.close();
-    redis.close();
+    await redis.quit();
   });
 
   // One error envelope for every route, registered before any plugin.

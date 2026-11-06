@@ -7,6 +7,7 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   reactCompiler: true,
   transpilePackages: ['@chat-app/shared'],
   experimental: {
