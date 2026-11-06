@@ -1,0 +1,28 @@
+:80 {
+    # Backend REST API routes
+    handle /health {
+        reverse_proxy api:3001
+    }
+
+    handle /auth/* {
+        reverse_proxy api:3001
+    }
+
+    handle /users* {
+        reverse_proxy api:3001
+    }
+
+    handle /chat/* {
+        reverse_proxy api:3001
+    }
+
+    # Realtime WebSockets / Socket.io
+    handle /socket.io/* {
+        reverse_proxy api:3001
+    }
+
+    # Everything else -> Next.js Frontend
+    handle {
+        reverse_proxy web:3000
+    }
+}

@@ -40,7 +40,8 @@ export const githubController = (app: FastifyInstance) => {
   // Linking is explicit, authenticated, and CSRF-protected. A login flow never
   // implicitly links accounts, even if started with an authenticated cookie.
   app.post('/link', { preHandler: requireAuth }, async (req, reply) => {
-    if (req.headers.origin !== env.CLIENT_ORIGIN) {
+    const origins = env.CLIENT_ORIGIN.split(',').map((o) => o.trim());
+    if (!req.headers.origin || !origins.includes(req.headers.origin)) {
       throw new AppError('BAD_REQUEST', 'Link GitHub from the Cipher app');
     }
     const flow = createGitHubFlow();
@@ -83,6 +84,7 @@ export const githubController = (app: FastifyInstance) => {
     req.session.userId = userId;
     await req.session.save();
     // Fixed application destination; never accept a callback returnTo parameter.
-    return reply.redirect(new URL('/chat', env.CLIENT_ORIGIN).toString());
+    const redirectBase = env.CLIENT_ORIGIN.split(',')[0].trim();
+    return reply.redirect(new URL('/chat', redirectBase).toString());
   });
 };

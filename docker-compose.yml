@@ -55,7 +55,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-cipher}:${POSTGRES_PASSWORD:-cipher}@postgres:5432/${POSTGRES_DB:-cipher}
       REDIS_URL: redis://redis:6379/0
       BACKEND_PORT: '3001'
-      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000,http://localhost:80,http://localhost}
       SESSION_SECRET: ${SESSION_SECRET:-cipher-compose-dev-session-secret-32chars}
       REDIS_NAMESPACE: ${REDIS_NAMESPACE:-cipher}
       PRESENCE_LEASE_MS: ${PRESENCE_LEASE_MS:-15000}
@@ -79,7 +79,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-cipher}:${POSTGRES_PASSWORD:-cipher}@postgres:5432/${POSTGRES_DB:-cipher}
       REDIS_URL: redis://redis:6379/0
       BACKEND_PORT: '3001'
-      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000,http://localhost:80,http://localhost}
       SESSION_SECRET: ${SESSION_SECRET:-cipher-compose-dev-session-secret-32chars}
       REDIS_NAMESPACE: ${REDIS_NAMESPACE:-cipher}
       PRESENCE_LEASE_MS: ${PRESENCE_LEASE_MS:-15000}
@@ -135,6 +135,19 @@ services:
       timeout: 5s
       retries: 10
       start_period: 5s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
 
 volumes:
   postgres_data:

@@ -14,7 +14,7 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(['development', 'production', 'test'])
       .default('development'),
-    CLIENT_ORIGIN: z.url(),
+    CLIENT_ORIGIN: z.string().min(1),
     DATABASE_URL: z.string(),
     BACKEND_PORT: z.string(),
     SESSION_SECRET: z.string().min(32),

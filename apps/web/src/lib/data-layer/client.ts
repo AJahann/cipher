@@ -1,5 +1,5 @@
 import { apiErrorSchema } from '@chat-app/shared/contracts';
-import { env } from '../../config/env';
+import { getApiOrigin } from './api-origin';
 
 export class ApiError extends Error {
   constructor(
@@ -24,7 +24,7 @@ export async function apiFetch<T>(
   if (typeof init?.body === 'string' && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const res = await fetch(`${env.NEXT_PUBLIC_API_URL}${path}`, {
+  const res = await fetch(`${getApiOrigin()}${path}`, {
     ...init,
     credentials: 'include',
     headers,

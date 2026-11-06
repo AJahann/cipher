@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiFetch } from './client';
 
-vi.mock(import('../../config/env'), () => ({
-  env: { NEXT_PUBLIC_API_URL: 'https://api.example.test' },
+vi.mock(import('./api-origin'), () => ({
+  getApiOrigin: () => 'https://api.example.test',
 }));
 afterEach(() => vi.unstubAllGlobals());
 
