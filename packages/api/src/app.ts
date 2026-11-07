@@ -120,7 +120,7 @@ export const buildApp = async (
       try {
         budgets.take('ip.handshake', req.socket.remoteAddress ?? 'unknown');
         const reqOrigin = req.headers.origin;
-        accept(null, !reqOrigin || allowedOrigins.includes(reqOrigin));
+        accept(null, Boolean(reqOrigin && allowedOrigins.includes(reqOrigin)));
       } catch (_error) {
         accept(null, false);
       }

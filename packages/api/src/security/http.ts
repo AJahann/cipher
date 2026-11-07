@@ -7,7 +7,9 @@ export function registerHttpSecurity(
   budgets: SecurityBudgets,
   allowedOrigins: string | string[],
 ) {
-  const origins = Array.isArray(allowedOrigins) ? allowedOrigins : [allowedOrigins];
+  const origins = Array.isArray(allowedOrigins)
+    ? allowedOrigins
+    : [allowedOrigins];
   // Register BEFORE cookie/session plugins: refuse avoidable parsing/store/hash work.
   app.addHook('onRequest', (req, reply, done) => {
     reply.header('Cache-Control', 'no-store');
