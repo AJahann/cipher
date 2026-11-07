@@ -26,6 +26,7 @@ import {
   SecurityBudgets,
 } from './security/policy';
 import { registerHttpSecurity } from './security/http';
+import { isOriginAllowed } from './security/origins';
 import { securityLogger } from './security/logging';
 
 export const buildApp = async (
@@ -76,7 +77,7 @@ export const buildApp = async (
 
   await app.register(cors, {
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         cb(null, true);
       } else {
         cb(new Error('Not allowed by CORS'), false);
@@ -120,13 +121,26 @@ export const buildApp = async (
       try {
         budgets.take('ip.handshake', req.socket.remoteAddress ?? 'unknown');
         const reqOrigin = req.headers.origin;
-        accept(null, Boolean(reqOrigin && allowedOrigins.includes(reqOrigin)));
+        const host =
+          (req.headers['x-forwarded-host'] as string) || req.headers.host;
+        accept(
+          null,
+          Boolean(
+            reqOrigin && isOriginAllowed(reqOrigin, allowedOrigins, host),
+          ),
+        );
       } catch (_error) {
         accept(null, false);
       }
     },
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        if (!origin || isOriginAllowed(origin, allowedOrigins)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       credentials: true,
     },
   });
