@@ -52,7 +52,8 @@ export const buildApp = async (
 
   const budgets = new SecurityBudgets(securityOptions.now);
   app.decorate('securityBudgets', budgets);
-  registerHttpSecurity(app, budgets, env.CLIENT_ORIGIN);
+  const allowedOrigins = env.CLIENT_ORIGIN.split(',').map((o) => o.trim());
+  registerHttpSecurity(app, budgets, allowedOrigins);
 
   // Socket.IO can only attach once the HTTP server is ready, but the REST
   // handlers registered below need to emit on it at request time (e.g. telling
@@ -74,7 +75,13 @@ export const buildApp = async (
   registerErrorHandling(app);
 
   await app.register(cors, {
-    origin: env.CLIENT_ORIGIN,
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Not allowed by CORS'), false);
+      }
+    },
     credentials: true,
   });
 
@@ -112,13 +119,14 @@ export const buildApp = async (
     allowRequest: (req, accept) => {
       try {
         budgets.take('ip.handshake', req.socket.remoteAddress ?? 'unknown');
-        accept(null, req.headers.origin === env.CLIENT_ORIGIN);
+        const reqOrigin = req.headers.origin;
+        accept(null, Boolean(reqOrigin && allowedOrigins.includes(reqOrigin)));
       } catch (_error) {
         accept(null, false);
       }
     },
     cors: {
-      origin: env.CLIENT_ORIGIN,
+      origin: allowedOrigins,
       credentials: true,
     },
   });

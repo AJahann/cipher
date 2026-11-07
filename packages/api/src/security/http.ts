@@ -5,8 +5,11 @@ import type { SecurityBudgets } from './policy';
 export function registerHttpSecurity(
   app: FastifyInstance,
   budgets: SecurityBudgets,
-  origin: string,
+  allowedOrigins: string | string[],
 ) {
+  const origins = Array.isArray(allowedOrigins)
+    ? allowedOrigins
+    : [allowedOrigins];
   // Register BEFORE cookie/session plugins: refuse avoidable parsing/store/hash work.
   app.addHook('onRequest', (req, reply, done) => {
     reply.header('Cache-Control', 'no-store');
@@ -21,7 +24,7 @@ export function registerHttpSecurity(
     if (
       !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
       req.headers.origin !== undefined &&
-      req.headers.origin !== origin
+      !origins.includes(req.headers.origin)
     )
       throw new AppError('BAD_REQUEST', 'Untrusted request origin');
     done();

@@ -12,7 +12,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { clearClientSession } from '@/lib/client-session';
 import { KeyStorage } from '@/lib/keyStorage';
 import { AuthForm } from '@chat-app/ui-web';
-import { env } from '@/config/env';
+import { getApiOrigin } from '@/lib/data-layer/api-origin';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -54,7 +54,7 @@ export default function AuthPage() {
       onRegister={handleRegister}
       githubSignInUrl={
         authConfig?.githubEnabled === true
-          ? `${env.NEXT_PUBLIC_API_URL}/auth/github`
+          ? `${getApiOrigin()}/auth/github`
           : undefined
       }
     />

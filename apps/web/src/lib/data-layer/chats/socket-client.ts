@@ -3,12 +3,12 @@ import type {
   ClientToServerEvents,
   ServerToClientEvents,
 } from '@chat-app/shared/contracts';
-import { env } from '../../../config/env';
+import { getApiOrigin } from '../api-origin';
 
 export type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 let instance: AppSocket | null = null;
 export function getSocket() {
-  instance ??= io(env.NEXT_PUBLIC_API_URL, {
+  instance ??= io(getApiOrigin(), {
     withCredentials: true,
     autoConnect: false,
   });
