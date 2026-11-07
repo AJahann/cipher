@@ -6,6 +6,7 @@ import { revokeSession } from './session-authority';
 import { AppError } from '../../http/errors';
 import { userService } from '../user/user.service';
 import { requireAuth } from './auth.middleware';
+import { isOriginAllowed } from '../../security/origins';
 import {
   createGitHubFlow,
   githubFlowStore,
@@ -41,7 +42,12 @@ export const githubController = (app: FastifyInstance) => {
   // implicitly links accounts, even if started with an authenticated cookie.
   app.post('/link', { preHandler: requireAuth }, async (req, reply) => {
     const origins = env.CLIENT_ORIGIN.split(',').map((o) => o.trim());
-    if (!req.headers.origin || !origins.includes(req.headers.origin)) {
+    const host =
+      (req.headers['x-forwarded-host'] as string) || req.headers.host;
+    if (
+      !req.headers.origin ||
+      !isOriginAllowed(req.headers.origin, origins, host)
+    ) {
       throw new AppError('BAD_REQUEST', 'Link GitHub from the Cipher app');
     }
     const flow = createGitHubFlow();

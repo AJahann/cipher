@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { AppError } from '../http/errors';
 import type { SecurityBudgets } from './policy';
+import { isOriginAllowed } from './origins';
 
 export function registerHttpSecurity(
   app: FastifyInstance,
@@ -21,10 +22,12 @@ export function registerHttpSecurity(
       budgets.take('ip.github', req.ip);
     // Absent Origin supports non-browser clients. "null", malformed and foreign
     // origins are refused, not merely omitted from CORS response headers.
+    const host =
+      (req.headers['x-forwarded-host'] as string) || req.headers.host;
     if (
       !['GET', 'HEAD', 'OPTIONS'].includes(req.method) &&
       req.headers.origin !== undefined &&
-      !origins.includes(req.headers.origin)
+      !isOriginAllowed(req.headers.origin, origins, host)
     )
       throw new AppError('BAD_REQUEST', 'Untrusted request origin');
     done();
