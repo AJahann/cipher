@@ -10,7 +10,7 @@ import { userController } from './modules/user/user.controller';
 import { chatController } from './modules/chat/chat.controller';
 import { registerChatSocket } from './modules/chat/chat.socket';
 import { sessionStore } from './db/session';
-import { registerErrorHandling } from './http/errors';
+import { registerErrorHandling, AppError } from './http/errors';
 import { RedisRuntime } from './redis/runtime';
 import { DirectoryCache } from './redis/directory-cache';
 import { Presence } from './redis/presence';
@@ -28,7 +28,27 @@ import {
 import { registerHttpSecurity } from './security/http';
 import { isOriginAllowed } from './security/origins';
 import { securityLogger } from './security/logging';
+import {
+  formatTraceparent,
+  generateTraceId,
+  parseTraceparent,
+  sanitizeRequestId,
+  TRACEPARENT_HEADER,
+  REQUEST_ID_HEADER,
+} from '@chat-app/shared/telemetry';
+import {
+  runWithTraceContext,
+  startSpan,
+  type ActiveTraceContext,
+  type SpanHandle,
+} from './telemetry/tracer';
+import { initApiSentry } from './telemetry/sentry';
+import {
+  pushLogRecord,
+  registerTelemetryDashboard,
+} from './telemetry/dashboard';
 
+/* oxlint-disable max-lines-per-function */
 export const buildApp = async (
   jobOptions: Partial<
     Pick<
@@ -45,10 +65,90 @@ export const buildApp = async (
   > = {},
   securityOptions: { now?: () => number } = {},
 ) => {
+  initApiSentry();
+
   const app = Fastify({
     bodyLimit: HTTP_BODY_BYTES,
     trustProxy: false, // No forwarded IP authority without a reviewed proxy policy.
     logger: securityLogger,
+  });
+
+  app.addHook('onRequest', (req, _reply, done) => {
+    const rawTrace = req.headers[TRACEPARENT_HEADER];
+    const incomingTrace = parseTraceparent(
+      Array.isArray(rawTrace) ? rawTrace[0] : rawTrace,
+    );
+    const traceId = incomingTrace?.traceId ?? generateTraceId();
+    const parentSpanId = incomingTrace?.spanId;
+    const rawReqId = req.headers[REQUEST_ID_HEADER];
+    const requestId = sanitizeRequestId(
+      Array.isArray(rawReqId) ? rawReqId[0] : rawReqId,
+    );
+
+    req.id = requestId;
+
+    const route = req.routeOptions.url ?? req.url.split('?')[0];
+    const span = startSpan(`http.server ${req.method} ${route}`, {
+      kind: 'server',
+      traceId,
+      parentSpanId,
+      attributes: {
+        'http.method': req.method,
+        'http.route': route,
+      },
+    });
+
+    const context: ActiveTraceContext = {
+      traceId,
+      spanId: span.spanId,
+      requestId,
+      parentSpanId,
+    };
+
+    (req as unknown as { traceContext: ActiveTraceContext }).traceContext =
+      context;
+    (req as unknown as { serverSpan: SpanHandle }).serverSpan = span;
+
+    runWithTraceContext(context, () => {
+      done();
+    });
+  });
+
+  app.addHook('onSend', (req, reply, _payload, done) => {
+    const ctx = (req as unknown as { traceContext?: ActiveTraceContext })
+      .traceContext;
+    if (ctx) {
+      reply.header(REQUEST_ID_HEADER, ctx.requestId);
+      reply.header(
+        TRACEPARENT_HEADER,
+        formatTraceparent(ctx.traceId, ctx.spanId),
+      );
+    }
+    done();
+  });
+
+  app.addHook('onResponse', (req, reply, done) => {
+    const ctx = (req as unknown as { traceContext?: ActiveTraceContext })
+      .traceContext;
+    const span = (req as unknown as { serverSpan?: SpanHandle }).serverSpan;
+    if (span) {
+      span.end(reply.statusCode < 500 ? 'ok' : 'error');
+    }
+
+    const duration_ms = Number(reply.elapsedTime.toFixed(2));
+    const route = req.routeOptions.url ?? req.url.split('?')[0];
+    const logData = {
+      requestId: req.id,
+      traceId: ctx?.traceId,
+      spanId: ctx?.spanId,
+      route,
+      method: req.method,
+      status: reply.statusCode,
+      duration_ms,
+    };
+    pushLogRecord(logData);
+    req.log.info(logData, 'request completed');
+    done();
   });
 
   const budgets = new SecurityBudgets(securityOptions.now);
@@ -74,6 +174,7 @@ export const buildApp = async (
 
   // One error envelope for every route, registered before any plugin.
   registerErrorHandling(app);
+  registerTelemetryDashboard(app);
 
   await app.register(cors, {
     origin: (origin, cb) => {
@@ -106,6 +207,13 @@ export const buildApp = async (
   });
 
   app.get('/health', () => ({ status: 'ok' }));
+
+  app.get('/telemetry/test-error', () => {
+    throw new AppError(
+      'INTERNAL',
+      'Deliberate test error for Sentry verification',
+    );
+  });
 
   app.register(authController, { prefix: '/auth' });
   app.register(githubController, { prefix: '/auth/github' });

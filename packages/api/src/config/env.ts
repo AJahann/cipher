@@ -38,6 +38,9 @@ export const env = createEnv({
     GITHUB_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_CLIENT_SECRET: z.string().min(1).optional(),
     GITHUB_REDIRECT_URI: z.url().optional(),
+    SENTRY_DSN: z.string().optional(),
+    SENTRY_ENVIRONMENT: z.string().optional(),
+    SENTRY_RELEASE: z.string().optional(),
   },
   // oxlint-disable-next-line node/no-process-env -- env-core requires the process environment.
   runtimeEnv: process.env,

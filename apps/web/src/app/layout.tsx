@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { QueryProvider } from '@/config/query-provider';
+import { TelemetryProvider } from '@/components/telemetry-provider';
 
 export const metadata: Metadata = {
   title: 'Cipher',
@@ -13,6 +14,7 @@ export default function RootLayout({
   return (
     <html lang='en' className='h-full antialiased'>
       <body className='min-h-full flex flex-col'>
+        <TelemetryProvider />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
