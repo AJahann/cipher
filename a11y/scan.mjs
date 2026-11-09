@@ -106,7 +106,9 @@ const bob = `bob-${ts}`;
   await page.getByLabel('username', { exact: true }).fill('nobody-' + ts);
   await page.getByLabel('passphrase', { exact: true }).fill('wrong');
   await page.getByRole('button', { name: 'authenticate' }).click();
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'Authentication failed' }),
+  ).toBeVisible();
   await scan(page, '/', 'anonymous · authentication failed');
   await page.getByRole('button', { name: 'register' }).click();
   await scan(page, '/', 'anonymous · register mode');
