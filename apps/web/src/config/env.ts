@@ -15,6 +15,9 @@ export const env = createEnv({
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
     NEXT_PUBLIC_SENTRY_ENVIRONMENT: z.string().optional(),
     NEXT_PUBLIC_SENTRY_RELEASE: z.string().optional(),
+    // Public token so the browser can submit RUM vitals to the gated endpoint.
+    // Optional: when unset, vitals stay local-only and are not posted.
+    NEXT_PUBLIC_TELEMETRY_TOKEN: z.string().optional(),
   },
   runtimeEnv: {
     // oxlint-disable-next-line node/no-process-env -- env-nextjs requires the process environment.
@@ -25,5 +28,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SENTRY_ENVIRONMENT: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
     // oxlint-disable-next-line node/no-process-env -- env-nextjs requires the process environment.
     NEXT_PUBLIC_SENTRY_RELEASE: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+    // oxlint-disable-next-line node/no-process-env -- env-nextjs requires the process environment.
+    NEXT_PUBLIC_TELEMETRY_TOKEN: process.env.NEXT_PUBLIC_TELEMETRY_TOKEN,
   },
 });

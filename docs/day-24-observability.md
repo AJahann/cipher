@@ -88,83 +88,68 @@ Base: `97b18a0` (Day 23 deployed & verified). Branch: `day-24/observability`.
 
 ## 3. Incident Diagnosis from Telemetry
 
+Real incident, reproduced and diagnosed against actual PostgreSQL in
+`packages/api/src/telemetry/incident-diagnosis.test.ts` (runs in the
+PostgreSQL CI job; skipped without `SESSION_TEST_DATABASE_URL`).
+
 ### Observed Symptom
-During authenticated chat history retrieval (`GET /chat/messages?conversationId=<id>&cursor=<cursor>&limit=50`), p95 response latency was elevated to **186.2 ms**, leading to UI stutter during rapid scrollback across paginated message batches.
+Messages vanished during chat history scrollback. With three messages stored
+within the same wall-clock millisecond, paginating `GET /chat/messages`
+returned the newest page correctly, then skipped the next message — the user
+saw a hole in history. No error was logged; the response was `200` with a
+valid `nextCursor`.
 
 ### Initial Hypothesis
-Initial suspicion was that client-side WebCrypto decryption (X25519 ECDH key exchange + XSalsa20-Poly1305 authenticated symmetric decryption across 50 message payloads) or Fastify JSON serialization was dominating request latency.
+Client-side rendering deduplication (React key collisions) or the keyset
+cursor encoder dropping rows between pages.
 
 ### Telemetry Evidence
-Correlated telemetry across the connected OpenTelemetry trace and structured Pino logs isolated the bottleneck:
+The connected OTel trace for the affected request (`traceId` shared with the
+Pino log line) showed both DB spans completing successfully with normal
+durations — so the rows were lost *inside the query predicate*, not by the
+client:
 
-1. **Structured Pino Log (`requestId: req-c8172b01`):**
-   ```json
-   {
-     "level": 30,
-     "time": 1794175000000,
-     "requestId": "req-c8172b01",
-     "traceId": "d4a81f3c92e1005a76e021b4a9018e32",
-     "spanId": "8b021c34a9ef1021",
-     "route": "/chat/messages",
-     "method": "GET",
-     "status": 200,
-     "duration_ms": 186.2,
-     "msg": "request completed"
-   }
-   ```
+| Span | Kind | Observation |
+|---|---|---|
+| `http.server GET /chat/messages` | server | 200, normal duration |
+| `db.query SELECT messages (buggy anchor)` | db | `ok`, row count < expected |
+| `db.query SELECT messages (sql anchor)` | db | `ok`, full row count |
 
-2. **Connected OpenTelemetry Trace Spans (`traceId: d4a81f3c92e1005a76e021b4a9018e32`):**
-   | Span Name | Kind | Duration (ms) | % of Request |
-   |---|---|---:|---:|
-   | `web.fetch GET /chat/messages` | client | 192.4 ms | 100.0% |
-   | `http.server GET /chat/messages` | server | 186.2 ms | 96.8% |
-   | `db.query SELECT conversation_members` | db | 2.8 ms | 1.5% |
-   | `db.query SELECT messages` | db | **178.6 ms** | **92.8%** |
-
-3. **Telemetry Analysis:**
-   - Client-side fetch overhead was only 6.2 ms (`192.4 - 186.2 ms`), disproving the client decryption hypothesis.
-   - Fastify HTTP handling overhead was only 4.8 ms (`186.2 - (178.6 + 2.8) ms`), disproving JSON serialization overhead.
-   - The single database span `db.query SELECT messages` consumed **178.6 ms (92.8% of the total request time)**.
+The Pino record `{ requestId, traceId, route: '/chat/messages', status: 200, duration_ms }`
+correlated the trace to the exact request, ruling out transport loss.
 
 ### Component/Stage Identified
-Database query execution stage inside `chatService.getMessages` in `packages/api/src/modules/chat/chat.service.ts`:
-```ts
-// Unoptimized code in chat.service.ts (Line 181 & 196)
-const anchor = await db.query.messages.findFirst({
-  where: and(eq(messages.id, anchorId), eq(messages.conversationId, conversationId)),
-  columns: { id: true },
-});
-
-// Then in findMany:
-sql`(${m.createdAt}, ${m.id}) < (select anchor.created_at, anchor.id from messages anchor where anchor.id = ${anchorId})`
-```
-Although `anchor` was already queried to validate cursor existence, only `id` was retrieved. The main keyset query then executed a redundant correlated scalar subquery `(select anchor.created_at, anchor.id from messages anchor where anchor.id = $anchorId)` inside PostgreSQL for every evaluated row during keyset filtering.
+`chatService.getMessages` in `packages/api/src/modules/chat/chat.service.ts`.
+The keyset anchor `created_at` was fetched into a JS `Date` and bound back as
+a query parameter. Postgres stores `created_at` with **microsecond**
+precision; a JS `Date` keeps only **milliseconds**. The tuple comparison
+`(${m.createdAt}, ${m.id}) < (${anchor.createdAt}, ${anchor.id})` therefore
+used a truncated anchor: any message sharing the anchor's millisecond but
+with a larger microsecond offset compared *greater* than the anchor and was
+silently excluded — skipping rows without error.
 
 ### Fix Applied
-Selected `{ id: true, createdAt: true }` in the cursor anchor pre-query, and passed the already resolved in-memory timestamp tuple directly as bound parameters:
-```ts
-// Fixed code in chat.service.ts
-const anchor = await db.query.messages.findFirst({
-  where: and(eq(messages.id, anchorId), eq(messages.conversationId, conversationId)),
-  columns: { id: true, createdAt: true },
-});
+The anchor timestamp no longer round-trips through JS. Existence is checked
+by `id` only, and the sort-key comparison runs entirely inside Postgres via
+a subquery that reads the raw `created_at`:
 
-// Directly bound tuple in keyset query:
-anchor ? sql`(${m.createdAt}, ${m.id}) < (${anchor.createdAt}, ${anchor.id})` : undefined
+```ts
+sql`(${m.createdAt}, ${m.id}) < (select created_at, id from ${messages} where ${messages.id} = ${anchorId})`
 ```
-This eliminated the correlated subquery in PostgreSQL's query execution plan.
 
 ### After-Fix Measurement
-Side-by-side telemetry comparison verified via `packages/api/src/telemetry/incident-diagnosis.test.ts`:
+`incident-diagnosis.test.ts` executes both variants against real Postgres
+with three messages at microsecond offsets `+0µs`, `+1µs`, `+2µs` within one
+millisecond, under correlated spans:
 
-| Metric | Before Fix (Correlated Subquery) | After Fix (In-Memory Tuple Bound) | Delta |
-|---|---:|---:|---:|
-| `web.fetch` duration | 192.4 ms | **18.7 ms** | **-90.3%** |
-| `http.server` duration | 186.2 ms | **14.2 ms** | **-92.4%** |
-| `db.query SELECT messages` duration | 178.6 ms | **9.1 ms** | **-94.9%** |
-| Pino `duration_ms` | 186.2 ms | **14.2 ms** | **-92.4%** |
+- **Before:** buggy anchor returns fewer than the 2 expected older rows —
+  same-millisecond rows skipped (assertion: `buggyRows.length < 2`).
+- **After:** two sequential `getMessages` pages return exactly `[m3, m2]` —
+  no skipped rows, correct order.
 
-The telemetry spans directly confirmed that eliminating the redundant subquery dropped DB keyset execution latency from 178.6 ms to 9.1 ms, eliminating scrollback lag completely.
+Regression coverage: `packages/api/src/modules/chat/chat.pagination.integration.test.ts`
+seeds the same microsecond-tie scenario and pages through all three messages,
+failing if any row is skipped.
 
 ---
 

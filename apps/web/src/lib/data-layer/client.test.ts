@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiFetch } from './client';
+import { clearWebSpans, getAllWebSpans } from '../telemetry/tracer';
 
 vi.mock(import('./api-origin'), () => ({
   getApiOrigin: () => 'https://api.example.test',
@@ -108,5 +109,38 @@ describe('apiFetch request headers', () => {
     const [, init] = fetchMock.mock.calls[0];
     expect(init.body).toBe(body);
     expect(new Headers(init.headers).has('content-type')).toBe(false);
+  });
+});
+
+describe('apiFetch span lifecycle', () => {
+  beforeEach(() => clearWebSpans());
+  afterEach(() => clearWebSpans());
+
+  it('records exactly one error span for an HTTP error response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ code: 'X', message: 'm' }), {
+            status: 500,
+          }),
+        ),
+      ),
+    );
+    await expect(apiFetch('/x')).rejects.toThrow('HTTP 500');
+    const spans = getAllWebSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.status).toBe('error');
+  });
+
+  it('marks invalid JSON on a 200 response as an error span', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response('not-json{', { status: 200 }))),
+    );
+    await expect(apiFetch('/x')).rejects.toThrow(/JSON|Unexpected token/);
+    const spans = getAllWebSpans();
+    expect(spans).toHaveLength(1);
+    expect(spans[0]!.status).toBe('error');
   });
 });

@@ -7,6 +7,26 @@ import {
   TRACEPARENT_HEADER,
   type SpanRecord,
 } from '@chat-app/shared/telemetry';
+import { env } from '../../config/env';
+import { getApiOrigin } from '../data-layer/api-origin';
+
+function exportSpanToApi(record: SpanRecord): void {
+  const token = env.NEXT_PUBLIC_TELEMETRY_TOKEN;
+  if (!token || typeof window === 'undefined') return;
+  try {
+    void fetch(`${getApiOrigin()}/telemetry/api/spans`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-telemetry-token': token,
+      },
+      body: JSON.stringify({ spans: [record] }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (_err) {
+    // ignore — telemetry export must never break the app
+  }
+}
 
 export interface WebSpanHandle {
   traceId: string;
@@ -23,6 +43,12 @@ export interface WebSpanHandle {
 }
 
 const recordedWebSpans: SpanRecord[] = [];
+const MAX_WEB_SPANS = 500;
+
+function pushBounded<T>(buffer: T[], item: T, max: number): void {
+  buffer.push(item);
+  if (buffer.length > max) buffer.splice(0, buffer.length - max);
+}
 
 export function startWebSpan(
   name: string,
@@ -40,6 +66,8 @@ export function startWebSpan(
   const startTimeMs = Date.now();
   const startPerf = typeof performance !== 'undefined' ? performance.now() : 0;
   const attributes = { ...options.attributes };
+  let ended = false;
+  let lastRecord: SpanRecord | undefined;
 
   const handle: WebSpanHandle = {
     traceId,
@@ -65,6 +93,8 @@ export function startWebSpan(
       }
     },
     end(status: 'ok' | 'error' = 'ok', errorMessage?: string) {
+      if (ended) return lastRecord!;
+      ended = true;
       const endTimeMs = Date.now();
       const endPerf =
         typeof performance !== 'undefined' ? performance.now() : 0;
@@ -82,7 +112,9 @@ export function startWebSpan(
         errorMessage,
         attributes,
       };
-      recordedWebSpans.push(record);
+      lastRecord = record;
+      pushBounded(recordedWebSpans, record, MAX_WEB_SPANS);
+      exportSpanToApi(record);
       return record;
     },
   };

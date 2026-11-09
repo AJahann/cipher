@@ -1,5 +1,14 @@
 import type { Pool, PoolClient } from 'pg';
 import { getTraceContext, startSpan } from './tracer';
+import { sanitizeTelemetryData } from '@chat-app/shared/telemetry';
+
+function spanErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  const sanitized = sanitizeTelemetryData(raw);
+  // Raw DB error text can embed row values (e.g. "duplicate key ... (id)=(...)").
+  // Keep only the first line; never ship the full error detail to telemetry.
+  return String(sanitized).split('\n')[0]?.slice(0, 160) ?? 'db error';
+}
 
 function findTargetTable(text: string, keyword: string): string | undefined {
   const idx = text.search(new RegExp(`\\b${keyword}\\b`, 'i'));
@@ -82,7 +91,7 @@ export function instrumentPgPool(pool: Pool): void {
             return res;
           },
           (err: any) => {
-            span.end('error', err instanceof Error ? err.message : String(err));
+            span.end('error', spanErrorMessage(err));
             throw err;
           },
         );
@@ -90,7 +99,7 @@ export function instrumentPgPool(pool: Pool): void {
       span.end('ok');
       return result;
     } catch (err) {
-      span.end('error', err instanceof Error ? err.message : String(err));
+      span.end('error', spanErrorMessage(err));
       throw err;
     }
   };
@@ -104,7 +113,15 @@ export function instrumentPgPool(pool: Pool): void {
     }
 
     return clientPromise.then((client: PoolClient) => {
-      // Instrument the acquired client for transaction queries
+      // Instrument each acquired client exactly once; pool reuses clients and
+      // re-wrapping would stack spans on every checkout.
+      const alreadyInstrumented = (
+        client as unknown as {
+          __cipherTelemetryWrapped?: boolean;
+        }
+      ).__cipherTelemetryWrapped;
+      if (alreadyInstrumented) return client;
+
       const originalClientQuery = client.query.bind(client);
       // oxlint-disable-next-line @typescript-eslint/no-explicit-any
       (client as any).query = function query(
@@ -155,6 +172,9 @@ export function instrumentPgPool(pool: Pool): void {
           throw err;
         }
       };
+      (
+        client as unknown as { __cipherTelemetryWrapped?: boolean }
+      ).__cipherTelemetryWrapped = true;
       return client;
     });
   };
