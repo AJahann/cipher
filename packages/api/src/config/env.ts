@@ -45,6 +45,9 @@ export const env = createEnv({
     // value in the `x-telemetry-token` header. When unset, routes stay disabled
     // (404) so production cannot leak telemetry without explicit opt-in.
     TELEMETRY_ADMIN_TOKEN: z.string().min(16).optional(),
+    // Separate ingest-only token for public/client telemetry (POST /vitals, POST /spans).
+    // Ingest token cannot access admin routes (/dashboard, /data, /clear, /test-error).
+    TELEMETRY_INGEST_TOKEN: z.string().min(16).optional(),
   },
   // oxlint-disable-next-line node/no-process-env -- env-core requires the process environment.
   runtimeEnv: process.env,

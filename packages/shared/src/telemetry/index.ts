@@ -94,10 +94,11 @@ export function sanitizeTelemetryData<T>(input: T, seen = new WeakSet()): T {
     let val: string = input;
     val = val.replace(/sessionid=\S+/gi, 'sessionId=[REDACTED]');
     val = val.replace(/bearer\s+\S+/gi, 'Bearer [REDACTED]');
-    // Strip inline secret words: privateKey <value>, password <value>, token <value>
+    // Strip inline secret words: privateKey: <value>, password: <value>, token <value>, password=<value>
     val = val.replace(
-      /(?:access[-_]?token|ciphertext|passphrase|password|private[-_]?key|token)\s+\S+/gi,
-      (m) => `${m.split(/\s+/)[0]} [REDACTED]`,
+      /(access[-_]?token|ciphertext|content|nonce|passphrase|password|private[-_]?key|secret|token|wrapped[-_]?(?:private|private[-_]?key))(\s*[:=]\s*|\s+)(?:"[^"]*"|'[^']*'|[^\s,;]+|\S+)/gi,
+      (_match, key, sep) =>
+        `${key}${sep.includes(':') ? ': ' : sep.includes('=') ? '=' : ' '}[REDACTED]`,
     );
     // Strip OAuth codes or tokens in query strings
     val = val.replace(

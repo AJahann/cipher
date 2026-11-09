@@ -154,4 +154,30 @@ describe('telemetry secret scrubbing', () => {
     expect(sanitizedError.message).toContain('privateKey [REDACTED]');
     expect(sanitizedError.message).toContain('ciphertext [REDACTED]');
   });
+
+  it('redacts colon-labelled and equals-labelled inline secrets in strings', () => {
+    const probes = [
+      'Error occurred at privateKey: secret-key-value-1234',
+      'Payload contained ciphertext: encrypted-payload-9999',
+      'Auth failure for password: my-super-secret-password',
+      'Header had accessToken: oauth-token-value-5678',
+      'Compact format privateKey:secret-key-compact',
+      'Assignment format password=my-assigned-password',
+      'Snake case format private_key: snake-secret-value',
+      'Double-quote wrapped password: "wrapped-password-secret"',
+    ];
+
+    for (const probe of probes) {
+      const sanitized = sanitizeTelemetryData(probe);
+      expect(sanitized).not.toContain('secret-key-value-1234');
+      expect(sanitized).not.toContain('encrypted-payload-9999');
+      expect(sanitized).not.toContain('my-super-secret-password');
+      expect(sanitized).not.toContain('oauth-token-value-5678');
+      expect(sanitized).not.toContain('secret-key-compact');
+      expect(sanitized).not.toContain('my-assigned-password');
+      expect(sanitized).not.toContain('snake-secret-value');
+      expect(sanitized).not.toContain('wrapped-password-secret');
+      expect(sanitized).toContain('[REDACTED]');
+    }
+  });
 });

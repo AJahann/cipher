@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/max-lines-per-function */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import Fastify from 'fastify';
 import { clearTelemetryBuffers, registerTelemetryDashboard } from './dashboard';
@@ -80,6 +81,95 @@ describe('telemetry dashboard access control', () => {
     expect(res.statusCode).toBe(200);
     expect(res.json().ingested).toBe(1);
     expect(getAllRecordedSpans()).toHaveLength(1);
+  });
+
+  it('restricts ingest-only token to POST /vitals and POST /spans, blocking admin routes', async () => {
+    const ADMIN = 'admin-secret-token-abcdef123456';
+    const INGEST = 'ingest-secret-token-1234567890ab';
+    const dualApp = Fastify();
+    registerTelemetryDashboard(dualApp, {
+      adminToken: ADMIN,
+      ingestToken: INGEST,
+    });
+    await dualApp.ready();
+
+    // 1. Ingest token succeeds on vitals and spans
+    const vitalsRes = await dualApp.inject({
+      method: 'POST',
+      url: '/telemetry/api/vitals',
+      headers: { 'x-telemetry-token': INGEST },
+      payload: {
+        name: 'LCP',
+        value: 120,
+        rating: 'good',
+        route: '/chat',
+        id: 'v1',
+        timestamp: Date.now(),
+      },
+    });
+    expect(vitalsRes.statusCode).toBe(200);
+
+    const spansRes = await dualApp.inject({
+      method: 'POST',
+      url: '/telemetry/api/spans',
+      headers: { 'x-telemetry-token': INGEST },
+      payload: {
+        spans: [
+          {
+            traceId: 'c'.repeat(32),
+            spanId: 'd'.repeat(16),
+            name: 'web.fetch GET /test',
+            kind: 'client',
+            startTimeMs: 10,
+            endTimeMs: 20,
+            duration_ms: 10,
+            status: 'ok',
+            attributes: {},
+          },
+        ],
+      },
+    });
+    expect(spansRes.statusCode).toBe(200);
+
+    // 2. Ingest token is strictly rejected on admin routes
+    const adminRoutes = [
+      ['GET', '/telemetry/dashboard'],
+      ['GET', '/telemetry/api/data'],
+      ['POST', '/telemetry/api/clear'],
+      ['POST', '/telemetry/api/test-error'],
+    ] as const;
+
+    const adminRejections = await Promise.all(
+      adminRoutes.map(([method, url]) =>
+        dualApp.inject({
+          method,
+          url,
+          headers: { 'x-telemetry-token': INGEST },
+        }),
+      ),
+    );
+
+    adminRejections.forEach((res, i) => {
+      const [method, url] = adminRoutes[i]!;
+      expect(
+        res.statusCode,
+        `Ingest token must be rejected on ${method} ${url}`,
+      ).toBe(401);
+      expect(res.json()).toEqual({
+        code: 'UNAUTHORIZED',
+        message: 'Invalid telemetry token',
+      });
+    });
+
+    // 3. Admin token succeeds on data
+    const dataRes = await dualApp.inject({
+      method: 'GET',
+      url: '/telemetry/api/data',
+      headers: { 'x-telemetry-token': ADMIN },
+    });
+    expect(dataRes.statusCode).toBe(200);
+
+    await dualApp.close();
   });
 
   it('registers no routes when admin token is absent (safe default)', async () => {

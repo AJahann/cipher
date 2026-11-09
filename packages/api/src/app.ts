@@ -176,6 +176,7 @@ export const buildApp = async (
   registerErrorHandling(app);
   registerTelemetryDashboard(app, {
     adminToken: env.TELEMETRY_ADMIN_TOKEN,
+    ingestToken: env.TELEMETRY_INGEST_TOKEN,
   });
 
   await app.register(cors, {

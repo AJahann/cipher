@@ -1,3 +1,4 @@
+/* oxlint-disable complexity */
 import * as Sentry from '@sentry/browser';
 import { sanitizeTelemetryData } from '@chat-app/shared/telemetry';
 import { env } from '@/config/env';
@@ -16,28 +17,55 @@ export interface WebSentryEventRecord {
 const capturedWebEvents: WebSentryEventRecord[] = [];
 let webSentryInitialized = false;
 
-export function initWebSentry(): void {
-  if (webSentryInitialized) return;
+export interface InitWebSentryOptions {
+  dsn?: string;
+  environment?: string;
+  release?: string;
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+  transport?: (opts: any) => any;
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeSend?: (event: any, hint?: any) => any;
+  forceReset?: boolean;
+}
+
+export function initWebSentry(options: InitWebSentryOptions = {}): void {
+  if (webSentryInitialized && !options.forceReset) return;
 
   const environment =
+    options.environment ??
     env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ??
     // oxlint-disable-next-line node/no-process-env -- fallback for environments where env-nextjs client didn't supply it
     process.env.NODE_ENV ??
     'development';
-  const release = env.NEXT_PUBLIC_SENTRY_RELEASE ?? 'cipher-web@0.1.0';
+  const release =
+    options.release ?? env.NEXT_PUBLIC_SENTRY_RELEASE ?? 'cipher-web@0.1.0';
+  const dsn = options.dsn ?? env.NEXT_PUBLIC_SENTRY_DSN;
 
-  if (env.NEXT_PUBLIC_SENTRY_DSN) {
+  if (dsn) {
     Sentry.init({
-      dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+      dsn,
       environment,
       release,
-      beforeSend(event) {
-        return sanitizeTelemetryData(event);
+      transport: options.transport,
+      beforeSend(event, hint) {
+        const sanitized = sanitizeTelemetryData(event);
+        if (options.beforeSend) {
+          return options.beforeSend(sanitized, hint);
+        }
+        return sanitized;
       },
     });
   }
 
   webSentryInitialized = true;
+}
+
+export function flushWebSentry(timeoutMs = 2000): Promise<boolean> {
+  const client = Sentry.getClient();
+  if (client) {
+    return Sentry.flush(timeoutMs);
+  }
+  return Promise.resolve(true);
 }
 
 export function captureWebError(
@@ -49,12 +77,16 @@ export function captureWebError(
     extra?: Record<string, unknown>;
   } = {},
 ): string {
+  const client = Sentry.getClient();
+  const options = client?.getOptions();
   const environment =
+    options?.environment ??
     env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ??
     // oxlint-disable-next-line node/no-process-env -- fallback
     process.env.NODE_ENV ??
     'development';
-  const release = env.NEXT_PUBLIC_SENTRY_RELEASE ?? 'cipher-web@0.1.0';
+  const release =
+    options?.release ?? env.NEXT_PUBLIC_SENTRY_RELEASE ?? 'cipher-web@0.1.0';
   const eventId = `sentry-web-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
   const sanitizedContext = sanitizeTelemetryData(context);
@@ -78,7 +110,7 @@ export function captureWebError(
 
   capturedWebEvents.push(record);
 
-  if (env.NEXT_PUBLIC_SENTRY_DSN) {
+  if (client) {
     Sentry.withScope((scope) => {
       if (sanitizedContext.requestId)
         scope.setTag('requestId', sanitizedContext.requestId);
