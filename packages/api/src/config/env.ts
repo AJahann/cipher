@@ -41,6 +41,10 @@ export const env = createEnv({
     SENTRY_DSN: z.string().optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
     SENTRY_RELEASE: z.string().optional(),
+    // When set, enables /telemetry/* routes. Requests must present the same
+    // value in the `x-telemetry-token` header. When unset, routes stay disabled
+    // (404) so production cannot leak telemetry without explicit opt-in.
+    TELEMETRY_ADMIN_TOKEN: z.string().min(16).optional(),
   },
   // oxlint-disable-next-line node/no-process-env -- env-core requires the process environment.
   runtimeEnv: process.env,

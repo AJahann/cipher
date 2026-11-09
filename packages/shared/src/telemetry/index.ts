@@ -80,7 +80,7 @@ export function sanitizeRequestId(header?: string | null): string {
 }
 
 const SENSITIVE_KEY_REGEX =
-  /^(?:authorization|ciphertext|content|cookie|nonce|passphrase|password|private[-_]?key|secret|session|sessionid|sessionprivatekey|text|token|wrapped[-_]?private|wrappedprivatekey)$/i;
+  /^(?:access[-_]?token|authorization|ciphertext|content|cookie|nonce|passphrase|password|private[-_]?key|secret|session|sessionid|sessionprivatekey|set[-_]?cookie|text|token|wrapped[-_]?(?:private|private[-_]?key))$/i;
 
 export function isSensitiveKey(key: string): boolean {
   return SENSITIVE_KEY_REGEX.test(key);
@@ -96,7 +96,7 @@ export function sanitizeTelemetryData<T>(input: T, seen = new WeakSet()): T {
     val = val.replace(/bearer\s+\S+/gi, 'Bearer [REDACTED]');
     // Strip inline secret words: privateKey <value>, password <value>, token <value>
     val = val.replace(
-      /(?:passphrase|password|privatekey|token)\s+\S+/gi,
+      /(?:access[-_]?token|ciphertext|passphrase|password|private[-_]?key|token)\s+\S+/gi,
       (m) => `${m.split(/\s+/)[0]} [REDACTED]`,
     );
     // Strip OAuth codes or tokens in query strings

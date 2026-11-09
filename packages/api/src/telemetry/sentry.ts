@@ -13,6 +13,13 @@ export interface SentryEventRecord {
 }
 
 const capturedEvents: SentryEventRecord[] = [];
+const MAX_CAPTURED_EVENTS = 500;
+
+function pushEvent(record: SentryEventRecord): void {
+  capturedEvents.push(record);
+  if (capturedEvents.length > MAX_CAPTURED_EVENTS)
+    capturedEvents.splice(0, capturedEvents.length - MAX_CAPTURED_EVENTS);
+}
 
 let sentryInitialized = false;
 
@@ -80,7 +87,7 @@ export function captureApiError(
     timestamp: Date.now(),
   };
 
-  capturedEvents.push(record);
+  pushEvent(record);
 
   if (dsn) {
     Sentry.withScope((scope) => {

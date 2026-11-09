@@ -84,6 +84,10 @@ services:
       REDIS_NAMESPACE: ${REDIS_NAMESPACE:-cipher}
       PRESENCE_LEASE_MS: ${PRESENCE_LEASE_MS:-15000}
       GITHUB_AUTH_ENABLED: ${GITHUB_AUTH_ENABLED:-false}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
+      SENTRY_RELEASE: ${SENTRY_RELEASE:-}
+      TELEMETRY_ADMIN_TOKEN: ${TELEMETRY_ADMIN_TOKEN:-}
     ports:
       - '${BACKEND_PORT:-3001}:3001'
     depends_on:
@@ -113,6 +117,10 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+        NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${NEXT_PUBLIC_SENTRY_ENVIRONMENT:-production}
+        NEXT_PUBLIC_SENTRY_RELEASE: ${NEXT_PUBLIC_SENTRY_RELEASE:-}
+        NEXT_PUBLIC_TELEMETRY_TOKEN: ${NEXT_PUBLIC_TELEMETRY_TOKEN:-}
     restart: unless-stopped
     environment:
       NODE_ENV: production

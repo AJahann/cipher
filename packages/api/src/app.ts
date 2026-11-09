@@ -174,7 +174,9 @@ export const buildApp = async (
 
   // One error envelope for every route, registered before any plugin.
   registerErrorHandling(app);
-  registerTelemetryDashboard(app);
+  registerTelemetryDashboard(app, {
+    adminToken: env.TELEMETRY_ADMIN_TOKEN,
+  });
 
   await app.register(cors, {
     origin: (origin, cb) => {
@@ -208,12 +210,20 @@ export const buildApp = async (
 
   app.get('/health', () => ({ status: 'ok' }));
 
-  app.get('/telemetry/test-error', () => {
-    throw new AppError(
-      'INTERNAL',
-      'Deliberate test error for Sentry verification',
-    );
-  });
+  // Deliberate test error, only enabled alongside telemetry admin token.
+  if (env.TELEMETRY_ADMIN_TOKEN) {
+    app.get('/telemetry/test-error', (req, reply) => {
+      if (req.headers['x-telemetry-token'] !== env.TELEMETRY_ADMIN_TOKEN) {
+        return reply
+          .code(401)
+          .send({ code: 'UNAUTHORIZED', message: 'Invalid telemetry token' });
+      }
+      throw new AppError(
+        'INTERNAL',
+        'Deliberate test error for Sentry verification',
+      );
+    });
+  }
 
   app.register(authController, { prefix: '/auth' });
   app.register(githubController, { prefix: '/auth/github' });

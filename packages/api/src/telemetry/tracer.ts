@@ -14,6 +14,13 @@ export interface ActiveTraceContext {
 
 const traceStorage = new AsyncLocalStorage<ActiveTraceContext>();
 const recordedSpans: SpanRecord[] = [];
+const MAX_RECORDED_SPANS = 1000;
+
+function pushSpan(record: SpanRecord): void {
+  recordedSpans.push(record);
+  if (recordedSpans.length > MAX_RECORDED_SPANS)
+    recordedSpans.splice(0, recordedSpans.length - MAX_RECORDED_SPANS);
+}
 
 export function runWithTraceContext<T>(
   context: ActiveTraceContext,
@@ -56,6 +63,8 @@ export function startSpan(
   const startPerf = performance.now();
   const kind = options.kind ?? 'internal';
   const attributes = { ...options.attributes };
+  let ended = false;
+  let lastRecord: SpanRecord | undefined;
 
   const handle: SpanHandle = {
     traceId,
@@ -67,6 +76,8 @@ export function startSpan(
     startPerf,
     attributes,
     end(status: 'ok' | 'error' = 'ok', errorMessage?: string) {
+      if (ended) return lastRecord!;
+      ended = true;
       const endTimeMs = Date.now();
       const duration_ms = Number((performance.now() - startPerf).toFixed(2));
       const record: SpanRecord = {
@@ -82,7 +93,8 @@ export function startSpan(
         errorMessage,
         attributes,
       };
-      recordedSpans.push(record);
+      lastRecord = record;
+      pushSpan(record);
       return record;
     },
   };
@@ -96,6 +108,15 @@ export function getTraceSpans(traceId: string): SpanRecord[] {
 
 export function getAllRecordedSpans(): SpanRecord[] {
   return [...recordedSpans];
+}
+
+/**
+ * Record a browser-side span exported from the web client so a single trace
+ * covers browser request → Fastify handling → Postgres query.
+ */
+export function ingestWebSpan(record: SpanRecord): void {
+  if (!record || typeof record.traceId !== 'string') return;
+  pushSpan(record);
 }
 
 export function clearRecordedSpans(): void {

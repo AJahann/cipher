@@ -1,17 +1,23 @@
 /* oxlint-disable max-lines-per-function */
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import {
   clearCapturedSentryEvents,
   getCapturedSentryEvents,
   captureApiError,
 } from './sentry';
-import { clearRecordedSpans, getAllRecordedSpans, startSpan } from './tracer';
+import {
+  clearRecordedSpans,
+  getAllRecordedSpans,
+  ingestWebSpan,
+  startSpan,
+} from './tracer';
 import { AppError } from '../http/errors';
 import {
   formatTraceparent,
   generateRequestId,
   generateSpanId,
   generateTraceId,
+  type SpanRecord,
 } from '@chat-app/shared/telemetry';
 
 export interface TelemetryLogRecord {
@@ -211,6 +217,14 @@ function getDashboardHtml(): string {
   </div>
 
   <script>
+    const TELEMETRY_TOKEN = sessionStorage.getItem('telemetryToken') || '';
+    if (!TELEMETRY_TOKEN) {
+      const t = prompt('Enter telemetry admin token:');
+      if (t) sessionStorage.setItem('telemetryToken', t);
+      location.reload();
+    }
+    const telemetryHeaders = { 'x-telemetry-token': TELEMETRY_TOKEN };
+
     function showTab(id, btn) {
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -222,7 +236,7 @@ function getDashboardHtml(): string {
 
     async function triggerTestError() {
       try {
-        const res = await fetch('/telemetry/api/test-error', { method: 'POST' });
+        const res = await fetch('/telemetry/api/test-error', { method: 'POST', headers: telemetryHeaders });
         const json = await res.json();
         alert('Deliberate error triggered and captured in Sentry!\\nTrace ID: ' + json.traceId);
         fetchData();
@@ -233,13 +247,13 @@ function getDashboardHtml(): string {
 
     async function clearTelemetry() {
       if (!confirm('Clear all captured telemetry data?')) return;
-      await fetch('/telemetry/api/clear', { method: 'POST' });
+      await fetch('/telemetry/api/clear', { method: 'POST', headers: telemetryHeaders });
       fetchData();
     }
 
     async function fetchData() {
       try {
-        const res = await fetch('/telemetry/api/data');
+        const res = await fetch('/telemetry/api/data', { headers: telemetryHeaders });
         if (!res.ok) return;
         const data = await res.json();
 
@@ -358,15 +372,44 @@ function getDashboardHtml(): string {
 </html>`;
 }
 
-export function registerTelemetryDashboard(app: FastifyInstance): void {
+function requireTelemetryToken(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  token: string,
+): boolean {
+  const provided = req.headers['x-telemetry-token'];
+  if (provided !== token) {
+    void reply
+      .code(401)
+      .send({ code: 'UNAUTHORIZED', message: 'Invalid telemetry token' });
+    return false;
+  }
+  return true;
+}
+
+export function registerTelemetryDashboard(
+  app: FastifyInstance,
+  opts: { adminToken?: string },
+): void {
+  const token = opts.adminToken;
+  if (!token) {
+    // Telemetry routes disabled unless TELEMETRY_ADMIN_TOKEN is configured.
+    return;
+  }
+
+  const guard = (req: FastifyRequest, reply: FastifyReply) =>
+    requireTelemetryToken(req, reply, token);
+
   // Public HTML Dashboard
-  app.get('/telemetry/dashboard', (_req, reply) => {
+  app.get('/telemetry/dashboard', (req, reply) => {
+    if (!guard(req, reply)) return;
     reply.type('text/html; charset=utf-8');
     return reply.send(getDashboardHtml());
   });
 
   // Data API for Dashboard
-  app.get('/telemetry/api/data', (_req, reply) => {
+  app.get('/telemetry/api/data', (req, reply) => {
+    if (!guard(req, reply)) return;
     return reply.send({
       sentryEvents: getCapturedSentryEvents(),
       spans: getAllRecordedSpans(),
@@ -377,6 +420,7 @@ export function registerTelemetryDashboard(app: FastifyInstance): void {
 
   // Client Web Vitals submission endpoint
   app.post('/telemetry/api/vitals', (req, reply) => {
+    if (!guard(req, reply)) return;
     const vital = req.body as TelemetryVitalRecord;
     if (vital && vital.name && typeof vital.value === 'number') {
       pushVitalRecord(vital);
@@ -385,13 +429,42 @@ export function registerTelemetryDashboard(app: FastifyInstance): void {
   });
 
   // Clear buffers
-  app.post('/telemetry/api/clear', (_req, reply) => {
+  app.post('/telemetry/api/clear', (req, reply) => {
+    if (!guard(req, reply)) return;
     clearTelemetryBuffers();
     return reply.send({ ok: true });
   });
 
+  // Browser span ingestion — connects web client spans with API spans by traceId.
+  app.post('/telemetry/api/spans', (req, reply) => {
+    if (!guard(req, reply)) return;
+    const body = req.body as { spans?: unknown[] } | unknown[] | undefined;
+    const spans = Array.isArray(body)
+      ? body
+      : Array.isArray(body?.spans)
+        ? body.spans
+        : [];
+    let ingested = 0;
+    for (const span of spans) {
+      const s = span as Partial<SpanRecord>;
+      if (
+        s &&
+        typeof s.traceId === 'string' &&
+        typeof s.spanId === 'string' &&
+        typeof s.name === 'string' &&
+        typeof s.startTimeMs === 'number' &&
+        typeof s.endTimeMs === 'number'
+      ) {
+        ingestWebSpan(s as SpanRecord);
+        ingested += 1;
+      }
+    }
+    return reply.send({ ok: true, ingested });
+  });
+
   // Deliberate test error trigger
   app.post('/telemetry/api/test-error', (req, reply) => {
+    if (!guard(req, reply)) return;
     const traceId = generateTraceId();
     const spanId = generateSpanId();
     const requestId = generateRequestId();

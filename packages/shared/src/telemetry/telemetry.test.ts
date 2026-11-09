@@ -124,4 +124,34 @@ describe('telemetry secret scrubbing', () => {
     expect(sanitized).toContain('code=[REDACTED]');
     expect(sanitized).toContain('state=[REDACTED]');
   });
+
+  it('redacts review-flagged misses: accessToken, snake_case keys, set-cookie, inline secrets in errors', () => {
+    const payload = {
+      accessToken: 'oauth-access-token-xyz',
+      wrapped_private_key: 'wrapped-snake-case-key',
+      'set-cookie': 'sessionId=snake-cookie-value; HttpOnly',
+      nested: { access_token: 'nested-access-token' },
+    };
+    const sanitized = sanitizeTelemetryData(payload);
+    expect(sanitized.accessToken).toBe('[REDACTED]');
+    expect(sanitized.wrapped_private_key).toBe('[REDACTED]');
+    expect(sanitized['set-cookie']).toBe('[REDACTED]');
+    expect(sanitized.nested.access_token).toBe('[REDACTED]');
+
+    const json = JSON.stringify(sanitized);
+    expect(json).not.toContain('oauth-access-token-xyz');
+    expect(json).not.toContain('wrapped-snake-case-key');
+    expect(json).not.toContain('snake-cookie-value');
+    expect(json).not.toContain('nested-access-token');
+
+    // Inline secrets inside free-text error messages
+    const dbError = new Error(
+      'insert failed: duplicate key value violates unique constraint on privateKey raw-private-key-material and ciphertext msg-ciphertext-body',
+    );
+    const sanitizedError = sanitizeTelemetryData(dbError) as Error;
+    expect(sanitizedError.message).not.toContain('raw-private-key-material');
+    expect(sanitizedError.message).not.toContain('msg-ciphertext-body');
+    expect(sanitizedError.message).toContain('privateKey [REDACTED]');
+    expect(sanitizedError.message).toContain('ciphertext [REDACTED]');
+  });
 });

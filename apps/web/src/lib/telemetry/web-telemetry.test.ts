@@ -108,6 +108,16 @@ describe('client trace context propagation', () => {
     expect(spans).toHaveLength(1);
     expect(spans[0]?.spanId).toBe(span.spanId);
   });
+
+  it('end() is idempotent: double-end records exactly one span', () => {
+    const span = startWebSpan('web.fetch GET /users/me');
+    span.end('ok');
+    const again = span.end('error', 'late failure');
+    // Second call returns first record, does not append another span.
+    expect(again.status).toBe('ok');
+    const spans = getWebSpans(span.traceId);
+    expect(spans).toHaveLength(1);
+  });
 });
 
 describe('RUM Web Vitals instrumentation', () => {

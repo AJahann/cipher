@@ -46,10 +46,10 @@ export async function apiFetch<T>(
     });
 
     if (!res.ok) {
-      span.end('error', `HTTP ${res.status}`);
       // Every API error uses the shared envelope `{ code, message, issues? }`.
       const raw = await res.json().catch(() => null);
       const parsed = apiErrorSchema.safeParse(raw);
+      span.end('error', `HTTP ${res.status}`);
       if (parsed.success) {
         const { code, message, issues } = parsed.data;
         throw new ApiError(res.status, code, message, issues);
@@ -57,13 +57,18 @@ export async function apiFetch<T>(
       throw new ApiError(res.status, 'UNKNOWN', `HTTP ${res.status}`);
     }
 
-    span.end('ok');
-
     // 204 No Content — return undefined cast to T
-    if (res.status === 204) return undefined as T;
+    if (res.status === 204) {
+      span.end('ok');
+      return undefined as T;
+    }
 
-    return res.json() as Promise<T>;
+    // Parse fully before ending the span: invalid JSON is an error, not ok.
+    const data = (await res.json()) as T;
+    span.end('ok');
+    return data;
   } catch (error) {
+    // end() is idempotent; records the parse failure when not already ended.
     span.end('error', error instanceof Error ? error.message : String(error));
     throw error;
   }

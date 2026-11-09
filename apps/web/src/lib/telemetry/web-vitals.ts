@@ -1,4 +1,6 @@
 import { onCLS, onINP, onLCP, type Metric } from 'web-vitals';
+import { env } from '../../config/env';
+import { getApiOrigin } from '../data-layer/api-origin';
 
 export interface WebVitalMetric {
   name: 'LCP' | 'INP' | 'CLS';
@@ -56,11 +58,15 @@ let webVitalsInitialized = false;
 
 export function reportVitalToApi(vital: WebVitalMetric): void {
   if (typeof window === 'undefined') return;
+  const token = env.NEXT_PUBLIC_TELEMETRY_TOKEN;
+  if (!token) return; // vitals endpoint gated; skip when no token configured
   try {
-    const { origin } = window.location;
-    void fetch(`${origin}/telemetry/api/vitals`, {
+    void fetch(`${getApiOrigin()}/telemetry/api/vitals`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-telemetry-token': token,
+      },
       body: JSON.stringify(vital),
       keepalive: true,
     }).catch(() => {});

@@ -175,25 +175,26 @@ export const chatService = {
       throw new AppError('CONVERSATION_NOT_FOUND');
     }
 
-    let anchor: { id: string; createdAt: Date } | undefined;
-    if (cursor) {
-      const anchorId = decodeCursor('messages', cursor);
-      anchor = await db.query.messages.findFirst({
+    const anchorId = cursor ? decodeCursor('messages', cursor) : undefined;
+    if (anchorId) {
+      const anchor = await db.query.messages.findFirst({
         where: and(
           eq(messages.id, anchorId),
           eq(messages.conversationId, conversationId),
         ),
-        columns: { id: true, createdAt: true },
+        columns: { id: true },
       });
       if (!anchor) throw new AppError('INVALID_CURSOR');
     }
 
+    // The sort-key comparison runs entirely inside Postgres (subquery), so
+    // `created_at` microsecond precision never round-trips through a JS Date.
     const rows = await db.query.messages.findMany({
       where: (m, { and: allOf, eq: equals }) =>
         allOf(
           equals(m.conversationId, conversationId),
-          anchor
-            ? sql`(${m.createdAt}, ${m.id}) < (${anchor.createdAt}, ${anchor.id})`
+          anchorId
+            ? sql`(${m.createdAt}, ${m.id}) < (select created_at, id from ${messages} where ${messages.id} = ${anchorId})`
             : undefined,
         ),
       orderBy: (m, { desc }) => [desc(m.createdAt), desc(m.id)],
