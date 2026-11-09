@@ -70,7 +70,9 @@ test.describe('axe: route × SessionGate state', () => {
       .fill(`nobody-${Date.now()}`);
     await page.getByLabel('passphrase', { exact: true }).fill('wrong');
     await page.getByRole('button', { name: 'authenticate' }).click();
-    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Authentication failed' }),
+    ).toBeVisible();
     // The enabled submit button transitions from disabled opacity over 150 ms.
     // Audit the settled error state, not an intermediate animation frame. Keep
     // the contrast assertion; do not hide violations with axe retries or sleeps.
