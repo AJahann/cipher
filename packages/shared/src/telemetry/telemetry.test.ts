@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/max-lines-per-function */
 import { describe, expect, it } from 'vitest';
 import {
   formatTraceparent,
@@ -179,5 +180,30 @@ describe('telemetry secret scrubbing', () => {
       expect(sanitized).not.toContain('wrapped-password-secret');
       expect(sanitized).toContain('[REDACTED]');
     }
+  });
+
+  it('redacts complete multi-word secrets, PEM keys, and Cookie headers', () => {
+    expect(sanitizeTelemetryData('content: alpha beta gamma')).toBe(
+      'content: [REDACTED]',
+    );
+    expect(sanitizeTelemetryData('passphrase: alpha beta gamma')).toBe(
+      'passphrase: [REDACTED]',
+    );
+    expect(sanitizeTelemetryData('Cookie: session=alpha; theme=beta')).toBe(
+      'Cookie: [REDACTED]',
+    );
+    expect(
+      sanitizeTelemetryData(
+        'Set-Cookie: sessionId=secret-val; Path=/; HttpOnly',
+      ),
+    ).toBe('Set-Cookie: [REDACTED]');
+    expect(
+      sanitizeTelemetryData('privateKey: -----BEGIN PRIVATE KEY----- abc123'),
+    ).toBe('privateKey: [REDACTED]');
+    expect(
+      sanitizeTelemetryData(
+        'user: alice, passphrase: alpha beta gamma, ip: 127.0.0.1',
+      ),
+    ).toBe('user: alice, passphrase: [REDACTED], ip: 127.0.0.1');
   });
 });

@@ -1,4 +1,4 @@
-/* oxlint-disable eslint/max-nested-callbacks */
+/* oxlint-disable eslint/max-nested-callbacks, eslint/max-lines-per-function */
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { instrumentPgPool } from './db-tracer';
 import {
@@ -13,9 +13,12 @@ describe('db-tracer pooled client instrumentation and callback lifecycle', () =>
     clearRecordedSpans();
   });
 
-  it('sanitizes pooled client query errors in span error messages', async () => {
-    const rawError = new Error(
-      'duplicate key value violates unique constraint on privateKey: my-super-secret-private-key and password: secret-password',
+  it('sanitizes pooled client query errors using generic message and allowlisted code', async () => {
+    const rawError = Object.assign(
+      new Error(
+        'duplicate key value violates unique constraint on privateKey: my-super-secret-private-key and password: secret-password',
+      ),
+      { code: '23505' },
     );
 
     const fakeClient = {
@@ -47,10 +50,43 @@ describe('db-tracer pooled client instrumentation and callback lifecycle', () =>
     const dbSpan = spans.find((s) => s.kind === 'db');
     expect(dbSpan).toBeDefined();
     expect(dbSpan?.status).toBe('error');
-    expect(dbSpan?.errorMessage).toBeDefined();
+    expect(dbSpan?.errorMessage).toBe('Database query failed (23505)');
     expect(dbSpan?.errorMessage).not.toContain('my-super-secret-private-key');
     expect(dbSpan?.errorMessage).not.toContain('secret-password');
-    expect(dbSpan?.errorMessage).toContain('[REDACTED]');
+  });
+
+  it('uses generic message without code when code is unallowlisted or absent', async () => {
+    const rawError = new Error('unexpected error with sensitive info: foo bar');
+
+    const fakeClient = {
+      query: vi.fn().mockRejectedValue(rawError),
+    } as unknown as PoolClient;
+
+    const fakePool = {
+      query: vi.fn(),
+      connect: vi.fn().mockResolvedValue(fakeClient),
+    } as unknown as Pool;
+
+    instrumentPgPool(fakePool);
+    const client = await fakePool.connect();
+
+    const context = {
+      traceId: '22223333444455556666777788889999',
+      spanId: '2222333344445555',
+      requestId: 'req-db-generic-fallback',
+    };
+
+    await expect(
+      runWithTraceContext(context, async () => {
+        await client.query('SELECT 1');
+      }),
+    ).rejects.toThrow('unexpected error');
+
+    const dbSpan = getAllRecordedSpans().find((s) => s.kind === 'db');
+    expect(dbSpan).toBeDefined();
+    expect(dbSpan?.status).toBe('error');
+    expect(dbSpan?.errorMessage).toBe('Database query failed');
+    expect(dbSpan?.errorMessage).not.toContain('sensitive info');
   });
 
   it('keeps span open for callback-style client query until callback finishes and sanitizes errors', async () => {
@@ -86,9 +122,10 @@ describe('db-tracer pooled client instrumentation and callback lifecycle', () =>
     let dbSpan = spans.find((s) => s.kind === 'db');
     expect(dbSpan).toBeUndefined();
 
-    // Now invoke callback with error containing secrets
-    const rawDbError = new Error(
-      'syntax error at or near ciphertext: raw-leaked-ciphertext',
+    // Now invoke callback with error containing secrets and SQLSTATE syntax error code
+    const rawDbError = Object.assign(
+      new Error('syntax error at or near ciphertext: raw-leaked-ciphertext'),
+      { code: '42601' },
     );
     expect(capturedCallback).toBeTypeOf('function');
     capturedCallback!(rawDbError);
@@ -98,8 +135,8 @@ describe('db-tracer pooled client instrumentation and callback lifecycle', () =>
     dbSpan = spans.find((s) => s.kind === 'db');
     expect(dbSpan).toBeDefined();
     expect(dbSpan?.status).toBe('error');
+    expect(dbSpan?.errorMessage).toBe('Database query failed (42601)');
     expect(dbSpan?.errorMessage).not.toContain('raw-leaked-ciphertext');
-    expect(dbSpan?.errorMessage).toContain('[REDACTED]');
   });
 
   it('records rowCount and ok status when callback-style client query succeeds', async () => {

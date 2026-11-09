@@ -1,13 +1,34 @@
 import type { Pool, PoolClient } from 'pg';
 import { getTraceContext, startSpan } from './tracer';
-import { sanitizeTelemetryData } from '@chat-app/shared/telemetry';
+
+const ALLOWED_DB_ERROR_CODES = new Set([
+  '23505', // unique_violation
+  '23503', // foreign_key_violation
+  '23502', // not_null_violation
+  '23514', // check_violation
+  '42P01', // undefined_table
+  '42703', // undefined_column
+  '42601', // syntax_error
+  '40001', // serialization_failure
+  '40P01', // deadlock_detected
+  '57014', // query_canceled
+  '08006', // connection_failure
+  '08001', // unable_to_establish_connection
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+  'ECONNRESET',
+  'ENOTFOUND',
+]);
 
 function spanErrorMessage(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err);
-  const sanitized = sanitizeTelemetryData(raw);
-  // Raw DB error text can embed row values (e.g. "duplicate key ... (id)=(...)").
-  // Keep only the first line; never ship the full error detail to telemetry.
-  return String(sanitized).split('\n')[0]?.slice(0, 160) ?? 'db error';
+  const code = (err as { code?: unknown })?.code;
+  if (
+    typeof code === 'string' &&
+    (ALLOWED_DB_ERROR_CODES.has(code) || /^[0-9A-Z]{5}$/.test(code))
+  ) {
+    return `Database query failed (${code})`;
+  }
+  return 'Database query failed';
 }
 
 function findTargetTable(text: string, keyword: string): string | undefined {

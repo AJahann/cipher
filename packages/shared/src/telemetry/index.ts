@@ -90,16 +90,37 @@ export function sanitizeTelemetryData<T>(input: T, seen = new WeakSet()): T {
   if (input === null || input === undefined) return input;
 
   if (typeof input === 'string') {
-    // Strip cookie and authorization token patterns
     let val: string = input;
+
+    // Redact Cookie and Set-Cookie headers in full
+    val = val.replace(
+      /(?:set[-_]?)?cookie\s*:\s*[^\n\r]+/gi,
+      (m) => `${m.split(':')[0]}: [REDACTED]`,
+    );
+
+    // Strip standalone cookie and authorization token patterns
     val = val.replace(/sessionid=\S+/gi, 'sessionId=[REDACTED]');
     val = val.replace(/bearer\s+\S+/gi, 'Bearer [REDACTED]');
-    // Strip inline secret words: privateKey: <value>, password: <value>, token <value>, password=<value>
+
+    // Redact multi-line or inline PEM private keys
     val = val.replace(
-      /(access[-_]?token|ciphertext|content|nonce|passphrase|password|private[-_]?key|secret|token|wrapped[-_]?(?:private|private[-_]?key))(\s*[:=]\s*|\s+)(?:"[^"]*"|'[^']*'|[^\s,;]+|\S+)/gi,
+      /-----begin [^-]+private key-----[\s\S]*?-----end [^-]+private key-----/gi,
+      '[REDACTED]',
+    );
+
+    // Normalize ' and <secret>' transitions into comma boundaries
+    val = val.replace(
+      /\s+and\s+(?=(?:access[-_]?token|ciphertext|content|nonce|passphrase|password|private[-_]?key|secret|token)\b)/gi,
+      ', ',
+    );
+
+    // Strip inline secret words and their complete values
+    val = val.replace(
+      /(access[-_]?token|ciphertext|content|nonce|passphrase|password|private[-_]?key|secret|token|wrapped[-_]?(?:private|private[-_]?key))(\s*[:=]\s*|\s+)[^\s,;][^\n\r,;]*/gi,
       (_match, key, sep) =>
         `${key}${sep.includes(':') ? ': ' : sep.includes('=') ? '=' : ' '}[REDACTED]`,
     );
+
     // Strip OAuth codes or tokens in query strings
     val = val.replace(
       /[&?](?:code|password|state|token)=[^\s&]*/gi,
