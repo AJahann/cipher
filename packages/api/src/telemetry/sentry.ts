@@ -1,3 +1,4 @@
+/* oxlint-disable complexity */
 import * as Sentry from '@sentry/node';
 import { sanitizeTelemetryData } from '@chat-app/shared/telemetry';
 
@@ -37,23 +38,50 @@ function getSentryConfig() {
   return { environment, release, dsn };
 }
 
-export function initApiSentry(): void {
-  if (sentryInitialized) return;
+export interface InitApiSentryOptions {
+  dsn?: string;
+  environment?: string;
+  release?: string;
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+  transport?: (opts: any) => any;
+  // oxlint-disable-next-line @typescript-eslint/no-explicit-any
+  beforeSend?: (event: any, hint?: any) => any;
+  forceReset?: boolean;
+}
 
-  const { environment, release, dsn } = getSentryConfig();
+export function initApiSentry(options: InitApiSentryOptions = {}): void {
+  if (sentryInitialized && !options.forceReset) return;
+
+  const envConfig = getSentryConfig();
+  const environment = options.environment ?? envConfig.environment;
+  const release = options.release ?? envConfig.release;
+  const dsn = options.dsn ?? envConfig.dsn;
 
   if (dsn) {
     Sentry.init({
       dsn,
       environment,
       release,
-      beforeSend(event) {
-        return sanitizeTelemetryData(event);
+      transport: options.transport,
+      beforeSend(event, hint) {
+        const sanitized = sanitizeTelemetryData(event);
+        if (options.beforeSend) {
+          return options.beforeSend(sanitized, hint);
+        }
+        return sanitized;
       },
     });
   }
 
   sentryInitialized = true;
+}
+
+export function flushApiSentry(timeoutMs = 2000): Promise<boolean> {
+  const client = Sentry.getClient();
+  if (client) {
+    return Sentry.flush(timeoutMs);
+  }
+  return Promise.resolve(true);
 }
 
 export function captureApiError(
@@ -65,7 +93,20 @@ export function captureApiError(
     extra?: Record<string, unknown>;
   } = {},
 ): string {
-  const { environment, release, dsn } = getSentryConfig();
+  const client = Sentry.getClient();
+  const options = client?.getOptions();
+  const environment =
+    options?.environment ??
+    // oxlint-disable-next-line node/no-process-env
+    process.env.SENTRY_ENVIRONMENT ??
+    // oxlint-disable-next-line node/no-process-env
+    process.env.NODE_ENV ??
+    'development';
+  const release =
+    options?.release ??
+    // oxlint-disable-next-line node/no-process-env
+    process.env.SENTRY_RELEASE ??
+    'cipher-api@0.1.0';
   const eventId = `sentry-api-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
   const sanitizedContext = sanitizeTelemetryData(context);
@@ -89,7 +130,7 @@ export function captureApiError(
 
   pushEvent(record);
 
-  if (dsn) {
+  if (client) {
     Sentry.withScope((scope) => {
       if (sanitizedContext.requestId)
         scope.setTag('requestId', sanitizedContext.requestId);

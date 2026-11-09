@@ -389,27 +389,47 @@ function requireTelemetryToken(
 
 export function registerTelemetryDashboard(
   app: FastifyInstance,
-  opts: { adminToken?: string },
+  opts: { adminToken?: string; ingestToken?: string },
 ): void {
-  const token = opts.adminToken;
-  if (!token) {
-    // Telemetry routes disabled unless TELEMETRY_ADMIN_TOKEN is configured.
+  const { adminToken, ingestToken } = opts;
+  if (!adminToken && !ingestToken) {
+    // Telemetry routes disabled unless TELEMETRY_ADMIN_TOKEN or TELEMETRY_INGEST_TOKEN is configured.
     return;
   }
 
-  const guard = (req: FastifyRequest, reply: FastifyReply) =>
-    requireTelemetryToken(req, reply, token);
+  const adminGuard = (req: FastifyRequest, reply: FastifyReply) => {
+    if (!adminToken) {
+      void reply
+        .code(401)
+        .send({ code: 'UNAUTHORIZED', message: 'Invalid telemetry token' });
+      return false;
+    }
+    return requireTelemetryToken(req, reply, adminToken);
+  };
+
+  const ingestGuard = (req: FastifyRequest, reply: FastifyReply) => {
+    const provided = req.headers['x-telemetry-token'];
+    const matchesIngest = Boolean(ingestToken) && provided === ingestToken;
+    const matchesAdmin = Boolean(adminToken) && provided === adminToken;
+    if (!matchesIngest && !matchesAdmin) {
+      void reply
+        .code(401)
+        .send({ code: 'UNAUTHORIZED', message: 'Invalid telemetry token' });
+      return false;
+    }
+    return true;
+  };
 
   // Public HTML Dashboard
   app.get('/telemetry/dashboard', (req, reply) => {
-    if (!guard(req, reply)) return;
+    if (!adminGuard(req, reply)) return;
     reply.type('text/html; charset=utf-8');
     return reply.send(getDashboardHtml());
   });
 
   // Data API for Dashboard
   app.get('/telemetry/api/data', (req, reply) => {
-    if (!guard(req, reply)) return;
+    if (!adminGuard(req, reply)) return;
     return reply.send({
       sentryEvents: getCapturedSentryEvents(),
       spans: getAllRecordedSpans(),
@@ -420,7 +440,7 @@ export function registerTelemetryDashboard(
 
   // Client Web Vitals submission endpoint
   app.post('/telemetry/api/vitals', (req, reply) => {
-    if (!guard(req, reply)) return;
+    if (!ingestGuard(req, reply)) return;
     const vital = req.body as TelemetryVitalRecord;
     if (vital && vital.name && typeof vital.value === 'number') {
       pushVitalRecord(vital);
@@ -430,14 +450,14 @@ export function registerTelemetryDashboard(
 
   // Clear buffers
   app.post('/telemetry/api/clear', (req, reply) => {
-    if (!guard(req, reply)) return;
+    if (!adminGuard(req, reply)) return;
     clearTelemetryBuffers();
     return reply.send({ ok: true });
   });
 
   // Browser span ingestion — connects web client spans with API spans by traceId.
   app.post('/telemetry/api/spans', (req, reply) => {
-    if (!guard(req, reply)) return;
+    if (!ingestGuard(req, reply)) return;
     const body = req.body as { spans?: unknown[] } | unknown[] | undefined;
     const spans = Array.isArray(body)
       ? body
@@ -464,7 +484,7 @@ export function registerTelemetryDashboard(
 
   // Deliberate test error trigger
   app.post('/telemetry/api/test-error', (req, reply) => {
-    if (!guard(req, reply)) return;
+    if (!adminGuard(req, reply)) return;
     const traceId = generateTraceId();
     const spanId = generateSpanId();
     const requestId = generateRequestId();

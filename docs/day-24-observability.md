@@ -158,10 +158,13 @@ failing if any row is skipped.
 All acceptance checks, lints, formatters, and tests pass:
 
 1. **Unit & Integration Tests (`pnpm test:unit`):**
-   - `packages/shared/src/telemetry/telemetry.test.ts`: Traceparent parsing/formatting, request ID sanitation, deep secret redaction.
+   - `packages/shared/src/telemetry/telemetry.test.ts`: Traceparent parsing/formatting, request ID sanitation, deep secret redaction, and colon/equals-labelled secret scrubbing (`privateKey:`, `ciphertext:`, `password:`, `accessToken:`).
    - `packages/api/src/telemetry/telemetry.integration.test.ts`: Connected OTel trace graph, structured Pino logs, Sentry deliberate test error capture, 3-way correlation using shared `requestId` and `traceId`, and zero sensitive data leakage.
+   - `packages/api/src/telemetry/sentry.test.ts`: Sentry SDK transport delivery verification asserting real serialized envelope delivery, release/environment/tag propagation, and in-transit secret scrubbing.
+   - `packages/api/src/telemetry/db-tracer.test.ts`: Pooled client query error sanitization and callback-style query span lifecycle verification.
+   - `packages/api/src/telemetry/dashboard.test.ts`: Separate ingest-only token (`TELEMETRY_INGEST_TOKEN`) gating for `POST /vitals` and `POST /spans` while strictly blocking admin routes.
    - `packages/api/src/telemetry/incident-diagnosis.test.ts`: Reproducible incident diagnosis comparing baseline unoptimized query to candidate fix.
-   - `apps/web/src/lib/telemetry/web-telemetry.test.ts`: Client Sentry scrubbing, client trace propagation, and RUM Web Vitals (LCP, INP, CLS).
+   - `apps/web/src/lib/telemetry/web-telemetry.test.ts`: Client Sentry scrubbing, client Sentry SDK transport delivery, client trace propagation, and RUM Web Vitals (LCP, INP, CLS).
    - Real PostgreSQL suite (`SESSION_TEST_DATABASE_URL`): All 14 tests pass with real PostgreSQL.
 2. **Typecheck (`pnpm typecheck`):** Clean across all 5 workspace packages.
 3. **Lint (`pnpm lint --deny-warnings`):** 0 errors, 0 warnings with Oxlint.

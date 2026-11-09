@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import * as Sentry from '@sentry/browser';
 import {
   captureWebError,
   clearCapturedWebSentryEvents,
   getCapturedWebSentryEvents,
+  initWebSentry,
+  flushWebSentry,
 } from './sentry';
 import {
   clearWebSpans,
@@ -80,6 +83,59 @@ describe('client Sentry telemetry & scrubbing', () => {
     expect(event?.extra?.password).toBe('[REDACTED]');
     expect(event?.extra?.privateKey).toBe('[REDACTED]');
     expect(event?.extra?.ciphertext).toBe('[REDACTED]');
+  });
+
+  it('delivers sanitized event envelope through client Sentry SDK transport', async () => {
+    const deliveredEnvelopes: { body: string | Uint8Array }[] = [];
+
+    const mockTransport = (opts: any) =>
+      Sentry.createTransport(opts, (req) => {
+        deliveredEnvelopes.push(req);
+        return Promise.resolve({ statusCode: 200 });
+      });
+
+    initWebSentry({
+      dsn: 'https://12345678901234567890123456789012@o1.ingest.sentry.io/1',
+      environment: 'staging',
+      release: 'cipher-web@0.2.0-test',
+      transport: mockTransport,
+      forceReset: true,
+    });
+
+    captureWebError(
+      new Error(
+        'Client decryption crashed for password: super-secret and privateKey: pk-val',
+      ),
+      {
+        requestId: 'req-web-sdk-1',
+        traceId: 'trace-web-sdk-1',
+        route: '/chat',
+        extra: {
+          token: 'bearer-client-token',
+          safeField: 'client-metadata',
+        },
+      },
+    );
+
+    await flushWebSentry(2000);
+
+    expect(deliveredEnvelopes.length).toBeGreaterThan(0);
+
+    const envelopeBodies = deliveredEnvelopes
+      .map((e) => String(e.body))
+      .join('\n');
+
+    expect(envelopeBodies).toContain('req-web-sdk-1');
+    expect(envelopeBodies).toContain('trace-web-sdk-1');
+    expect(envelopeBodies).toContain('/chat');
+    expect(envelopeBodies).toContain('cipher-web@0.2.0-test');
+    expect(envelopeBodies).toContain('staging');
+    expect(envelopeBodies).toContain('client-metadata');
+
+    expect(envelopeBodies).not.toContain('super-secret');
+    expect(envelopeBodies).not.toContain('pk-val');
+    expect(envelopeBodies).not.toContain('bearer-client-token');
+    expect(envelopeBodies).toContain('[REDACTED]');
   });
 });
 

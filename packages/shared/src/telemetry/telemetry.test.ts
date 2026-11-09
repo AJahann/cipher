@@ -1,3 +1,4 @@
+/* oxlint-disable eslint/max-lines-per-function */
 import { describe, expect, it } from 'vitest';
 import {
   formatTraceparent,
@@ -153,5 +154,56 @@ describe('telemetry secret scrubbing', () => {
     expect(sanitizedError.message).not.toContain('msg-ciphertext-body');
     expect(sanitizedError.message).toContain('privateKey [REDACTED]');
     expect(sanitizedError.message).toContain('ciphertext [REDACTED]');
+  });
+
+  it('redacts colon-labelled and equals-labelled inline secrets in strings', () => {
+    const probes = [
+      'Error occurred at privateKey: secret-key-value-1234',
+      'Payload contained ciphertext: encrypted-payload-9999',
+      'Auth failure for password: my-super-secret-password',
+      'Header had accessToken: oauth-token-value-5678',
+      'Compact format privateKey:secret-key-compact',
+      'Assignment format password=my-assigned-password',
+      'Snake case format private_key: snake-secret-value',
+      'Double-quote wrapped password: "wrapped-password-secret"',
+    ];
+
+    for (const probe of probes) {
+      const sanitized = sanitizeTelemetryData(probe);
+      expect(sanitized).not.toContain('secret-key-value-1234');
+      expect(sanitized).not.toContain('encrypted-payload-9999');
+      expect(sanitized).not.toContain('my-super-secret-password');
+      expect(sanitized).not.toContain('oauth-token-value-5678');
+      expect(sanitized).not.toContain('secret-key-compact');
+      expect(sanitized).not.toContain('my-assigned-password');
+      expect(sanitized).not.toContain('snake-secret-value');
+      expect(sanitized).not.toContain('wrapped-password-secret');
+      expect(sanitized).toContain('[REDACTED]');
+    }
+  });
+
+  it('redacts complete multi-word secrets, PEM keys, and Cookie headers', () => {
+    expect(sanitizeTelemetryData('content: alpha beta gamma')).toBe(
+      'content: [REDACTED]',
+    );
+    expect(sanitizeTelemetryData('passphrase: alpha beta gamma')).toBe(
+      'passphrase: [REDACTED]',
+    );
+    expect(sanitizeTelemetryData('Cookie: session=alpha; theme=beta')).toBe(
+      'Cookie: [REDACTED]',
+    );
+    expect(
+      sanitizeTelemetryData(
+        'Set-Cookie: sessionId=secret-val; Path=/; HttpOnly',
+      ),
+    ).toBe('Set-Cookie: [REDACTED]');
+    expect(
+      sanitizeTelemetryData('privateKey: -----BEGIN PRIVATE KEY----- abc123'),
+    ).toBe('privateKey: [REDACTED]');
+    expect(
+      sanitizeTelemetryData(
+        'user: alice, passphrase: alpha beta gamma, ip: 127.0.0.1',
+      ),
+    ).toBe('user: alice, passphrase: [REDACTED], ip: 127.0.0.1');
   });
 });
